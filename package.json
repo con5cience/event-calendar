@@ -30,7 +30,8 @@
     "test:capture-profiles": "node --import ./tests/setup-capture.mjs --test tests/capture-profile.test.mjs",
     "test:locales": "node tests/locales/run.mjs",
     "test:locale-tools": "node --test tests/package-locale.test.mjs",
-    "test:refresh": "node --test tests/refresh-locale.test.mjs tests/feed-capture.test.mjs"
+    "test:refresh": "node --test tests/refresh-locale.test.mjs tests/feed-capture.test.mjs",
+    "test:refresh-dry-run": "node --test tests/refresh-dry-run.test.mjs"
   },
   "dependencies": {
     "@fullcalendar/react": "7.1.0",

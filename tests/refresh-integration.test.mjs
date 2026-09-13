@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { chromium } from "@playwright/test";
 import { execute } from "../scripts/refresh-locale.mjs";
 import { captureHMT, eventJSONLD } from "../scripts/capture-feeds.mjs";
+import { checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
 const fixtureRoot = process.env.TEST_REPO || "/fixtures";
 const json = (path) => JSON.parse(readFileSync(path, "utf8"));
@@ -169,6 +170,9 @@ test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consume
       await (await fetch("http://127.0.0.1:8088/api/calendar")).text(),
       /Refreshed fixture/,
     );
+    const checked = await checkCalendar("http://127.0.0.1:8088", "test-city");
+    assert.equal(checked.calendar, "nonempty");
+    assert(checked.sample.some((event) => event.title === "Refreshed fixture"));
   } finally {
     upstream.close();
     if (server) {

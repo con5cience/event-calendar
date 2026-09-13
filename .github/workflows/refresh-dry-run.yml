@@ -1,0 +1,83 @@
+name: Locale refresh dry run
+
+on:
+  workflow_dispatch:
+    inputs:
+      locale:
+        description: Locale to refresh without publishing or deploying
+        required: true
+        type: choice
+        options:
+          - denver
+        default: denver
+
+permissions:
+  contents: read
+
+concurrency:
+  group: refresh-dry-run-${{ inputs.locale }}
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      LOCALE: ${{ inputs.locale }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+      - name: Prepare isolated inputs
+        run: |
+          node --input-type=module -e 'import { validateLocaleID } from "./scripts/package-locale.mjs"; validateLocaleID(process.env.LOCALE);'
+          mkdir -p "$RUNNER_TEMP/refresh-input/locales" dry-run-results
+          cp -R "locales/$LOCALE" "$RUNNER_TEMP/refresh-input/locales/$LOCALE"
+      - name: Build refresh image
+        run: docker build --target refresh -t withadult-refresh-dry-run .
+      - name: Refresh sources
+        id: refresh
+        run: |
+          set +e
+          docker run --rm --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" > dry-run-results/refresh.log 2>&1
+          refresh_status=$?
+          set -e
+          printf '%s\n' "$refresh_status" > dry-run-results/refresh-exit-code.txt
+          node scripts/refresh-dry-run.mjs report "$LOCALE" "$RUNNER_TEMP/refresh-input" dry-run-results
+      - name: Build refreshed application
+        run: |
+          docker run --rm --entrypoint node --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/checkout" withadult-refresh-dry-run --input-type=module -e 'import { cpSync } from "node:fs"; const id=process.argv[1]; cpSync(`/repo/locales/${id}/catalog`, `/checkout/locales/${id}/catalog`, { recursive:true });' "$LOCALE"
+          docker build -f Dockerfile.railway --build-arg "LOCALE=$LOCALE" -t withadult-app-dry-run .
+      - name: Verify running application
+        id: smoke
+        run: |
+          docker run -d --name withadult-dry-run-app --read-only --cap-drop ALL --security-opt no-new-privileges:true -p 127.0.0.1:8097:8080 withadult-app-dry-run
+          node scripts/refresh-dry-run.mjs smoke "$LOCALE" http://127.0.0.1:8097 dry-run-results/http-check.json
+      - name: Save verified snapshot
+        if: steps.smoke.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: snapshot-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/refresh-input/locales/${{ inputs.locale }}/catalog/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Save diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: report-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dry-run-results/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Flag partial refresh
+        run: node --input-type=module -e 'import { readFileSync } from "node:fs"; const r=JSON.parse(readFileSync("dry-run-results/report.json","utf8")); if(r.status!=="success") { console.error("Partial refresh. Inspect the saved reports and snapshot."); process.exitCode=1; }'
+      - name: Stop verification container
+        if: always()
+        run: |
+          if docker container inspect withadult-dry-run-app >/dev/null 2>&1; then
+            docker logs withadult-dry-run-app
+            docker stop withadult-dry-run-app
+          fi

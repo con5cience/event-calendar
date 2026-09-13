@@ -8,3 +8,5 @@ playwright-report/
 .builds/
 .DS_Store
 .refresh-lock/
+# Disposable manual workflow output (not a source catalog).
+dry-run-results/

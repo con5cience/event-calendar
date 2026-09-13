@@ -154,9 +154,48 @@ docker run --rm event-calendar-refresh-test
 The integration image uses local synthetic HTTP responses and the real Go
 publisher, snapshot validator, and calendar HTTP consumer. It also checks HMT
 HTML extraction against the Go parser. These checks do not prove live access
-from GitHub-hosted runners. Scheduling, Git publishing, and Railway automation
-remain separate work. `Dockerfile.railway` consumes the tracked catalog; the local
+from GitHub-hosted runners. The manual Actions dry run is described below;
+scheduling, Git publishing, and Railway deployment remain separate work.
+`Dockerfile.railway` consumes the tracked catalog; the local
 Compose app still consumes its independent `.artifacts/<id>` working store.
+
+### Manual GitHub Actions refresh dry run
+
+`.github/workflows/refresh-dry-run.yml` adds **Locale refresh dry run** with a
+manual `workflow_dispatch` trigger. After this workflow is pushed to the default
+branch, select **Actions → Locale refresh dry run → Run workflow → denver**.
+No remote run is implied by local verification.
+
+The workflow uses read-only repository permissions and no Railway secret. It
+builds the existing refresh image, copies only the selected locale into a new
+runner directory, and captures fresh source data there. It does not start from
+an empty catalog: the tracked snapshot supplies identity and last-valid records.
+Only the runner's disposable checkout changes for the subsequent application build.
+
+Exit code `1` (or any unexpected exit code), a missing report, or inconsistent
+source results prevents the application build and snapshot upload. Exit code `2`
+continues with the validated partial snapshot, but the final workflow status is
+failed so operators see the source failures or rejected records. A successful
+build must also serve `/healthz`, the selected locale at `/api/site`, and a
+nonempty event list at `/api/calendar`. This dry run treats an empty calendar as
+a failed smoke check; the application itself still supports empty calendars.
+
+Download `snapshot-<locale>-<run>-<attempt>` and
+`report-<locale>-<run>-<attempt>` from the run's artifacts. Retention is seven days.
+The snapshot contains the manifest and referenced source files, not raw captures
+or backup generations. Diagnostics include the refresh log, JSON report, source
+summary, and HTTP-check sample when those stages complete. Treat reports as public
+repository diagnostics; no credentials are passed to the capture container.
+
+Runs for one locale cannot overlap. The 180-minute job timeout is an operational
+cap, not a duration estimate. A timeout can leave only partial diagnostics and
+does not produce a verified snapshot. There is no schedule, Git commit/push,
+Railway deployment, or change to the local Compose data store.
+
+Local checks: `npm run test:refresh-dry-run`, `npm run test:refresh`, and the
+existing `refresh-test` container. Workflow syntax is checked with `actionlint`.
+GitHub runner access to each venue and artifact upload permissions require a
+separately authorized remote run.
 
 ### Roxy / Afton capture and replay
 

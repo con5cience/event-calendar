@@ -214,3 +214,42 @@ Cervantes off-site listings outside its reviewed scope, and invalid/conflicting
 times. Existing rejection and last-valid retention rules remain unchanged.
 Previous snapshots remain in the ignored run directories and Git history.
 No remote push, deployment, or schedule was enabled.
+
+## Manual Actions dry run — September 13, 2026
+
+The first automation step is `.github/workflows/refresh-dry-run.yml`. It uses
+manual dispatch, a locale choice (currently Denver), read-only Git permissions,
+immutable action revisions, and per-locale concurrency. It reuses the existing
+refresh container and Railway Dockerfile rather than duplicating adapter logic
+in the workflow. A host-native ingestion setup was not selected because the
+container already supplies the required Go tools and browser dependencies.
+
+The input is the selected locale's committed catalog and configuration. Fresh
+captures update a disposable runner directory, not the operator's store or Git.
+Usable partial results reach the application build and HTTP checks, then leave
+the workflow failed with diagnostics. Total failures cannot silently build the
+unchanged seed as if refresh succeeded. A nonempty calendar and correct locale
+are required by the dry-run smoke check; normal empty-app behavior is unchanged.
+
+Only the validated snapshot and operator diagnostics are uploaded, for seven
+days. Raw captures and recovery copies are excluded. Artifact transport and
+venue access from a GitHub runner remain unverified until a remote run occurs.
+The workflow has no schedule, publishing credentials, Git writes, or Railway
+deployment. Git publishing and daily deployment remain separate steps.
+
+Local verification for this step:
+
+| Evidence / command                                                                                                                                                                                                                                                             | Observed result                                                                          | Supported finding                                                                    | Limit                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:refresh-dry-run`                                                                                                                                                                                                                                                 | Four tests passed, including CLI diagnostics, partial/failure assessment and HTTP errors | Helper rejects inconsistent or missing results and checks the served locale/calendar | Synthetic report and HTTP cases                                                                                                                     |
+| `npm run test:refresh`; `docker build --target refresh-test -t event-calendar-refresh-test .` then `docker run --rm event-calendar-refresh-test`                                                                                                                               | Twelve coordinator tests and both container integration tests passed                     | Existing capture → Go publication → snapshot → HTTP path works with the new checker  | Local synthetic upstreams                                                                                                                           |
+| `npm run test:contracts`; `docker run --rm event-calendar-contract-tests go test -race ./...`                                                                                                                                                                                  | Contract handoff, 91 frontend tests, and full Go suite passed                            | Existing contracts and Go behavior remain intact                                     | No GitHub runner                                                                                                                                    |
+| Capture scripts `test:rhp`, `test:clique`, `test:plot`, `test:kse`, `test:marquis`, `test:blackbox`, `test:venuepilot`, `test:meowwolf`, `test:ophelias`, `test:buzzard`, `test:herbs`, `test:afton`, plus `test:capture-profiles` and `test:locale-tools` (all via `npm run`) | All commands passed                                                                      | Existing offline capture and packaging tests remain intact                           | Does not establish live venue access                                                                                                                |
+| `docker build -f Dockerfile.railway --build-arg LOCALE=denver -t withadult-dry-run-check .`; helper `smoke denver http://127.0.0.1:8097 ...`                                                                                                                                   | Build and HTTP check passed; five sampled events contained IDs, titles, venues and dates | Tracked Denver snapshot reaches the real container's public API                      | Existing tracked snapshot, not a fresh GitHub capture                                                                                               |
+| `CALENDAR_EMPTY_URL=http://127.0.0.1:8096 npm run test:e2e`                                                                                                                                                                                                                    | 148 passed, 66 opt-in tests skipped                                                      | Default browser regression suite passes with its required empty-data container       | Two earlier runs failed because the empty test used populated data, then a nonexistent directory; corrected by mounting an existing empty directory |
+| `docker run --rm --mount type=bind,src=$PWD,dst=/repo,readonly -w /repo rhysd/actionlint:1.7.7 .github/workflows/refresh-dry-run.yml`                                                                                                                                          | Passed                                                                                   | Workflow syntax and embedded shell checks pass                                       | Not workflow execution                                                                                                                              |
+| `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run build`, explicit Prettier check for workflow/ADR, `git diff --check`                                                                                                                                     | Passed                                                                                   | Static checks and frontend build pass                                                | Markdown inspected as source; no documentation render pipeline                                                                                      |
+
+The empty-exit-file CLI regression test first failed, then passed after explicit
+exit-code syntax validation. No tracked event data, local app data, Railway
+settings, secrets, GitHub settings, or schedules changed during this step.
