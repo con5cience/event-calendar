@@ -34,6 +34,10 @@ test("workflow streams and retains output, preserves status, and exports reports
     /docker run.*--entrypoint node.*refresh-dry-run.mjs report/,
   );
   assert.match(shell, /stop-commands/);
+  assert.match(yaml, /capture_concurrency:[\s\S]*default: "2"/);
+  assert.match(shell, /-e CAPTURE_CONCURRENCY/);
+  assert.match(shell, /docker stats --no-stream/);
+  assert.match(shell, /refresh-memory.jsonl/);
   for (const exitCode of [0, 1, 2, 137]) {
     const root = mkdtempSync(join(tmpdir(), "refresh-shell-"));
     mkdirSync(join(root, "dry-run-results"));
@@ -42,7 +46,7 @@ test("workflow streams and retains output, preserves status, and exports reports
       [
         "-e",
         "-c",
-        `docker() { if [[ "$*" == *"--entrypoint node"* ]]; then printf 'report exported\\n'; return 0; fi; printf 'live stdout\\n'; printf 'live stderr\\n' >&2; return ${exitCode}; }\n${shell}`,
+        `docker() { if [[ "$1" == stats ]]; then printf '{"MemUsage":"10MiB / 1GiB"}\\n'; return 0; fi; if [[ "$*" == *"--entrypoint node"* ]]; then printf 'report exported\\n'; return 0; fi; [[ "$*" == *"-e CAPTURE_CONCURRENCY"* ]] || return 99; printf 'live stdout\\n'; printf 'live stderr\\n' >&2; return ${exitCode}; }\n${shell}`,
       ],
       {
         cwd: root,
@@ -50,6 +54,7 @@ test("workflow streams and retains output, preserves status, and exports reports
         env: {
           ...process.env,
           LOCALE: "denver",
+          CAPTURE_CONCURRENCY: "3",
           RUNNER_TEMP: root,
           GITHUB_WORKSPACE: root,
           GITHUB_STEP_SUMMARY: join(root, "summary.md"),
@@ -59,6 +64,7 @@ test("workflow streams and retains output, preserves status, and exports reports
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /live stdout/);
     assert.match(result.stdout, /live stderr/);
+    assert(existsSync(join(root, "dry-run-results/refresh-memory.jsonl")));
     assert.equal(
       readFileSync(join(root, "dry-run-results/refresh.log"), "utf8"),
       "live stdout\nlive stderr\n",

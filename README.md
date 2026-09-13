@@ -180,6 +180,16 @@ manual `workflow_dispatch` trigger. After this workflow is pushed to the default
 branch, select **Actions → Locale refresh dry run → Run workflow → denver**.
 No remote run is implied by local verification.
 
+The manual run also accepts `capture_concurrency` (1–4, default 2). Select 3 for
+the next comparison run; this does not change the application or local default.
+The workflow passes the selection into the refresh container and saves it as
+`capture-concurrency.txt`. `refresh-memory.jsonl` contains timestamped Docker
+stats samples for that container, including memory usage/limit, CPU and PIDs.
+Sampling waits five seconds between polls. These are sampled values, not a true
+peak or a measurement of total runner memory. Short runs can produce no samples;
+poll errors (including container startup/removal races) are retained separately
+in `refresh-memory-errors.log` and do not change the refresh exit status.
+
 The workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from

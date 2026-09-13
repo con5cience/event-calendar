@@ -175,6 +175,26 @@ formatting, and the frontend build (including type checking) passed. No workflow
 or source artifact was changed. A new CI run is required to measure speed and
 memory use; this change does not resolve Roxy's upstream HTML response.
 
+### Dry-run concurrency comparison
+
+The manual workflow exposes `capture_concurrency` choices 1–4, retaining 2 as
+the default, and forwards the selection through Docker's environment. The next
+comparison should use 3 rather than changing the coordinator default globally.
+Provider groups and serial publication remain unchanged.
+
+During capture, a background loop samples the named refresh container with
+`docker stats --no-stream`, waiting five seconds between calls. Timestamped JSON
+records go to `refresh-memory.jsonl`; poll errors go to a separate diagnostic
+file. The chosen limit is saved in `capture-concurrency.txt`. The exit trap stops
+the monitor, and monitoring errors never replace the captured refresh exit code.
+Samples are not peak memory or total runner memory; short jobs can have none.
+The existing diagnostic artifact includes these files. No deployment is added.
+
+The exact workflow-shell regression checks input forwarding and preserves exit
+codes 0, 1, 2, and 137 with monitoring enabled. Local Docker sampling and workflow
+lint supplement the existing container integration tests. GitHub runner memory
+and the effect of concurrency 3 remain unverified until a new manual run.
+
 Exit code 2 means partial publication with a usable validated snapshot; code 1
 means failure. All-source failure does not replace the tracked snapshot. Successful
 jobs can change generation metadata even when event data is identical; semantic

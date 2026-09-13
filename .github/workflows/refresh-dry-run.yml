@@ -10,6 +10,16 @@ on:
         options:
           - denver
         default: denver
+      capture_concurrency:
+        description: Maximum independent captures (shared providers remain serial)
+        required: true
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+        default: "2"
 
 permissions:
   contents: read
@@ -24,6 +34,7 @@ jobs:
     timeout-minutes: 180
     env:
       LOCALE: ${{ inputs.locale }}
+      CAPTURE_CONCURRENCY: ${{ inputs.capture_concurrency }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -43,10 +54,23 @@ jobs:
         run: |
           log_token=$(node --input-type=module -e 'import { randomUUID } from "node:crypto"; console.log(randomUUID());')
           printf '::stop-commands::%s\n' "$log_token"
+          printf '%s\n' "$CAPTURE_CONCURRENCY" > dry-run-results/capture-concurrency.txt
+          touch dry-run-results/refresh-memory.jsonl
+          (
+            while true; do
+              docker stats --no-stream --format "{\"sampled_at\":\"$(date -u +%FT%TZ)\",\"stats\":{{json .}}}" withadult-refresh-capture >> dry-run-results/refresh-memory.jsonl 2>> dry-run-results/refresh-memory-errors.log || true
+              sleep 5
+            done
+          ) &
+          monitor_pid=$!
+          stop_monitor() { kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" 2>/dev/null || true; }
+          trap stop_monitor EXIT
           set +e
-          docker run --rm --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
+          docker run --rm --name withadult-refresh-capture -e CAPTURE_CONCURRENCY --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
           pipeline_status=("${PIPESTATUS[@]}")
           set -e
+          stop_monitor
+          trap - EXIT
           printf '::%s::\n' "$log_token"
           printf '%s\n' "${pipeline_status[0]}" > dry-run-results/refresh-exit-code.txt
           if [ "${pipeline_status[1]}" -ne 0 ]; then
