@@ -23,6 +23,69 @@ const fixtureRoot = process.env.TEST_REPO || "/fixtures";
 const json = (path) => JSON.parse(readFileSync(path, "utf8"));
 const save = (path, value) => writeFileSync(path, JSON.stringify(value));
 
+test("proxy CLI sends credentials to the proxy and reports failure without leaking them", async () => {
+  const root = mkdtempSync(join(tmpdir(), "roxy-proxy-"));
+  save(join(root, "site.json"), {
+    id: "test-city",
+    sources: { roxy: { adapter: "afton" } },
+  });
+  save(join(root, "capture.json"), {
+    roxy: {
+      endpoint: "https://aftontickets.com/api/get-events?key=fixture&page=",
+    },
+  });
+  const requests = [];
+  const proxy = createServer();
+  proxy.on("connect", (req, socket) => {
+    requests.push({
+      target: req.url,
+      auth: req.headers["proxy-authorization"],
+    });
+    socket.end(
+      "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+    );
+  });
+  proxy.listen(0, "127.0.0.1");
+  await once(proxy, "listening");
+  let stderr = "";
+  try {
+    const result = await execute(
+      process.execPath,
+      [
+        new URL("../scripts/probe-roxy-user-agent.mjs", import.meta.url)
+          .pathname,
+        "--proxy",
+      ],
+      {
+        env: {
+          SITE_DIR: root,
+          HTTP_PROXY: `http://fixture-user:fixture-password@127.0.0.1:${proxy.address().port}`,
+        },
+        onStderr: (chunk) => {
+          stderr += chunk;
+        },
+      },
+    );
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].target, "aftontickets.com:443");
+    assert.equal(
+      requests[0].auth,
+      "Basic " +
+        Buffer.from("fixture-user:fixture-password").toString("base64"),
+    );
+    assert.deepEqual(JSON.parse(result), {
+      mode: "proxy",
+      status: 502,
+      content_type: "other",
+      challenge: null,
+      cf_mitigated: null,
+    });
+    assert.equal(stderr, "");
+  } finally {
+    proxy.close();
+  }
+});
+
 test("Roxy browser probe observes iframe feed success, challenge and absence", async () => {
   const { probeRoxyBrowser } =
     await import("../scripts/probe-roxy-user-agent.mjs");

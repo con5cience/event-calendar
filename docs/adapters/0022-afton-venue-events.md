@@ -133,6 +133,42 @@ Wix frame, Afton embed document, and scoped JSON feed. This verifies local
 observation only; GitHub access and rendered event-card correctness remain
 unverified. No source artifacts were changed.
 
+### Optional operator-supplied proxy probe
+
+The `roxy_proxy_probe` manual input (default false) invokes `--proxy` using the
+repository Actions secret `HTTP_PROXY`. It accepts a full HTTP(S) proxy URL and
+decodes any username/password for the installed Playwright request client's
+explicit proxy settings. No new dependency or normal-ingestion fallback is added.
+The secret is passed by environment variable name, never expanded in shell
+arguments, and exists only on the probe step. The script removes the environment
+variable before creating its request client and emits no raw exceptions.
+
+The client makes one request to the reviewed Afton feed with certificate
+verification enabled, no redirects, no retries, and a 30-second timeout. The
+context is disposed afterward. The two-minute workflow step limit remains.
+`roxy-proxy.json` contains only a numeric status, normalized content-type and
+challenge indicators, or a fixed request-failure flag. Even arbitrary response
+header values are not copied into the report. No cookies, response body, proxy
+address, credentials, or event artifacts are logged or retained by this probe.
+Success establishes access through that proxy at that time, not recurring-access
+permission or a complete validated source capture. Proxy failure is deliberately
+generic so transport errors cannot leak credentials. The real GitHub secret and
+provider connection require remote verification.
+
+The local CLI test uses a synthetic authenticated CONNECT proxy. Playwright
+reports a proxy-generated HTTP 502 as a response, not an exception; the test was
+corrected after observing that behavior. Therefore a reported HTTP status can
+originate at the proxy and must not automatically be attributed to Afton.
+The test checks the CONNECT destination and credentials, redacted JSON output,
+and empty stderr. It does not contact the real proxy or Afton.
+
+Verification passed 13 dry-run tests, all six rebuilt-container integration
+tests, 19 coordinator/feed tests, and the contract suite (91 frontend tests;
+unchanged Go checks reused their cached layer). Workflow lint, code lint,
+formatting and build/type checks passed. The HTTP test needed loopback permission
+after an initial sandbox `listen EPERM`. No real proxy connection, deployment,
+or source-artifact replacement occurred during local verification.
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

@@ -1,7 +1,65 @@
-// Opt-in diagnostics only. No publication, proxies, or challenge interaction.
+// Opt-in diagnostics only. Proxy mode is explicit; no publication or challenge interaction.
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { captureProfile } from "../tests/capture-profile.mjs";
+
+export async function probeRoxyProxy(endpoint, proxyURL, requestAPI) {
+  let context;
+  try {
+    const target = new URL(endpoint),
+      proxy = new URL(proxyURL);
+    if (
+      target.origin !== "https://aftontickets.com" ||
+      target.pathname !== "/api/get-events" ||
+      target.username ||
+      target.password ||
+      !["http:", "https:"].includes(proxy.protocol) ||
+      proxy.pathname !== "/" ||
+      proxy.search ||
+      proxy.hash
+    )
+      throw Error("Invalid probe configuration");
+    const api = requestAPI ?? (await import("@playwright/test")).request;
+    context = await api.newContext({
+      proxy: {
+        server: proxy.origin,
+        ...(proxy.username
+          ? { username: decodeURIComponent(proxy.username) }
+          : {}),
+        ...(proxy.password
+          ? { password: decodeURIComponent(proxy.password) }
+          : {}),
+      },
+      ignoreHTTPSErrors: false,
+    });
+    const response = await context.get(endpoint, {
+      timeout: 30000,
+      maxRedirects: 0,
+      maxRetries: 0,
+    });
+    const headers = response.headers();
+    const type = headers["content-type"]?.split(";", 1)[0].trim().toLowerCase();
+    return {
+      mode: "proxy",
+      status: response.status(),
+      content_type: ["application/json", "text/html"].includes(type)
+        ? type
+        : "other",
+      challenge:
+        headers["x-amzn-waf-action"] === "challenge" ? "challenge" : null,
+      cf_mitigated:
+        headers["cf-mitigated"] === "challenge" ? "challenge" : null,
+    };
+  } catch {
+    return { mode: "proxy", request_failed: true };
+  } finally {
+    try {
+      await context?.dispose();
+    } catch {
+      /* Never expose transport errors. */
+    }
+  }
+}
 
 export async function probeRoxyBrowser(page, profile, observationMs = 15000) {
   if (profile.page !== "https://www.theroxydenver.com/calendar")
@@ -138,28 +196,38 @@ if (
   try {
     const browserMode =
       process.argv.length === 3 && process.argv[2] === "--browser";
-    if (process.argv.length !== 2 && !browserMode)
+    const proxyMode =
+      process.argv.length === 3 && process.argv[2] === "--proxy";
+    if (process.argv.length !== 2 && !browserMode && !proxyMode)
       throw Error("Unexpected arguments");
     const profile = captureProfile("roxy");
-    const { chromium } = await import("@playwright/test");
-    const browser = await chromium.launch();
-    let userAgent, result;
-    try {
-      const page = await browser.newPage();
-      userAgent = await page.evaluate(() => navigator.userAgent);
-      if (browserMode)
-        result = {
-          user_agent: userAgent,
-          ...(await probeRoxyBrowser(page, profile)),
-        };
-    } finally {
-      await browser.close();
+    if (proxyMode) {
+      const proxyURL = process.env.HTTP_PROXY;
+      delete process.env.HTTP_PROXY;
+      console.log(
+        JSON.stringify(await probeRoxyProxy(profile.endpoint + "1", proxyURL)),
+      );
+    } else {
+      const { chromium } = await import("@playwright/test");
+      const browser = await chromium.launch();
+      let userAgent, result;
+      try {
+        const page = await browser.newPage();
+        userAgent = await page.evaluate(() => navigator.userAgent);
+        if (browserMode)
+          result = {
+            user_agent: userAgent,
+            ...(await probeRoxyBrowser(page, profile)),
+          };
+      } finally {
+        await browser.close();
+      }
+      console.log(
+        JSON.stringify(
+          result ?? (await probeRoxy(profile.endpoint + "1", userAgent)),
+        ),
+      );
     }
-    console.log(
-      JSON.stringify(
-        result ?? (await probeRoxy(profile.endpoint + "1", userAgent)),
-      ),
-    );
   } catch {
     console.error("Roxy probe setup or observation failed");
     process.exitCode = 1;

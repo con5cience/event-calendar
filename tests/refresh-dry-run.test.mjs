@@ -14,6 +14,86 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assessRefresh, checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
+test("proxy probe uses full URL credentials only in proxy configuration and preserves TLS", async () => {
+  const { probeRoxyProxy } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  let disposed = false;
+  const result = await probeRoxyProxy(
+    "https://aftontickets.com/api/get-events?page=1",
+    "http://fixture-user:p%40ss@proxy.example:823",
+    {
+      newContext: async (options) => {
+        assert.deepEqual(options.proxy, {
+          server: "http://proxy.example:823",
+          username: "fixture-user",
+          password: "p@ss",
+        });
+        assert.equal(options.ignoreHTTPSErrors, false);
+        return {
+          get: async (url, options) => {
+            assert.equal(options.maxRedirects, 0);
+            assert.equal(options.timeout, 30000);
+            return {
+              status: () => 202,
+              headers: () => ({
+                "content-type": "text/html; secret=p@ss",
+                "x-amzn-waf-action": "challenge",
+                "set-cookie": "fixture-user",
+              }),
+            };
+          },
+          dispose: async () => {
+            disposed = true;
+          },
+        };
+      },
+    },
+  );
+  assert.equal(result.status, 202);
+  assert.equal(result.content_type, "text/html");
+  assert.equal(result.challenge, "challenge");
+  assert(disposed);
+  assert(!JSON.stringify(result).includes("fixture-user"));
+  assert(!JSON.stringify(result).includes("p@ss"));
+});
+test("proxy failures never expose credentials or exception messages", async () => {
+  const { probeRoxyProxy } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  for (const proxy of [
+    undefined,
+    "not a url",
+    "socks5://proxy.example:123",
+    "http://u:p@proxy.example:823",
+  ]) {
+    const result = await probeRoxyProxy(
+      "https://aftontickets.com/api/get-events?page=1",
+      proxy,
+      {
+        newContext: async () => {
+          throw Error("private credentials");
+        },
+      },
+    );
+    assert.equal(result.request_failed, true);
+    assert(!JSON.stringify(result).includes("private"));
+  }
+});
+test("proxy secret is scoped to the opt-in probe step", () => {
+  const yaml = readFileSync(
+    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(yaml, /roxy_proxy_probe:[\s\S]*default: false/);
+  const step = yaml
+    .split("      - name: Probe Roxy proxy\n")[1]
+    ?.split("      - name:")[0];
+  assert(step);
+  assert.match(step, /HTTP_PROXY: \$\{\{ secrets.HTTP_PROXY \}\}/);
+  assert.match(step, /-e HTTP_PROXY /);
+  assert.match(step, /--proxy > dry-run-results\/roxy-proxy.json/);
+  assert.equal(yaml.split("secrets.HTTP_PROXY").length, 2);
+});
+
 test("browser probe observes scoped feed responses without exposing URLs or bodies", async () => {
   const { probeRoxyBrowser } =
     await import("../scripts/probe-roxy-user-agent.mjs");

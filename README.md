@@ -211,6 +211,18 @@ reuse sessions, or use a proxy. It has the same two-minute step limit and does
 not change ingestion. Enable only this probe when testing actual browser access;
 the user-agent comparison is independent and defaults to disabled.
 
+`roxy_proxy_probe` is another optional diagnostic (default false). It reads the
+repository Actions secret `HTTP_PROXY` as a full HTTP(S) proxy URL, including
+percent-encoded username/password if needed. Only that step receives the secret;
+normal refresh and other probes do not. It makes one request through Playwright's
+explicit proxy client with TLS verification enabled, no redirects or retries,
+and a 30-second timeout. It saves only normalized response headers/status or a
+fixed failure flag in `roxy-proxy.json`. No event body is published or saved.
+The proxy URL, credentials, and exception text are never logged. The client
+context is disposed after the request. A missing/invalid secret or transport
+failure produces `request_failed: true`; a completed diagnostic step is not proof
+that the feed worked. The GitHub secret cannot be read back for local validation.
+
 The workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from

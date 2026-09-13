@@ -28,6 +28,10 @@ on:
         description: Observe Roxy calendar and embedded feed in a fresh Chromium session
         type: boolean
         default: false
+      roxy_proxy_probe:
+        description: Request Roxy feed through the HTTP_PROXY secret (diagnostic only)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -69,6 +73,14 @@ jobs:
         timeout-minutes: 2
         run: |
           docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --browser > dry-run-results/roxy-browser.json
+      - name: Probe Roxy proxy
+        if: ${{ inputs.roxy_proxy_probe }}
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
+        run: |
+          docker run --rm --entrypoint node -e HTTP_PROXY -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --proxy > dry-run-results/roxy-proxy.json
       - name: Refresh sources
         id: refresh
         run: |
