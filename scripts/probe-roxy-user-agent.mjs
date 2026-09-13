@@ -1,7 +1,92 @@
-// Opt-in comparison only. Does not publish, use proxies, or execute challenges.
+// Opt-in diagnostics only. No publication, proxies, or challenge interaction.
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { captureProfile } from "../tests/capture-profile.mjs";
+
+export async function probeRoxyBrowser(page, profile, observationMs = 15000) {
+  if (profile.page !== "https://www.theroxydenver.com/calendar")
+    throw Error("Unreviewed browser page");
+  const endpoint = new URL(profile.endpoint);
+  if (
+    endpoint.origin !== "https://aftontickets.com" ||
+    endpoint.pathname !== "/api/get-events" ||
+    !endpoint.searchParams.get("key")
+  )
+    throw Error("Unreviewed browser feed");
+  const result = {
+    page_status: null,
+    navigation_failed: false,
+    feed_responses: [],
+    document_responses: [],
+    feed_request_failed: false,
+    observations_truncated: false,
+  };
+  const matches = (raw) => {
+    const url = new URL(raw);
+    return (
+      url.origin === endpoint.origin &&
+      url.pathname === endpoint.pathname &&
+      url.searchParams.get("key") === endpoint.searchParams.get("key")
+    );
+  };
+  const response = (r) => {
+    const feed = matches(r.url());
+    if (!feed && r.request().resourceType() !== "document") return;
+    const target = feed ? result.feed_responses : result.document_responses;
+    if (target.length >= 32) {
+      result.observations_truncated = true;
+      return;
+    }
+    const headers = r.headers();
+    target.push({
+      origin: new URL(r.url()).origin,
+      status: r.status(),
+      content_type: headers["content-type"]?.slice(0, 200) ?? null,
+      challenge: headers["x-amzn-waf-action"]?.slice(0, 200) ?? null,
+      cf_mitigated: headers["cf-mitigated"]?.slice(0, 200) ?? null,
+    });
+  };
+  const failed = (request) => {
+    if (matches(request.url())) result.feed_request_failed = true;
+  };
+  page.on("response", response);
+  page.on("requestfailed", failed);
+  try {
+    try {
+      result.page_status =
+        (
+          await page.goto(profile.page, {
+            waitUntil: "domcontentloaded",
+            timeout: 30000,
+          })
+        )?.status() ?? null;
+    } catch {
+      result.navigation_failed = true;
+    }
+    await page.waitForTimeout(observationMs);
+    result.frame_origins = [
+      ...new Set(
+        page.frames().map((frame) => {
+          try {
+            return new URL(frame.url()).origin;
+          } catch {
+            return "unknown";
+          }
+        }),
+      ),
+    ].slice(0, 32);
+  } finally {
+    page.off("response", response);
+    page.off("requestfailed", failed);
+  }
+  result.json_feed_response = result.feed_responses.some(
+    (r) =>
+      r.status >= 200 &&
+      r.status < 300 &&
+      r.content_type?.includes("application/json"),
+  );
+  return result;
+}
 
 export async function probeRoxy(endpoint, userAgent, fetcher = fetch) {
   const url = new URL(endpoint);
@@ -51,22 +136,32 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   try {
-    if (process.argv.length !== 2) throw Error("Unexpected arguments");
+    const browserMode =
+      process.argv.length === 3 && process.argv[2] === "--browser";
+    if (process.argv.length !== 2 && !browserMode)
+      throw Error("Unexpected arguments");
     const profile = captureProfile("roxy");
     const { chromium } = await import("@playwright/test");
     const browser = await chromium.launch();
-    let userAgent;
+    let userAgent, result;
     try {
       const page = await browser.newPage();
       userAgent = await page.evaluate(() => navigator.userAgent);
+      if (browserMode)
+        result = {
+          user_agent: userAgent,
+          ...(await probeRoxyBrowser(page, profile)),
+        };
     } finally {
       await browser.close();
     }
     console.log(
-      JSON.stringify(await probeRoxy(profile.endpoint + "1", userAgent)),
+      JSON.stringify(
+        result ?? (await probeRoxy(profile.endpoint + "1", userAgent)),
+      ),
     );
   } catch {
-    console.error("Roxy user-agent probe setup failed");
+    console.error("Roxy probe setup or observation failed");
     process.exitCode = 1;
   }
 }

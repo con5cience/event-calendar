@@ -200,6 +200,17 @@ and exception text are omitted. The probe has a two-minute step limit; failure
 does not prevent the normal refresh. A successful probe step only means the
 comparison completed, not that Afton returned event JSON.
 
+The separate opt-in `roxy_browser_probe` opens Roxy's configured public calendar
+in a fresh Chromium session. It allows up to 30 seconds for navigation, then
+observes for 15 seconds without clicking or scrolling. `roxy-browser.json`
+records page status, scoped feed responses/failures, document responses, and
+frame origins. Bodies, cookies, and query strings are omitted. JSON response
+status is transport evidence only, not proof of valid events or rendered cards.
+Normal page scripts can run, but the probe does not interact with challenges,
+reuse sessions, or use a proxy. It has the same two-minute step limit and does
+not change ingestion. Enable only this probe when testing actual browser access;
+the user-agent comparison is independent and defaults to disabled.
+
 The workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from

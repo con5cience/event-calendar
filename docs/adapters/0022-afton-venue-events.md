@@ -100,6 +100,39 @@ The actual probe CLI in that Linux container returned HTTP 200 JSON for both
 requests and emitted the installed Linux Chromium user agent. The GitHub response
 still requires a manual run with the input enabled. No catalog data was replaced.
 
+### Optional browser observation
+
+The independent `roxy_browser_probe` input (default false) invokes the same
+diagnostic script with `--browser`. It opens the reviewed Roxy calendar from the
+locale capture profile in a fresh Chromium session, waits up to 30 seconds for
+DOMContentLoaded, then observes responses for 15 seconds. No clicks, scrolling,
+proxy, custom user agent, session reuse, or challenge interaction are added.
+Normal website scripts execute as part of navigation.
+
+Only feed requests matching the configured Afton origin, path, and venue-widget
+key are classified as Roxy feed responses. The report records status, bounded
+content type/challenge headers, navigation/request failures, and document/frame
+origins. Response arrays are capped at 32 with a truncation flag. Query strings,
+paths, bodies, cookies, and raw exception text are not emitted. Event JSON is not
+parsed; `json_feed_response` does not establish event validity or visible cards.
+No observed request is an inconclusive result, not proof that the feed is blocked.
+
+The workflow saves `roxy-browser.json` in the existing diagnostic artifact and
+allows the normal refresh to proceed even if the probe fails. The two-minute
+workflow limit bounds setup and observation. This is diagnosis, not an ingestion
+fallback. Tests cover JSON, challenge, absent feed, and unrelated widget keys;
+the Linux container suite also exercises a real Chromium iframe with intercepted
+synthetic responses.
+
+Local verification passed all ten dry-run tests, five container integration
+tests, coordinator/profile/Afton tests, workflow lint, code lint, formatting,
+and build/type checks. The contract suite passed with 91 frontend tests. The
+initial HTTP test hit sandbox `listen EPERM` and passed with loopback permission.
+The actual Linux-container browser visit returned HTTP 200 for the Roxy page,
+Wix frame, Afton embed document, and scoped JSON feed. This verifies local
+observation only; GitHub access and rendered event-card correctness remain
+unverified. No source artifacts were changed.
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

@@ -14,6 +14,70 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assessRefresh, checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
+test("browser probe observes scoped feed responses without exposing URLs or bodies", async () => {
+  const { probeRoxyBrowser } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  for (const status of [200, 202, null]) {
+    const listeners = new Map();
+    const response = (url, code, type) => ({
+      url: () => url,
+      status: () => code,
+      headers: () => ({
+        "content-type": type,
+        "x-amzn-waf-action": code === 202 ? "challenge" : undefined,
+      }),
+      request: () => ({ resourceType: () => "fetch" }),
+    });
+    const page = {
+      on: (name, fn) => listeners.set(name, fn),
+      off: (name) => listeners.delete(name),
+      goto: async () =>
+        response("https://www.theroxydenver.com/calendar", 200, "text/html"),
+      waitForTimeout: async () => {
+        const emit = listeners.get("response");
+        emit(
+          response(
+            "https://aftontickets.com/api/get-events?key=other",
+            200,
+            "application/json",
+          ),
+        );
+        if (status !== null)
+          emit(
+            response(
+              "https://aftontickets.com/api/get-events?key=private-key&page=1",
+              status,
+              status === 200 ? "application/json" : "text/html",
+            ),
+          );
+      },
+      frames: () => [{ url: () => "https://embed.example/frame?secret=value" }],
+    };
+    const result = await probeRoxyBrowser(page, {
+      page: "https://www.theroxydenver.com/calendar",
+      endpoint: "https://aftontickets.com/api/get-events?key=private-key&page=",
+    });
+    assert.equal(result.feed_responses.length, status === null ? 0 : 1);
+    if (status !== null) assert.equal(result.feed_responses[0].status, status);
+    assert.equal(result.json_feed_response, status === 200);
+    assert(!JSON.stringify(result).includes("private-key"));
+    assert(!JSON.stringify(result).includes("secret"));
+    assert.equal(listeners.size, 0);
+  }
+});
+test("browser probe workflow is opt-in and bounded", () => {
+  const yaml = readFileSync(
+    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(yaml, /roxy_browser_probe:[\s\S]*default: false/);
+  assert.match(yaml, /if:.*inputs.roxy_browser_probe/);
+  assert.match(
+    yaml,
+    /probe-roxy-user-agent.mjs --browser > dry-run-results\/roxy-browser.json/,
+  );
+});
+
 test("Roxy probe compares only user agent and excludes sensitive response data", async () => {
   const { probeRoxy } = await import("../scripts/probe-roxy-user-agent.mjs");
   const calls = [];

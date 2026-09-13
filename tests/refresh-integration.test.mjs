@@ -23,6 +23,67 @@ const fixtureRoot = process.env.TEST_REPO || "/fixtures";
 const json = (path) => JSON.parse(readFileSync(path, "utf8"));
 const save = (path, value) => writeFileSync(path, JSON.stringify(value));
 
+test("Roxy browser probe observes iframe feed success, challenge and absence", async () => {
+  const { probeRoxyBrowser } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  const browser = await chromium.launch();
+  const profile = {
+    page: "https://www.theroxydenver.com/calendar",
+    endpoint: "https://aftontickets.com/api/get-events?key=fixture&page=",
+  };
+  try {
+    for (const status of [200, 202, null]) {
+      const context = await browser.newContext();
+      try {
+        await context.route("**/*", async (route) => {
+          const url = route.request().url();
+          if (url === profile.page)
+            return route.fulfill({
+              contentType: "text/html",
+              body: '<iframe src="https://embed.example/frame"></iframe>',
+            });
+          if (url === "https://embed.example/frame")
+            return route.fulfill({
+              contentType: "text/html",
+              body:
+                status === null
+                  ? "No feed"
+                  : `<script>fetch(${JSON.stringify(profile.endpoint + "1")})</script>`,
+            });
+          if (url === profile.endpoint + "1")
+            return route.fulfill({
+              status,
+              headers: {
+                "content-type":
+                  status === 200 ? "application/json" : "text/html",
+                "access-control-allow-origin": "*",
+                ...(status === 202 ? { "x-amzn-waf-action": "challenge" } : {}),
+              },
+              body: status === 200 ? "{}" : "",
+            });
+          return route.abort();
+        });
+        const result = await probeRoxyBrowser(
+          await context.newPage(),
+          profile,
+          500,
+        );
+        assert.equal(result.page_status, 200);
+        assert(result.frame_origins.includes("https://embed.example"));
+        assert.equal(result.json_feed_response, status === 200);
+        assert.equal(result.feed_responses.length, status === null ? 0 : 1);
+        if (status === 202)
+          assert.equal(result.feed_responses[0].challenge, "challenge");
+        assert(!JSON.stringify(result).includes("key="));
+      } finally {
+        await context.close();
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
 test("container report export is readable by a runner without exposing raw captures", () => {
   assert.equal(
     process.getuid(),

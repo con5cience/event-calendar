@@ -74,6 +74,7 @@
     "home": "https://www.theblackbuzzard.com/"
   },
   "roxy": {
+    "page": "https://www.theroxydenver.com/calendar",
     "endpoint": "https://aftontickets.com/api/get-events?key=732e49e3d992ab7ff998f13c3a2d3f08&per_page=12&page="
   },
   "black-box": {

@@ -24,6 +24,10 @@ on:
         description: Compare anonymous Roxy requests with default and Chromium user agents
         type: boolean
         default: false
+      roxy_browser_probe:
+        description: Observe Roxy calendar and embedded feed in a fresh Chromium session
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -59,6 +63,12 @@ jobs:
         timeout-minutes: 2
         run: |
           docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs > dry-run-results/roxy-user-agent.json
+      - name: Probe Roxy browser
+        if: ${{ inputs.roxy_browser_probe }}
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --browser > dry-run-results/roxy-browser.json
       - name: Refresh sources
         id: refresh
         run: |
