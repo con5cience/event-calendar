@@ -24,7 +24,9 @@ export function validatePages(pages, check) {
       (i === pages.length - 1 ? rows.length !== 0 : rows.length === 0) ||
       (i < pages.length - 2 && rows.length !== 36)
     )
-      throw new Error("Incomplete pages");
+      throw new Error(
+        `Incomplete pages: page_index=${i} page_sizes=${JSON.stringify(pages.map((page) => (Array.isArray(page) ? page.length : null)))}`,
+      );
     for (const e of rows) {
       if (!e || typeof e.tm_id !== "string" || !e.tm_id || seen.has(e.tm_id))
         throw new Error("Invalid or duplicate identity");
@@ -40,7 +42,7 @@ export function validatePages(pages, check) {
 export async function capture(source = "marquis") {
   const { endpoint, page: pageURL } = venueProfile(source);
   const browser = await chromium.launch();
-  async function enumerate() {
+  async function enumerate(pass) {
     const context = await browser.newContext();
     const page = await context.newPage();
     const pages = new Map();
@@ -51,6 +53,16 @@ export async function capture(source = "marquis") {
       if (url.origin + url.pathname !== endpoint) return;
       pending.push(
         (async () => {
+          console.error(
+            JSON.stringify({
+              source,
+              pass,
+              stage: "page response",
+              offset: url.searchParams.get("offset")?.slice(0, 64),
+              limit: url.searchParams.get("limit")?.slice(0, 64),
+              status: response.status(),
+            }),
+          );
           if (!response.ok())
             throw new Error(`HTTP ${response.status()}; capture aborted`);
           const offset = Number(url.searchParams.get("offset"));
@@ -68,6 +80,15 @@ export async function capture(source = "marquis") {
             throw new Error("Oversized response");
           const rows = JSON.parse(text);
           if (!Array.isArray(rows)) throw new Error("Expected array");
+          console.error(
+            JSON.stringify({
+              source,
+              pass,
+              stage: "page decoded",
+              offset,
+              size: rows.length,
+            }),
+          );
           if (pages.has(offset) && !isDeepStrictEqual(pages.get(offset), rows))
             throw new Error("Page changed during enumeration");
           pages.set(offset, rows);
@@ -97,13 +118,25 @@ export async function capture(source = "marquis") {
       const result = ordered.map((entry) => entry[1]);
       validatePages(result, result);
       return result;
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          source,
+          pass,
+          stage: "enumeration failed",
+          pages: [...pages]
+            .sort((a, b) => a[0] - b[0])
+            .map(([offset, rows]) => ({ offset, size: rows.length })),
+        }),
+      );
+      throw error;
     } finally {
       await context.close();
     }
   }
   try {
-    const pages = await enumerate();
-    const check = await enumerate();
+    const pages = await enumerate(1);
+    const check = await enumerate(2);
     return {
       snapshot: validatePages(pages, check),
       captured_at: new Date().toISOString(),

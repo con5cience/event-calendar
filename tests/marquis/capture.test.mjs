@@ -58,3 +58,10 @@ test("empty requires matching successful enumerations", () => {
   assert.deepEqual(validatePages([[]], [[]]), { pages: [[]], check: [[]] });
   assert.throws(() => validatePages([], []));
 });
+test("incomplete pagination reports the observed page sizes without relaxing validation", () => {
+  const pages = [full(), [row("last")]];
+  assert.throws(
+    () => validatePages(pages, structuredClone(pages)),
+    /Incomplete pages.*page_index=1.*page_sizes=\[36,1\]/,
+  );
+});

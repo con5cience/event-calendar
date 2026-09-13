@@ -30,6 +30,22 @@ requests injected into the browser are used. Stop on an event-response failure.
 Browser capture is a separate operator step; Chromium is not added to the app or
 Go ingestion image. The app still consumes JSON files and makes no venue requests.
 
+## CI pagination diagnostics — September 13, 2026
+
+Run `34784640227` failed Marquis capture with `Incomplete pages`. A subsequent
+local browser enumeration reached offsets 0, 36, 72, and 108 with page sizes
+36, 36, 1, and 0. The local result does not explain the CI failure.
+
+Each response now logs source, enumeration pass, requested offset/limit, and HTTP
+status. Decoded responses log offset and row count. Failed enumeration logs the
+observed offset/size pairs; incomplete-page errors include the page index and
+page-size sequence. Diagnostics omit event bodies and unrelated request headers.
+The same diagnostics cover Summit and Fillmore through the shared adapter.
+
+No pagination, terminal-empty, timeout, identity, or paired-capture check is
+relaxed. No retries or alternate access paths were added. CI must supply the
+missing evidence before a transport or timing fix is selected.
+
 ## Fillmore profile and admission review — September 11, 2026
 
 Use the official `https://www.fillmoredenver.com/shows`, not the originally
@@ -56,13 +72,13 @@ separately labeled doors and show times. Existing timestamp validation applies.
 Do not reinterpret midnight pass timestamps or combine several dated doors/show
 labels into one event time. Reject those records; separate daily listings remain.
 
-| Evidence source | Raw observation or result | Supported finding | Material limit |
-| --- | --- | --- | --- |
-| Two complete public browser captures | Identical pages of 36, 13, and 0 | 49 currently announced listings enumerated | Website-internal API, no service or reuse guarantee |
-| Six raw and six staging API records | Correct venue IDs, Ticketmaster URLs, summer/winter offsets and explicit restrictions | Existing profile-based normalization fits | No prices are published |
-| Staged replay | 46 valid records through April 3, 2027: 26 All Ages, 16 at 16+, two at 18+, two at 21+ | Age-14 clearance applies to the 26 All Ages events | Three multi-day passes rejected |
-| Shpongle pass `1E006477A5E8755A` | Midnight listing, 7 p.m. doors note | Doors/listing mismatch rejects | Daily tickets remain |
-| Decibel passes `1E006490A2EB96C9`, `1E006490A26A95ED` | Several dates with different doors/show times; three-day pass also includes Ratio Beerworks | Conflicting labeled times reject both | No off-site pre-fest is assigned to Fillmore |
+| Evidence source                                       | Raw observation or result                                                                   | Supported finding                                  | Material limit                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------- |
+| Two complete public browser captures                  | Identical pages of 36, 13, and 0                                                            | 49 currently announced listings enumerated         | Website-internal API, no service or reuse guarantee |
+| Six raw and six staging API records                   | Correct venue IDs, Ticketmaster URLs, summer/winter offsets and explicit restrictions       | Existing profile-based normalization fits          | No prices are published                             |
+| Staged replay                                         | 46 valid records through April 3, 2027: 26 All Ages, 16 at 16+, two at 18+, two at 21+      | Age-14 clearance applies to the 26 All Ages events | Three multi-day passes rejected                     |
+| Shpongle pass `1E006477A5E8755A`                      | Midnight listing, 7 p.m. doors note                                                         | Doors/listing mismatch rejects                     | Daily tickets remain                                |
+| Decibel passes `1E006490A2EB96C9`, `1E006490A26A95ED` | Several dates with different doors/show times; three-day pass also includes Ratio Beerworks | Conflicting labeled times reject both              | No off-site pre-fest is assigned to Fillmore        |
 
 Tests cover missing/unknown policies, ages 0, 2, 3, 14, 15, 16, and 17, configured
 overrides, off-site IDs, midnight passes, conflicting clocks, reconciliation,
@@ -89,12 +105,12 @@ receives reviewed With adult ranges 0–2 and 3–17, with a ticket required in 
 latter range. Explicit restricted or unclear records receive no inferred waiver.
 Configured overrides still win.
 
-| Evidence source | Raw observation or result | Supported finding | Material limit |
-| --- | --- | --- | --- |
-| Two fresh public browser enumerations | Identical pages of 36, 18, and 0 | Current listing enumerated to its empty terminal page | Website-internal interface, not a supported API guarantee |
-| Six sampled records and full venue fields | Local/UTC clocks, labeled doors/show times; 52 Summit and two Moonroom records | Shared field semantics and reviewed room attribution fit | No unrelated/off-site venue inference |
-| Staged replay | 53 valid events through May 2, 2027; one rejected | 48 All Ages, four 18+, one 21+; no prices | Coverage is current announcements, not future availability |
-| Rejected pass `1E006504E6F142AB` | October 30 start is 00:00:01, but notes say doors 7PM | Existing doors/listing consistency check rejects the two-day pass | No special pass-time interpretation was added; separate daily listings remain |
+| Evidence source                           | Raw observation or result                                                      | Supported finding                                                 | Material limit                                                                |
+| ----------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Two fresh public browser enumerations     | Identical pages of 36, 18, and 0                                               | Current listing enumerated to its empty terminal page             | Website-internal interface, not a supported API guarantee                     |
+| Six sampled records and full venue fields | Local/UTC clocks, labeled doors/show times; 52 Summit and two Moonroom records | Shared field semantics and reviewed room attribution fit          | No unrelated/off-site venue inference                                         |
+| Staged replay                             | 53 valid events through May 2, 2027; one rejected                              | 48 All Ages, four 18+, one 21+; no prices                         | Coverage is current announcements, not future availability                    |
+| Rejected pass `1E006504E6F142AB`          | October 30 start is 00:00:01, but notes say doors 7PM                          | Existing doors/listing consistency check rejects the two-day pass | No special pass-time interpretation was added; separate daily listings remain |
 
 Run the shared capture checks with `npm run test:marquis`, full Go/handoff checks
 with `npm run test:contracts`, and the shared browser spec

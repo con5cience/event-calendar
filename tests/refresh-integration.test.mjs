@@ -296,3 +296,100 @@ test("HMT detached HTML extraction and existing Go parser agree on fixture snaps
     await browser.close();
   }
 });
+
+test("Meow Wolf mismatch reaches Go rejection and retains prior event while another updates", async () => {
+  const root = mkdtempSync(join(tmpdir(), "meowwolf-mismatch-"));
+  const site = join(root, "site");
+  mkdirSync(site);
+  save(join(site, "site.json"), {
+    id: "test-city",
+    sources: { "meow-wolf-denver": { adapter: "embedded-nextjs" } },
+  });
+  save(join(site, "capture.json"), {
+    "meow-wolf-denver": {
+      origin: "https://tickets.meowwolf.com",
+      city: "denver",
+      seller_id: "017a7f54-e443-a261-3c55-46ef4d921efb",
+    },
+  });
+  const config = join(root, "source.yaml");
+  const yaml = readFileSync(
+    join(fixtureRoot, "internal/meowwolf/testdata/meow-wolf-denver.yaml"),
+    "utf8",
+  );
+  writeFileSync(config, yaml);
+  const snapshot = json(
+    join(fixtureRoot, "internal/meowwolf/testdata/meow-wolf-denver.json"),
+  );
+  const second = structuredClone(snapshot.events[0]);
+  second.id =
+    "119f1aa0-d978-0ee7-4153-a9518ceb4d9a__ce822f61-3e04-0559-7a43-ca5b19313b79";
+  second.detail.id = second.id.split("__")[0];
+  second.detail.timeslots[0].id = second.id.split("__")[1];
+  second.url = "second-fixture";
+  second.title = second.detail.title = "Second fixture";
+  snapshot.events.push(second);
+  snapshot.total = 2;
+  snapshot.check = structuredClone(snapshot.events);
+  const input = join(root, "snapshot.json"),
+    store = join(root, "store");
+  mkdirSync(store);
+  const replay = async () => {
+    save(input, snapshot);
+    return JSON.parse(
+      await execute("ingest", [
+        "replay-meowwolf",
+        "--store",
+        store,
+        "--config",
+        config,
+        "--snapshot",
+        input,
+        "--now",
+        "2026-09-11T18:00:00Z",
+      ]),
+    );
+  };
+  assert.equal((await replay()).published, true);
+  const artifact = () => {
+    const catalog = json(join(store, "catalog.json"));
+    return json(join(store, catalog.sources[0].artifact));
+  };
+  const prior = artifact().events.find(
+    (event) => event.upstream_id === snapshot.events[0].id,
+  );
+  writeFileSync(config, yaml.replace("state: new", "state: established"));
+  const mismatched = structuredClone(snapshot.events[0].detail);
+  mismatched.id = "219f1aa0-d978-0ee7-4153-a9518ceb4d9a";
+  mismatched.meta[0].value = "21+";
+  mismatched.timeslots[0].startTime = "2027-01-17T23:00:00Z";
+  const moduleURL = new URL("./meowwolf/capture.mjs", import.meta.url).href;
+  snapshot.events[0].detail = JSON.parse(
+    await execute(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        `import {detail} from ${JSON.stringify(moduleURL)}; const e=JSON.parse(process.argv[1]); console.log(JSON.stringify(detail({isEvents:true,isDetails:true,seller:{id:e.sellerId},events:{events:[e]}})));`,
+        JSON.stringify(mismatched),
+      ],
+      { env: { SITE_DIR: site, CAPTURE_SOURCE: "meow-wolf-denver" } },
+    ),
+  );
+  snapshot.events[1].title = snapshot.events[1].detail.title =
+    "Updated second fixture";
+  snapshot.check = structuredClone(snapshot.events);
+  const result = await replay();
+  assert.equal(result.published, true);
+  assert.equal(result.durable, true);
+  assert.equal(result.rejected.length, 1);
+  assert.match(result.rejected[0].reason, /detail identity mismatch/);
+  const after = artifact();
+  const retained = after.events.find(
+    (event) => event.upstream_id === prior.upstream_id,
+  );
+  assert.deepEqual(retained, prior);
+  assert(
+    after.events.some((event) => event.title === "Updated second fixture"),
+  );
+});

@@ -36,6 +36,19 @@ conservative 500-record guard, 1 MiB per response, 30-second request timeout,
 redirect rejection and a 4 MiB snapshot bound. Unverified zero-event responses
 fail safely rather than removing all prior events.
 
+### CI HTTP diagnostics — September 13, 2026
+
+The first two GitHub dry runs reported `Afton HTTP or type failure`, but did not
+record status or content type. A later local capture completed both listing and
+detail passes. This does not establish why the GitHub requests failed.
+
+Listing responses now log pass, page number, HTTP status, and content type. A
+rejected HTTP/content-type response includes those fields in its error as well.
+Content type is bounded and JSON-escaped. Response bodies, cookies, headers other
+than content type, and the widget key are not logged. Tests cover HTTP 403 and a
+200 HTML response during the second pass. Existing failure and pagination rules
+remain unchanged; no retry, spoofing, or browser fallback is introduced.
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

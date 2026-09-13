@@ -74,6 +74,29 @@ test("anonymous canonical GETs; external pages are not fetched; prices are omitt
 test("HTTP failure is fatal", async () => {
   await assert.rejects(
     capture(async () => new Response("denied", { status: 403 })),
+    /Afton HTTP or type failure.*pass=1.*page=1.*status=403.*content_type="text\/plain;charset=UTF-8"/,
+  );
+});
+test("wrong content type reports its page and pass without logging the body or widget key", async () => {
+  let calls = 0;
+  await assert.rejects(
+    capture(async () => {
+      calls++;
+      if (calls === 3)
+        return new Response("private diagnostic body", {
+          headers: { "content-type": "text/html" },
+        });
+      return Response.json(page(calls));
+    }),
+    (error) => {
+      assert.match(
+        error.message,
+        /pass=2.*page=1.*status=200.*content_type="text\/html"/,
+      );
+      assert(!error.message.includes("private diagnostic body"));
+      assert(!error.message.includes("key="));
+      return true;
+    },
   );
 });
 test("native details are bounded and only exact Afton event URLs are fetched", async () => {

@@ -72,14 +72,17 @@ export async function capture(fetcher = fetch, now = new Date()) {
   }).format(now);
   const end = new Date(from + "T12:00:00Z");
   end.setUTCFullYear(end.getUTCFullYear() + 1);
-  const read = async () => {
+  const read = async (pass) => {
     const pages = await enumerate(async (n) => {
       const r = await fetcher(endpoint + n, {
         redirect: "error",
         signal: AbortSignal.timeout(30000),
       });
-      if (!r.ok || !r.headers.get("content-type")?.includes("application/json"))
-        throw Error("Afton HTTP or type failure");
+      const contentType = r.headers.get("content-type");
+      const diagnostic = `pass=${pass} page=${n} status=${r.status} content_type=${JSON.stringify(contentType?.slice(0, 200) ?? null)}`;
+      console.error(`roxy listing: ${diagnostic}`);
+      if (!r.ok || !contentType?.includes("application/json"))
+        throw Error(`Afton HTTP or type failure: ${diagnostic}`);
       const reader = r.body.getReader(),
         chunks = [];
       let size = 0;
@@ -107,8 +110,8 @@ export async function capture(fetcher = fetch, now = new Date()) {
     }
     return { pages, details };
   };
-  const first = await read(),
-    second = await read();
+  const first = await read(1),
+    second = await read(2);
   const snapshot = {
     from,
     through: end.toISOString().slice(0, 10),

@@ -69,7 +69,7 @@ export function listing(props, hrefs) {
     throw Error("Rendered listing mismatch");
   return rows;
 }
-export function detail(props, row) {
+export function detail(props) {
   if (
     props?.__N_REDIRECT === `/events/${city}/` ||
     props?.isExhibitions === true
@@ -84,11 +84,14 @@ export function detail(props, row) {
     throw Error("Unrecognized detail");
   const e = props.events.events[0];
   if (
-    e.id !== row.id.split("__")[0] ||
+    typeof e?.id !== "string" ||
+    !e.id ||
     !Array.isArray(e.meta) ||
     !Array.isArray(e.timeslots)
   )
-    throw Error("Detail identity mismatch");
+    throw Error("Unrecognized detail fields");
+  // Preserve the returned identity. Go rejects a mismatched occurrence per
+  // listing record, retaining its last-valid version without losing other shows.
   return {
     id: e.id,
     title: e.title,
@@ -223,11 +226,15 @@ async function read(browser) {
       const path = new URL(page.url()).pathname;
       if ([`/events/${city}/`, `/${city}/events/`, `/${city}/`].includes(path))
         row.detail = { error: "unrelated redirect" };
-      else row.detail = detail(documentProps(await response.text()), row);
+      else row.detail = detail(documentProps(await response.text()));
       console.log(
         JSON.stringify({
           event: row.url,
-          detail: row.detail.error ?? "captured",
+          detail:
+            row.detail.error ??
+            (row.detail.id === row.id.split("__")[0]
+              ? "captured"
+              : "identity mismatch; deferred to record validator"),
         }),
       );
     }

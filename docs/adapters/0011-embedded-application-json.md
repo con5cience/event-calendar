@@ -56,6 +56,43 @@ successful empty results. Recognized redirects to the listing or general
 exhibition can reject an individual record. No rejected record is silently
 reclassified as an event at the exhibit.
 
+### Detail identity mismatches — September 13, 2026
+
+The public listing for LuLu's Giggle Factory included a September 13 occurrence,
+but its linked detail page returned a different event ID with a January 17
+timeslot. Both published URL forms returned that later occurrence. Listing and
+rendered-link order agreed, so positional link ordering did not explain this
+observed mismatch.
+
+Capture now preserves the actual detail ID and reviewed fields instead of
+aborting the whole source when the IDs differ. The existing Go normalizer rejects
+that observation with `detail identity mismatch`. The reconciler retains its
+last-valid version when one exists; other valid events can update. The wrong
+occurrence's date, admission policy, and other metadata are not applied to the
+listed event. Nothing is accepted based on matching title or slug alone.
+
+Listing identity, seller scope, required detail structure, paired-capture
+agreement, and completeness checks remain strict. This is not a general fallback
+for HTTP errors or schema changes. No Go or public artifact schema change is
+needed. A container regression passes mismatched detail through JavaScript, Go
+replay, and persisted artifacts; it checks exact retention and a separate valid
+event update.
+
+Verification of this change used an isolated copy of the committed Denver catalog.
+Neither the repository catalog nor the local application catalog was replaced.
+
+| Evidence source                                    | Raw observation or test result                                                          | Supported finding                                                                     | Material limit                               |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Live paired capture and staged Go replay           | 50 captured records; one identity rejection; durable publication succeeded              | A mismatched detail no longer aborts the source                                       | Local run, not GitHub Actions                |
+| Persisted event comparison                         | September 13 LuLu's record equals its previous artifact record exactly                  | Wrong January date and admission metadata were not applied                            | Tests this observed mismatch                 |
+| Refresh-test container                             | Four integration tests passed, including mismatch retention and a separate event update | JavaScript-to-Go publication preserves record-level rejection                         | Synthetic regression plus staged live replay |
+| Existing browser test against staged app container | Desktop and phone passed                                                                | Admission, cancellation, event links, filtering, and calendar downloads remain usable | No production deployment                     |
+
+Capture tests, refresh tests, dry-run tests, contract tests, lint, formatting,
+type checking, and the frontend build also passed. Marquis and Roxy completed
+paired local captures with their added diagnostics. Their CI failures still need
+a separate GitHub run; local success does not establish their CI root causes.
+
 `internal/meowwolf` supplies `replay-meowwolf` through the established publication
 workflow. Only reviewed room IDs and matching room names map to Meow Wolf Denver:
 The Perplexiplex (`14f4d967-6acc-4d09-2e5b-f2707768c20d`), Sips (with a Z)

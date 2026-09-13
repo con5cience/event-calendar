@@ -153,7 +153,7 @@ test("detail selects no price/capacity data and recognizes unrelated redirects",
     error: "unrelated redirect",
   });
   assert.throws(() => detail({}, row));
-  assert.throws(() =>
+  assert.equal(
     detail(
       {
         isEvents: true,
@@ -162,8 +162,21 @@ test("detail selects no price/capacity data and recognizes unrelated redirects",
         events: { events: [{ ...event, id: "other" }] },
       },
       row,
-    ),
+    ).id,
+    "other",
   );
+  for (const changed of [{ id: "" }, { meta: null }, { timeslots: null }])
+    assert.throws(() =>
+      detail(
+        {
+          isEvents: true,
+          isDetails: true,
+          seller,
+          events: { events: [{ ...event, ...changed }] },
+        },
+        row,
+      ),
+    );
 });
 test("paired captures must match", () => {
   assert.equal(validateSnapshot([row], [structuredClone(row)]).total, 1);
