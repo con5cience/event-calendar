@@ -1,0 +1,10 @@
+schema_version: 1
+source: { id: lost-lake, adapter: rhp-calendar }
+state: established
+venue:
+  key: lost-lake
+  name: Lost Lake
+  timezone: America/Denver
+  website: https://lost-lake.com
+  address: 3602 E Colfax, Denver, CO 80206
+  phone: "303.296.1003"

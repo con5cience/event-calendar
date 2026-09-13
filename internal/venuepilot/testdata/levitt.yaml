@@ -1,4 +1,6 @@
 schema_version: 1
+adapter_options:
+  event_base: "https://www.levittdenver.org/summer-concert-series#/events/"
 source: {id: levitt, adapter: venuepilot}
 state: new
 venue:

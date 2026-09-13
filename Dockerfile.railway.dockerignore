@@ -18,9 +18,9 @@
 !tests/contracts/
 !tests/contracts/**
 !.artifacts/
-!.artifacts/catalog.json
-!.artifacts/sources/
-!.artifacts/sources/**
+!.artifacts/**
+!locales/
+!locales/**
 **/.env
 **/.env.*
 **/node_modules

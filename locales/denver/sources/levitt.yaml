@@ -1,0 +1,24 @@
+schema_version: 1
+adapter_options:
+  event_base: "https://www.levittdenver.org/summer-concert-series#/events/"
+source: { id: levitt, adapter: venuepilot }
+state: established
+venue:
+  key: levitt
+  name: Levitt Pavilion Denver
+  timezone: America/Denver
+  website: https://www.levittdenver.org
+  admission_policy:
+    text: Check event admission requirements; guests 16 and younger must have an adult
+    url: https://www.levittdenver.org/faq
+admission_rules:
+  All ages:
+    url: https://www.levittdenver.org/faq
+    reviewed_on: "2026-09-11"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 16,
+          condition: Adult required; event ticket requirements apply,
+        }
+      - { min_age: 17, max_age: 17, condition: Event ticket requirements apply }

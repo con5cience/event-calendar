@@ -1,5 +1,11 @@
 # ADR 0020: Evaluate VenuePilot event widgets as a separate adapter family
 
+Operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
+`adapter_options.event_base` supplies the event-link prefix, including any hash
+route and trailing separator. Venue name and timezone are configured. Capture
+requires `SITE_DIR`; `CAPTURE_SOURCE` selects a different configured source.
+Its GraphQL endpoint, account ID and timezone come from `capture.json`.
+
 - Status: Implemented — Levitt capture, replay, and admission configuration
 - Date: 2026-09-10
 - Related: [Source evaluation](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)

@@ -1,5 +1,82 @@
 # ADR 0019: Implementation sequence and verification gates
 
+## Sorted fallback and first-paint loading shell — September 12, 2026
+
+Approved: sort the initial HTML event list and remove its visible flash during
+normal startup. Keep no-JavaScript event content, SEO metadata, locale isolation
+and the existing security policy. This is a display-only change; catalog bytes,
+event IDs, API ordering and ingestion behavior do not change.
+
+Test-first: the new Go eight-row sorting test failed on the existing artifact
+order. The initial desktop/phone startup tests failed before the loading shell
+existed. Server rendering now sorts a copy using date, venue-local doors/show
+clock, venue, artist/title and ID, with untimed events first. A small synchronous
+same-origin head script and critical styles select the loading shell before body
+rendering. React signals replacement from its first layout effect. Script/config
+errors and a 15-second startup deadline restore the fallback. JavaScript-disabled
+visitors see the sorted list without the loader.
+
+The fallback remains in the same initial HTML for visitors and crawlers. No
+user-agent detection, inline-script permission, new framework or schema was added.
+README and ADR 0015 describe this behavior. Markdown source is inspected because
+the repository has no documentation render workflow.
+
+| Evidence source | Raw result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| `go test ./internal/web` in the Go container | Pass, including eight deliberately unordered records and unchanged caller order | Fallback sorting follows date/time/venue/title rules without mutating input | Synthetic sorting cases |
+| `npm run test:e2e -- tests/browser/startup.spec.ts tests/browser/seo.spec.ts` | 14 pass at fixture port 8091; 14 pass with `CALENDAR_BASE_URL=http://127.0.0.1:8090` | Delayed bundle/configuration, module failure, 503, timeout and no-JavaScript paths behave as specified | Chromium desktop and emulated phone |
+| Full `npm run test:e2e` with dedicated-venue variables at port 8090 and empty app at 8096 | 206 pass, eight skip | Existing calendar and new startup checks pass | Four locale and two replay tests run separately; two layout-specific exclusions |
+| `npm run test:locales`; `npm run test:aeg` | Both exit 0; independent locale rebuild checks pass; replay's two browser checks pass | Standalone images, locale isolation and replay consumption remain compatible | Local Docker, not a remote deployment |
+| `npm run test:contracts` | Go formatting, vet and full race suite pass; producer handoff and 91 frontend tests pass | Shared code and contracts pass regression checks | Local containers and fixtures |
+| `npm run format:check`; `npm run lint`; `npm run typecheck`; `npm run build`; `git diff --check` | Exit 0 | Applicable repository checks pass | Markdown inspected as source |
+
+The updated app and fixture are running on ports 8090 and 8091. The temporary
+empty test container was stopped after verification. No event data was refreshed,
+and no commit, push or remote deployment was performed.
+
+## Independent locale instances — September 12, 2026
+
+Implemented the approved locale-isolation refactor in
+[ADR 0023](0023-locale-isolation.md). One selected locale owns public settings,
+source profiles, capture endpoints, reviewed admission configuration, assets and
+catalog storage. Exported Railway build contexts contain only that locale's
+operational configuration and active generation. Shared code and test fixtures
+remain shared. No new live sources, translations or remote deployment were added.
+
+Test-first checks covered explicit startup selection, runtime presentation,
+non-Denver provider profiles and packaging. The first isolated frontend build
+exposed a test import of operational Denver configuration; it was changed to a
+contract fixture. The first full browser run exposed synthetic fixture adapter
+IDs rejected by the real Denver registry. Fixture Compose now uses its own
+registry; the runtime ownership check was not weakened. An empty-startup check
+also required an actual empty directory, not a nonexistent path.
+A later isolation rerun exposed Docker's asynchronous `--rm` name release after
+stop. The rebuilt fixture now uses a distinct container name; the full isolation
+workflow then passed again.
+
+| Evidence source | Raw result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| `npm run test:locales` | Separate Denver/coastal contexts build and serve; four desktop/phone tests pass; coastal-only rebuild leaves Denver image ID and API bytes unchanged | Build and runtime isolation work through HTTP and the browser | Synthetic second locale; local Docker, not Railway |
+| `npm run test:contracts` | Go formatting, vet, full race suite and producer handoff pass; 91 frontend tests pass | Shared contracts and server regression checks pass | Local containers and fixtures |
+| Full `npm run test:e2e` with dedicated-venue URL variables set to 8090 and empty URL to 8096 | 196 pass, eight skip | Existing Denver desktop and phone behavior remains intact | Four locale tests run separately; two replay tests run separately; two layout-specific exclusions |
+| `CALENDAR_EMPTY_URL=http://127.0.0.1:8096 npm run test:publication`; `npm run test:aeg` | Both exit 0; AEG replay's two browser tests pass | Snapshot normalization, reconciliation, guarded publication and application consumption work | Isolated fixture stores; no upstream fetch |
+| `test:rhp`, `test:clique`, `test:plot`, `test:kse`, `test:marquis`, `test:blackbox`, `test:venuepilot`, `test:meowwolf`, `test:ophelias`, `test:buzzard`, `test:herbs`, `test:afton`, `test:locale-tools`, `test:capture-profiles` via npm | All pass; VenuePilot includes a mocked non-Denver account selection | Existing capture safeguards and explicit locale selection pass | Offline tests; specialist layouts still require individual review |
+| Added Go non-Denver AEG normalization and cross-locale HTTP tests | Auckland event serializes with `+12:00`, Harbor path and venue URL; foreign catalog returns 503 on fresh startup and cannot replace last-good data | Configured timezone/identity survives normalization; registry protects catalog consumption | Representative fixtures, not every provider in a new city |
+| Byte/checksum comparison of original and migrated stores | Five inspected rows identify Ball Arena, Black Box, Black Buzzard, Bluebird and Cervantes; every referenced source and catalog matches original bytes | Denver event IDs, public URLs and reviewed artifact data are preserved | Existing generation only; no refresh |
+| `npm run format:check`; `npm run lint`; `npm run typecheck`; `npm run build`; `git diff --check` | Exit 0 | Applicable repository checks pass | No Markdown renderer is configured |
+| Documented snapshot staging command | Builds, packages a new temporary store, and passes catalog `cmp` | Established-source refresh instructions preserve the current generation | No live ingestion performed |
+
+The local app now runs as `withadult-denver-app-1` on port 8090 and reads
+`.artifacts/denver`. Its fixture uses port 8091. Original app/fixture containers
+remain stopped for rollback; original `.artifacts/catalog.json` and source files
+remain untouched. Stop the new Compose project before restarting the old
+containers on those ports. Temporary verification containers are stopped after
+checks; their exported contexts and fixture stores remain available for inspection.
+
+README, product/frontend/deployment ADRs and affected adapter ADRs were updated.
+Their Markdown source was inspected; no documentation render workflow exists.
+At verification, this refactor had not yet been committed or pushed. No remote deployment was performed.
+
 ## SEO and link-preview foundation — September 12, 2026
 
 Approved: extend the Go host with initial page-specific metadata, basic readable

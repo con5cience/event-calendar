@@ -1,18 +1,73 @@
 # Event calendar
 
-The site favicon is `web/public/assets/favicon.png`, copied from the approved
+## Locale selection
+
+Each deployment contains one locale, with no shared runtime state. Start Denver:
+
+```sh
+docker compose --env-file locales/denver/compose.env up --build -d
+```
+
+`locales/<id>/site.json` owns branding, domain, timezone, formatting, view defaults,
+venue colors and source ownership. Its `sources/` directory owns operational
+source configs; `capture.json` owns capture endpoints. Artifacts live under
+`.artifacts/<id>/`. Other cities need their own configuration, asset, source
+profiles, data directory, Compose project/port, and Railway service. No real
+second locale is preconfigured. See [ADR 0023](docs/adr/0023-locale-isolation.md).
+
+Before running the capture commands below, select their locale explicitly:
+
+```sh
+export SITE_DIR="$PWD/locales/denver"
+```
+
+Use `locales/denver/sources/<source>.yaml` for operational replay and admission
+updates. Files under `internal/*/testdata` remain test fixtures. Capture never
+runs during an application build or startup. Use a separate temporary output
+directory for each job; `TMPDIR` can select a per-locale capture parent.
+
+Denver's operational profiles use `state: established`. Seed each replay staging
+directory with a validated copy of the current `.artifacts/denver` generation;
+do not start an established source in an empty store. This preserves event IDs
+and URLs. The standalone snapshot packager can make this copy:
+
+```sh
+docker build --target backend -f Dockerfile.railway -t event-calendar-snapshot-tools .
+stage_parent=$(mktemp -d)
+docker run --rm --mount type=bind,src="$PWD",dst=/repo,readonly --mount type=bind,src="$stage_parent",dst=/stage --entrypoint /package-snapshot event-calendar-snapshot-tools --site /repo/locales/denver /repo/.artifacts/denver /stage/data
+```
+
+Mount `$stage_parent/data` at `/data` for replay. For a genuinely new source,
+start its reviewed operational profile with `state: new`, then switch it to
+`established` after the first successful publication. Never change an existing
+source back to `new` to bypass missing prior data.
+
+Standalone deployment contexts are created with
+`node scripts/package-locale.mjs <locale> <new-directory>`; see the Railway
+section below. `npm run test:locales` verifies two isolated builds and running
+instances using a synthetic second-locale fixture. It does not deploy remotely.
+
+Denver's favicon is `locales/denver/assets/favicon.png`, copied from the approved
 `docs/denver-purple.png`: transparent background and `#6C5CE7` artwork.
-Vite copies it into the build, and the Go host serves it at `/assets/favicon.png`.
+The Go host serves the selected locale's image at `/assets/favicon.png`.
 
 The Go host serves page-specific titles, descriptions, canonical URLs, Open Graph
 and summary-card metadata, plus basic HTML content before React starts. The
-approved Denver logo is also the shared preview image. Canonical URLs always use
-`https://denver.withadult.com`; request hosts and query strings cannot change them.
+approved Denver logo is also the shared preview image. Canonical URLs use the selected locale's fixed origin (`https://denver.withadult.com`
+for Denver); request hosts and query strings cannot change them.
 `/sitemap.xml` includes the homepage and listed, unexpired events; `/robots.txt`
 points crawlers to it. Removed-but-retained events remain accessible with
 `noindex`; expired events still return 404. Copy Event Link still copies the
 venue's event URL, not this site's URL. External preview rendering must be checked
 after deployment. These features require the Go host, not the Vite dev server.
+
+The server-rendered fallback list uses calendar order: date, venue-local doors
+(otherwise show time), venue, then artist/title. Untimed events come first within
+each date. With JavaScript enabled, a small same-origin startup script shows a
+dark loading shell before the app bundle starts, so the fallback list does not
+flash. The sorted fallback remains visible without JavaScript and returns if
+startup fails or stalls for 15 seconds. SEO metadata and event links stay in the
+initial HTML; the content-security policy is unchanged.
 
 The app is a React/FullCalendar interface served by Go, with local JSON input.
 Its charcoal-and-purple palette matches music-finder: near-black background,
@@ -26,7 +81,8 @@ scripts run only when an operator invokes them. Scheduled jobs are not enabled.
 This workspace's main app was populated with one-time real imports on
 September 9, 2026: 248 events across Gothic, Mission, Bluebird, Ogden, and Fiddler's
 Green at [localhost:8090](http://localhost:8090). The data lives
-in ignored `.artifacts/`, not in committed fixtures. Reload the page to read it.
+in ignored `.artifacts/denver/`, not in committed fixtures. The original `.artifacts/`
+generation remains available as a migration backup. Reload the page to read it.
 It will not refresh automatically. See the [initial import record](docs/adr/0019-implementation-and-verification-plan.md#aeg-source-expansion--2026-09-09) and the source additions below.
 
 ## Run locally
@@ -41,7 +97,7 @@ External ticket pages are not fetched; their unverified ages and times stay unse
 No prices are published. No browser or credentials are needed for capture.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/afton/testdata` read-only at
+a seeded staging directory at `/data`, and `locales/denver/sources` read-only at
 `/config`, then run:
 
 ```sh
@@ -69,7 +125,7 @@ and clocks are treated as Denver-local by explicit approval, despite the site's
 New York setting. This is an assumption, not confirmation from the venue.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/herbs/testdata` read-only at
+a seeded staging directory at `/data`, and `locales/denver/sources` read-only at
 `/config`, then run:
 
 ```sh
@@ -98,7 +154,7 @@ ambiguous times are published. The reviewed 18+ venue default supplies no guardi
 exception; placeholder age text is ignored.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/buzzard/testdata`
+a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run:
 
 ```sh
@@ -123,7 +179,7 @@ to compare parsed event fields; dynamic page scripts are never executed. Raw pag
 are temporary operator evidence, not application input. No prices are published.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/ophelias/testdata`
+a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run:
 
 ```sh
@@ -150,7 +206,7 @@ agree. The reader supports the inspected legacy and replacement serializations.
 No prices or automatic jobs are added.
 
 Build the ingestion image, mount a verified capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/meowwolf/testdata`
+a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run:
 
 ```sh
@@ -175,7 +231,7 @@ No credentials or browser session are required. The request covers today through
 12 months ahead; only available events are returned.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/venuepilot/testdata`
+a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run:
 
 ```sh
@@ -202,7 +258,7 @@ The main room and Lounge share The Black Box venue filter. External ticket
 provider redirects are rejected without fetching the external destination.
 
 Build the ingestion image, mount the reported capture read-only at `/capture`,
-an empty staging directory at `/data`, and `internal/blackbox/testdata`
+a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run:
 
 ```sh
@@ -260,7 +316,7 @@ through May 16, 2027; one undated listing was rejected. There are now 17 dedicat
 venue sources locally. Run `node tests/kse/ball-capture.mjs` explicitly;
 it captures and rechecks both interfaces without publishing. Build the ingestion
 image, mount the reported capture directory read-only at `/capture`, a staging
-directory at `/data`, and `internal/kse/testdata` read-only at `/config`, then run:
+directory at `/data`, and `locales/denver/sources` read-only at `/config`, then run:
 
 ```sh
 replay-kse-calendar --store /data --config /config/ball-arena.yaml --snapshot /capture/snapshot.json --now <captured_at>
@@ -281,13 +337,13 @@ and one 18+ event. The local catalog now contains 16 dedicated venue sources.
 With the existing Playwright Chromium installation available, run:
 
 ```sh
-node tests/marquis/capture.mjs
+node tests/marquis/capture.mjs marquis
 docker build --target ingestion -t event-calendar-ingestion .
 ```
 
 Capture scrolls the normal public page twice and requires matching complete event
 pages. It does not publish. Mount the reported capture directory read-only at
-`/capture`, an empty staging directory at `/data`, and `internal/livenation/testdata`
+`/capture`, a seeded staging directory at `/data`, and `locales/denver/sources`
 read-only at `/config`, then run the ingestion image with:
 
 ```sh
@@ -308,7 +364,7 @@ The September 11 local import added 72 events through April 10, 2027; two record
 with inconsistent doors dates were rejected. The catalog now has 15 venue sources.
 Capture is explicit: `node tests/kse/capture.mjs`. Build the ingestion image, mount
 the reported capture directory read-only at `/capture`, a staging directory at
-`/data`, and `internal/kse/testdata` read-only at `/config`, then run:
+`/data`, and `locales/denver/sources` read-only at `/config`, then run:
 
 ```sh
 replay-kse --store /data --config /config/paramount.yaml --snapshot /capture/snapshot.json --now <captured_at>
@@ -333,7 +389,7 @@ docker build --target ingestion -t event-calendar-ingestion .
 ```
 
 Mount the reported capture directory read-only at `/capture`, a staging directory
-at `/data`, and `internal/plot/testdata` read-only at `/config`. Run the image with:
+at `/data`, and `locales/denver/sources` read-only at `/config`. Run the image with:
 
 ```sh
 replay-plot --store /data --config /config/hi-dive.yaml --snapshot /capture/snapshot.json --now <captured_at>
@@ -359,7 +415,7 @@ docker build --target ingestion -t event-calendar-ingestion .
 
 The capture prints its new temporary directory and timestamp. Mount that directory
 read-only at `/capture`, a staging directory at `/data`, and
-`internal/clique/testdata` read-only at `/config`, then run the ingestion image with:
+`locales/denver/sources` read-only at `/config`, then run the ingestion image with:
 
 ```sh
 replay-clique --store /data --config /config/red-rocks.yaml --snapshot /capture/snapshot.json --now <captured_at>
@@ -377,23 +433,23 @@ for capture tests and `npm run test:contracts` for adapter and publication tests
 Install Docker with Compose, then run:
 
 ```sh
-docker compose up --build -d
+docker compose --env-file locales/denver/compose.env up --build -d
 ```
 
-Open [localhost:8090](http://localhost:8090). Stop the application with `docker compose stop app`.
-The read-only `.artifacts` mount is empty on first startup. The server returns an empty
+Open [localhost:8090](http://localhost:8090). Stop the application with `docker compose --env-file locales/denver/compose.env stop app`.
+The read-only `.artifacts/<locale>` mount is empty on first startup. The server returns an empty
 event list when that directory is empty. A missing directory or a nonempty directory
 without a valid catalog is an error, not an empty calendar.
 
 Optional environment settings:
 
-| Variable            | Default        | Meaning                                       |
-| ------------------- | -------------- | --------------------------------------------- |
-| `CALENDAR_PORT`     | `8090`         | Local HTTP port; bound to loopback            |
-| `CALENDAR_DATA_DIR` | `./.artifacts` | Directory containing `catalog.json`           |
-| `WEEK_EVENT_LIMIT`  | `10`           | Visible event cards per date in week view     |
-| `MONTH_EVENT_LIMIT` | `5`            | Visible event cards per date in month view    |
-| `DAY_EVENT_LIMIT`   | `0`            | Per-date day-view limit; zero means unlimited |
+| Variable            | Default                           | Meaning                                       |
+| ------------------- | --------------------------------- | --------------------------------------------- |
+| `CALENDAR_PORT`     | `8090`                            | Local HTTP port; bound to loopback            |
+| `CALENDAR_DATA_DIR` | `./.artifacts/${CALENDAR_LOCALE}` | Directory containing `catalog.json`           |
+| `WEEK_EVENT_LIMIT`  | `10`                              | Visible event cards per date in week view     |
+| `MONTH_EVENT_LIMIT` | `5`                               | Visible event cards per date in month view    |
+| `DAY_EVENT_LIMIT`   | `0`                               | Per-date day-view limit; zero means unlimited |
 
 Week and month limits must be positive integers. These limits apply only to
 the phone's scrolling lists; desktop Week and Month use available cell height instead.
@@ -403,18 +459,19 @@ Show All control; full day expansion is covered by the UI tests when configured.
 ## Railway snapshot deployment
 
 `Dockerfile.railway` replaces the former Pages build reference. It builds the
-React frontend and Go server, validates `.artifacts/catalog.json` and every
+React frontend and Go server, validates `.artifacts/<locale>/catalog.json` and every
 referenced source file, then includes only that generation in `/data`. Missing
 or invalid input fails the build. Unreferenced generations and capture reports
 are not copied into the final image. IDs, public paths, and checksums stay unchanged.
 No volume, bucket, database, ingestion job, or runtime write access is required.
-The existing `Dockerfile`, `.dockerignore`, and Compose workflow are unchanged.
+Application image builds require explicit locale selection when building from the repository.
+The shared ingestion and Go-test targets do not select a locale at build time.
 
 Build and run locally without a data mount:
 
 ```sh
-docker build -f Dockerfile.railway -t event-calendar-railway .
-docker run --rm --read-only -p 127.0.0.1:8095:8080 event-calendar-railway
+docker build -f Dockerfile.railway --build-arg LOCALE=denver -t event-calendar-denver .
+docker run --rm --read-only -p 127.0.0.1:8095:8080 event-calendar-denver
 ```
 
 ### Supplying ignored data to Railway
@@ -423,8 +480,9 @@ Git-based builds do not contain the ignored `.artifacts/` directory. Instead,
 prepare a dedicated local upload context after ingestion has completed:
 
 ```sh
-railway_context=$(mktemp -d)
-docker build -f Dockerfile.railway --target upload-context --output "type=local,dest=$railway_context" .
+railway_parent=$(mktemp -d)
+railway_context="$railway_parent/denver"
+node scripts/package-locale.mjs denver "$railway_context"
 docker build -f "$railway_context/Dockerfile.railway" -t event-calendar-railway "$railway_context"
 ```
 
@@ -465,7 +523,7 @@ its own smoke test; local image verification is not evidence of a successful upl
 ## Explicit test-data preview
 
 ```sh
-docker compose -f compose.yaml -f compose.test.yaml up --build -d
+docker compose --env-file locales/denver/compose.env -f compose.yaml -f compose.test.yaml up --build -d
 ```
 
 The normal app keeps its own data at port 8090. A separate app at
@@ -474,7 +532,7 @@ The normal app keeps its own data at port 8090. A separate app at
 September 6, 2026. These dated preview events start expiring on December 7, 2026;
 update their dates, paths, expiry values, and checksums together when refreshing
 fixtures. `CALENDAR_INITIAL_DATE` selects a view date, not the server clock.
-Stop the preview with `docker compose -f compose.yaml -f compose.test.yaml stop fixture-app`.
+Stop the preview with `docker compose --env-file locales/denver/compose.env -f compose.yaml -f compose.test.yaml stop fixture-app`.
 Do not use the fixture override for ordinary startup or deployment.
 
 ## Checks
@@ -491,7 +549,7 @@ npm test
 npm run build
 docker build --target go-test .
 npm run test:contracts
-docker compose -f compose.yaml -f compose.test.yaml up --build --wait
+docker compose --env-file locales/denver/compose.env -f compose.yaml -f compose.test.yaml up --build --wait
 npm exec playwright -- install chromium --no-remove
 npm run test:e2e
 npm run test:aeg
@@ -527,7 +585,7 @@ docker run --rm --mount type=bind,src="$PWD",dst=/workspace --workdir /workspace
 ```
 
 `npm run dev` starts Vite on port 5173 and proxies `/api` to the Go app on port 8090.
-Build changes into the container with `docker compose up --build -d`.
+Build changes into the container with `docker compose --env-file locales/denver/compose.env up --build -d`.
 
 ## Application input
 
@@ -780,8 +838,8 @@ mounted read-only. Do not make a shared production directory world-writable.
 For a deliberately new store with no catalog, and an input named `source.json`:
 
 ```sh
-docker compose build ingestion
-docker compose run --rm ingestion publish --store /data --expect none /input/source.json
+docker compose --env-file locales/denver/compose.env build ingestion
+docker compose --env-file locales/denver/compose.env run --rm ingestion publish --store /data --expect none /input/source.json
 ```
 
 For later updates, replace `none` with the catalog's `generation` captured when preparing
@@ -789,7 +847,7 @@ the candidates. Put all options before file arguments. Multiple file arguments p
 as one generation. A mismatch fails without replacing the catalog; do not simply retry
 with a newer generation unless the candidates have been reconciled against that state.
 `none` is reserved for an absent catalog, not a way to recover a lost established catalog.
-The command supports `publish --help`. Default `docker compose up` remains app-only
+The command supports `publish --help`. Default `docker compose --env-file locales/denver/compose.env up` remains app-only
 unless you explicitly uncomment the service.
 
 The command emits a JSON report with `generation`, `published`, `durable`, and optional

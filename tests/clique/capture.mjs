@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("red-rocks");
 // Explicit read-only operator capture. Never called by app builds or startup.
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 export async function capture(fetcher = fetch, now = new Date()) {
   const from = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Denver",
+    timeZone: captureSettings.timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -18,7 +20,7 @@ export async function capture(fetcher = fetch, now = new Date()) {
   const end = nextYear.toISOString().slice(0, 10);
   const raw = {};
   async function request(path) {
-    const url = "https://www.redrocksonline.com/wp-json/clique/v1/" + path;
+    const url = captureSettings.endpoint + path;
     const response = await fetcher(url, {
       redirect: "error",
       signal: AbortSignal.timeout(30000),

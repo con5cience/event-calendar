@@ -37,15 +37,8 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	venues := map[string]struct{ venue, website string }{
-		"37": {"2274", "https://www.gothictheatre.com"},
-		"89": {"127278", "https://www.missionballroom.com"},
-		"2":  {"100811", "https://www.bluebirdtheater.net"},
-		"7":  {"101141", "https://www.ogdentheatre.com"},
-		"44": {"100869", "https://www.fiddlersgreenamp.com"},
-	}
-	p, ok := venues[cfg.AdapterOptions["feed_id"]]
-	if !ok || cfg.Source.Adapter != "aeg-json" || cfg.AdapterOptions["venue_id"] != p.venue || cfg.Venue.Website != p.website || cfg.Venue.Timezone != "America/Denver" {
+	p := struct{ venue, website string }{cfg.AdapterOptions["venue_id"], cfg.Venue.Website}
+	if cfg.Source.Adapter != "aeg-json" || !digits.MatchString(cfg.AdapterOptions["feed_id"]) || !digits.MatchString(p.venue) || p.website == "" {
 		return fail("configuration does not identify a supported feed and venue")
 	}
 	if len(cfg.AdapterOptions) != 2 {

@@ -1,3 +1,4 @@
+import { captureProfiles } from "../capture-profile.mjs";
 // Explicit operator capture, never run by Compose startup. No browser scripts
 // execute. Original responses are retained beside the bounded replay snapshot.
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
@@ -5,12 +6,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const origins = {
-  "lost-lake": "https://lost-lake.com",
-  larimer: "https://larimerlounge.com",
-  "globe-hall": "https://globehall.com",
-  cervantes: "https://cervantesmasterpiece.com",
-};
+const origins = Object.fromEntries(
+  Object.entries(captureProfiles())
+    .filter(([, p]) => p.adapter === "rhp-calendar")
+    .map(([id, p]) => [id, p.origin]),
+);
 export function calendarForm() {
   return new URLSearchParams({
     action: "loadEtixMonthViewEventPageFn",

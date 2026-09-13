@@ -2,12 +2,47 @@ package web
 
 import (
 	"encoding/xml"
+	"event-calendar/internal/locale"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestSEOHomepageSortsWithoutChangingInput(t *testing.T) {
+	_, root := fixtureServer(t)
+	events := []Event{
+		{ID: "later-date", Date: "2026-09-13", Title: "Later date"},
+		{ID: "later-time", Date: "2026-09-12", DoorsAt: "2026-09-12T20:00:00-06:00", Title: "Later time"},
+		{ID: "venue-z", Date: "2026-09-12", ShowAt: "2026-09-12T19:00:00-06:00", Venue: "Z Hall", Title: "A show"},
+		{ID: "title-10", Date: "2026-09-12", DoorsAt: "2026-09-12T19:00:00-06:00", Venue: "A Hall", Title: "Show 10"},
+		{ID: "title-2", Date: "2026-09-12", DoorsAt: "2026-09-12T19:00:00-06:00", ShowAt: "2026-09-12T21:00:00-06:00", Venue: "A Hall", Title: "Show 2"},
+		{ID: "untimed-z", Date: "2026-09-12", Venue: "Z Hall", Title: "Unknown time"},
+		{ID: "untimed-a", Date: "2026-09-12", Venue: "A Hall", Title: "Unknown time"},
+		{ID: "earlier-date", Date: "2026-09-11", Title: "Earlier date"},
+	}
+	for i := range events {
+		events[i].PublicPath = "/events/" + events[i].ID
+		events[i].Timezone = "America/Denver"
+	}
+	w := httptest.NewRecorder()
+	servePage(w, httptest.NewRequest("GET", "/", nil), filepath.Join(root, "dist"), pageMetadata{Site: locale.Config{Presentation: locale.Presentation{Language: "en-US"}}, Events: events})
+	if w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	last := -1
+	for _, id := range []string{"earlier-date", "untimed-a", "untimed-z", "title-2", "title-10", "venue-z", "later-time", "later-date"} {
+		index := strings.Index(w.Body.String(), `href="/events/`+id+`"`)
+		if index <= last {
+			t.Fatalf("event %s out of order: %s", id, w.Body.String())
+		}
+		last = index
+	}
+	if events[0].ID != "later-date" {
+		t.Fatal("rendering mutated caller input")
+	}
+}
 
 func TestSEOInitialHTMLAndDiscovery(t *testing.T) {
 	_, root := fixtureServer(t)
@@ -16,7 +51,7 @@ func TestSEOInitialHTMLAndDiscovery(t *testing.T) {
 	a.Events[0].Title = `Test </title><script>alert("x")</script> & show`
 	publishFixture(t, dir, "seo", a)
 	now := fixedNow()
-	h := NewHandler(Config{DataDir: dir, AssetsDir: filepath.Join(root, "dist"), Now: func() time.Time { return now }})
+	h := NewHandler(Config{Site: testSite(), DataDir: dir, AssetsDir: filepath.Join(root, "dist"), Now: func() time.Time { return now }})
 	path := a.Events[0].PublicPath
 	for _, route := range []string{"/", path} {
 		w := httptest.NewRecorder()

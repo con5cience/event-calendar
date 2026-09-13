@@ -1,5 +1,11 @@
 # ADR 0021: Live Nation venue events through the public browser flow
 
+Operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
+`adapter_options.venue_ids` is a comma-separated list of accepted upstream venue
+IDs. Venue website, name and timezone replace the compiled Denver registry.
+Capture requires `SITE_DIR` and a source CLI argument configured in that locale's
+`capture.json`. Existing pagination and returned-identity checks remain required.
+
 - Status: Implemented for Marquis, Summit, and Fillmore
 - Date: 2026-09-11
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md), [JSON-LD exploration](0007-event-json-ld.md)

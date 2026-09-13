@@ -1,0 +1,26 @@
+schema_version: 1
+source: { id: fiddlers-green, adapter: aeg-json }
+state: established
+venue:
+  key: fiddlers-green
+  name: Fiddler's Green Amphitheatre
+  timezone: America/Denver
+  website: https://www.fiddlersgreenamp.com
+admission_rules:
+  All ages:
+    url: https://www.fiddlersgreenamp.com/policies/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 1,
+          condition: Permitted at this age; check event ticket requirements,
+        }
+      - {
+          min_age: 2,
+          max_age: 17,
+          condition: Ticket generally required from age 2,
+        }
+adapter_options:
+  feed_id: "44"
+  venue_id: "100869"

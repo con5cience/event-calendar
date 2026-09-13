@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("roxy");
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -5,8 +7,7 @@ import { fileURLToPath } from "node:url";
 import { readHTML } from "../html/http.mjs";
 import { compactHTML } from "../rhp/capture.mjs";
 
-const endpoint =
-  "https://aftontickets.com/api/get-events?key=732e49e3d992ab7ff998f13c3a2d3f08&per_page=12&page=";
+const endpoint = captureSettings.endpoint;
 const fields = [
   "event_type",
   "event_id",

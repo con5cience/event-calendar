@@ -1,5 +1,9 @@
 # ADR 0018: Filesystem development and Railway snapshot deployment
 
+The single-locale paths and commands below are historical. Current per-locale
+storage, explicit build selection and standalone upload contexts follow
+[ADR 0023](0023-locale-isolation.md) and the repository README.
+
 - Status: Image-baked snapshots accepted for initial Railway deployment; independent bucket publication deferred.
 - Date: 2026-09-08
 - Scope: Deployment design and implementation references.

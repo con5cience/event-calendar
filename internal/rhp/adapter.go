@@ -44,9 +44,8 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	profiles := map[string]struct{ name, origin string }{"lost-lake": {"Lost Lake", "https://lost-lake.com"}, "larimer": {"Larimer Lounge", "https://larimerlounge.com"}, "globe-hall": {"Globe Hall", "https://globehall.com"}, "cervantes": {"Cervantes", "https://cervantesmasterpiece.com"}}
-	p, ok := profiles[cfg.Source.ID]
-	if !ok || cfg.Source.Adapter != "rhp-calendar" || cfg.Venue.Key != cfg.Source.ID || cfg.Venue.Name != p.name || cfg.Venue.Website != p.origin || cfg.Venue.Timezone != "America/Denver" || len(cfg.AdapterOptions) != 0 {
+	p := struct{ name, origin string }{cfg.Venue.Name, cfg.Venue.Website}
+	if cfg.Source.Adapter != "rhp-calendar" || cfg.Venue.Key != cfg.Source.ID || p.origin == "" || len(cfg.AdapterOptions) != 0 {
 		return fail("unsupported source configuration")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {

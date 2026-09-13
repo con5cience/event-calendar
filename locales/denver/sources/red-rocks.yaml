@@ -1,0 +1,23 @@
+schema_version: 1
+source: { id: red-rocks, adapter: clique-calendar }
+state: established
+venue:
+  key: red-rocks
+  name: Red Rocks Amphitheatre
+  timezone: America/Denver
+  website: https://www.redrocksonline.com
+  admission_policy:
+    text: All Ages
+    category: All ages
+    url: https://www.redrocksonline.com/plan-your-visit/faq/
+admission_rules:
+  "All ages":
+    url: https://www.redrocksonline.com/plan-your-visit/faq/
+    reviewed_on: "2026-09-11"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 1,
+          condition: Adult lap seating required; check event ticket conditions,
+        }
+      - { min_age: 2, max_age: 17, condition: All ages event; ticket required }

@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("hi-dive");
 // Explicit operator capture; never runs during app startup or builds.
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,7 +11,7 @@ export async function capture(fetcher = fetch, now = new Date()) {
   const raw = [];
   const pageSize = 5;
   async function request(page) {
-    const url = `https://hi-dive.com/api/plot/v1/listings?currentpage=${page}&listingsPerPage=${pageSize}`;
+    const url = `${captureSettings.endpoint}?currentpage=${page}&listingsPerPage=${pageSize}`;
     const response = await fetcher(url, {
       redirect: "error",
       signal: AbortSignal.timeout(30000),

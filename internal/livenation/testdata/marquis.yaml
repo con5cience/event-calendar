@@ -1,4 +1,6 @@
 schema_version: 1
+adapter_options:
+  venue_ids: "KovZpZAJeFkA"
 source: {id: marquis, adapter: livenation-venue-events}
 state: new
 venue:

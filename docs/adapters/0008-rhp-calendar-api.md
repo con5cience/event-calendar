@@ -1,5 +1,11 @@
 # ADR 0008: RHP calendar JSON
 
+Operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
+The venue name, website origin and timezone come from the source configuration,
+not a compiled Denver registry. Capture requires `SITE_DIR` and a source CLI
+argument listed in that locale's `capture.json`. Existing origin, detail and
+admission checks remain in place.
+
 - Status: Accepted for Lost Lake, Larimer Lounge, Globe Hall, and on-site Cervantes snapshot ingestion
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)

@@ -1,4 +1,6 @@
 schema_version: 1
+adapter_options:
+  venue_ids: "KovZpZAE6eJA"
 source: {id: fillmore, adapter: livenation-venue-events}
 state: new
 venue:

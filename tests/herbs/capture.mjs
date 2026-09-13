@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("herbs");
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -9,7 +11,7 @@ export async function capture(fetcher = fetch, now = new Date()) {
   }).format(now);
   const end = new Date(from + "T12:00:00Z");
   end.setUTCFullYear(end.getUTCFullYear() + 1);
-  const url = "https://www.herbsbar.com/live-music-calendar-1";
+  const url = captureSettings.page;
   const snapshot = {
     from,
     through: end.toISOString().slice(0, 10),

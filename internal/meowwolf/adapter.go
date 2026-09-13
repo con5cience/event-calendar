@@ -46,7 +46,8 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	if cfg.Source.ID != "meow-wolf-denver" || cfg.Source.Adapter != "embedded-nextjs" || cfg.Venue.Key != "meow-wolf-denver" || cfg.Venue.Name != "Meow Wolf Denver" || cfg.Venue.Website != "https://tickets.meowwolf.com/events/denver/" || cfg.Venue.Timezone != "America/Denver" || len(cfg.AdapterOptions) != 0 {
+	var rooms map[string]string
+	if cfg.Source.Adapter != "embedded-nextjs" || cfg.Venue.Key != cfg.Source.ID || cfg.Venue.Website == "" || cfg.AdapterOptions["seller_id"] == "" || json.Unmarshal([]byte(cfg.AdapterOptions["rooms"]), &rooms) != nil || len(rooms) == 0 || rooms[cfg.AdapterOptions["default_room"]] == "" || len(cfg.AdapterOptions) != 3 {
 		return fail("unsupported configuration")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {
@@ -82,7 +83,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 			return fail("invalid identity")
 		}
 		seen[id.ID] = true
-		data, err := normalize(raw, loc)
+		data, err := normalize(raw, loc, cfg, rooms)
 		if err == nil && (data.Date < s.From || data.Date > s.Through) {
 			continue
 		}
@@ -97,7 +98,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 }
 
 func clean(s string) string { return strings.Join(strings.Fields(html.UnescapeString(s)), " ") }
-func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
+func normalize(raw []byte, loc *time.Location, cfg artifact.SourceConfig, rooms map[string]string) (artifact.EventData, error) {
 	var e record
 	d := artifact.EventData{Status: "Scheduled"}
 	if json.Unmarshal(raw, &e) != nil {
@@ -107,7 +108,7 @@ func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
 		return d, fmt.Errorf("unrelated detail redirect")
 	}
 	parts := strings.Split(e.ID, "__")
-	if len(parts) != 2 || e.Detail.ID != parts[0] || e.Detail.SellerID != "017a7f54-e443-a261-3c55-46ef4d921efb" || clean(e.Detail.Title) != clean(e.Title) {
+	if len(parts) != 2 || e.Detail.ID != parts[0] || e.Detail.SellerID != cfg.AdapterOptions["seller_id"] || clean(e.Detail.Title) != clean(e.Title) {
 		return d, fmt.Errorf("detail identity mismatch")
 	}
 	meta := map[string]string{}
@@ -117,8 +118,7 @@ func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
 		}
 		meta[m.Metakey] = m.Value
 	}
-	rooms := map[string]string{"14f4d967-6acc-4d09-2e5b-f2707768c20d": "The Perplexiplex", "d1bdc498-735e-781d-a390-f4c7f234c482": "Sips (with a Z)", "017a7f54-ebc3-c5e1-1499-0887afa464fc": "Convergence Station"}
-	if name, ok := rooms[e.Detail.VenueID]; !ok || (meta["venue"] != name && !(e.Detail.VenueID == "017a7f54-ebc3-c5e1-1499-0887afa464fc" && meta["venue"] == "")) {
+	if name, ok := rooms[e.Detail.VenueID]; !ok || (meta["venue"] != name && !(e.Detail.VenueID == cfg.AdapterOptions["default_room"] && meta["venue"] == "")) {
 		return d, fmt.Errorf("unreviewed venue")
 	}
 	at, err := time.Parse(time.RFC3339, e.StartDateTime)
@@ -143,7 +143,7 @@ func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
 	if !slug.MatchString(e.URL) {
 		return d, fmt.Errorf("invalid event slug")
 	}
-	d.EventURL = "https://tickets.meowwolf.com/events/denver/" + e.URL + "/"
+	d.EventURL = strings.TrimRight(cfg.Venue.Website, "/") + "/" + e.URL + "/"
 	for _, pair := range []struct {
 		value  string
 		target *string

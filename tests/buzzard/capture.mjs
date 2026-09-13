@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("black-buzzard");
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -5,11 +7,8 @@ import { fileURLToPath } from "node:url";
 import { readHTML } from "../html/http.mjs";
 export async function capture(fetcher = fetch, now = new Date()) {
   const read = async () => ({
-    calendar: await readHTML(
-      "https://www.theblackbuzzard.com/event-calendar",
-      fetcher,
-    ),
-    home: await readHTML("https://www.theblackbuzzard.com/", fetcher),
+    calendar: await readHTML(captureSettings.page, fetcher),
+    home: await readHTML(captureSettings.home, fetcher),
   });
   const from = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Denver",

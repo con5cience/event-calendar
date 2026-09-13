@@ -34,6 +34,7 @@ func TestPriceRetiredFromLegacyArtifactResponses(t *testing.T) {
 }
 
 func TestPriceRetiredConfigurationIgnored(t *testing.T) {
+	t.Setenv("SITE_DIR", "../../tests/contracts")
 	t.Setenv("COST_BRACKET_LIMITS", "obsolete value")
 	if _, err := ConfigFromEnv(); err != nil {
 		t.Fatal(err)

@@ -19,25 +19,31 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /calendar ./cmd/calenda
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /package-snapshot ./cmd/package-snapshot
 
 FROM backend AS snapshot
-COPY .artifacts/ /input/
-RUN /package-snapshot /input /snapshot
+ARG LOCALE
+COPY locales/${LOCALE}/ /site/
+COPY .artifacts/${LOCALE}/ /input/
+RUN test -n "$LOCALE" && /package-snapshot --site /site /input /snapshot
 
 # Optional local export for railway up: only build inputs and the active snapshot.
 # No Git metadata, node_modules, raw captures, or obsolete artifact generations.
 FROM scratch AS upload-context
+ARG LOCALE
 COPY Dockerfile.railway Dockerfile.railway.dockerignore /
 COPY package.json package-lock.json tsconfig.json vite.config.ts go.mod go.sum /
 COPY web /web
 COPY cmd /cmd
 COPY internal /internal
 COPY tests/contracts /tests/contracts
-COPY --from=snapshot /snapshot/ /.artifacts/
+COPY --from=snapshot /site/ /locales/${LOCALE}/
+COPY --from=snapshot /snapshot/ /.artifacts/${LOCALE}/
 
 FROM scratch AS runtime
 COPY --from=backend /calendar /calendar
 COPY --from=frontend /build/dist /app/dist
 COPY --from=snapshot /snapshot /data
+COPY --from=snapshot /site/site.json /app/site/site.json
+COPY --from=snapshot /site/assets /app/site/assets
 USER 65532:65532
-ENV PORT=8080 ASSETS_DIR=/app/dist DATA_DIR=/data
+ENV PORT=8080 ASSETS_DIR=/app/dist DATA_DIR=/data SITE_DIR=/app/site
 EXPOSE 8080
 ENTRYPOINT ["/calendar"]

@@ -13,6 +13,7 @@ const env = {
   PUBLICATION_TEST_STORE: directory,
   PUBLICATION_TEST_UID: String(process.getuid()),
   PUBLICATION_TEST_GID: String(process.getgid()),
+  PUBLICATION_TEST_SITE: "./tests/contracts/site.json",
   AEG_BASE_URL: "http://127.0.0.1:8092",
 };
 const compose = [

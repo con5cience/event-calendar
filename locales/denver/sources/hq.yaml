@@ -1,0 +1,10 @@
+schema_version: 1
+source: { id: hq, adapter: holdmyticket-ical }
+state: established
+venue:
+  key: hq
+  name: HQ
+  timezone: America/Denver
+  website: https://www.hqdenver.com
+adapter_options:
+  feed_id: "6457"

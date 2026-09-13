@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("paramount");
 // Explicit operator capture of the complete array used by Paramount's own widget.
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,7 +10,7 @@ import { isDeepStrictEqual } from "node:util";
 export async function capture(fetcher = fetch, now = new Date()) {
   const raw = [];
   async function request() {
-    const url = "https://alttix.ksehq.com/api/tm/venue/KovZpZAFa1nA";
+    const url = captureSettings.endpoint;
     const response = await fetcher(url, {
       redirect: "error",
       signal: AbortSignal.timeout(30000),

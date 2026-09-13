@@ -37,7 +37,8 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	if cfg.Source.ID != "levitt" || cfg.Source.Adapter != "venuepilot" || cfg.Venue.Key != "levitt" || cfg.Venue.Name != "Levitt Pavilion Denver" || cfg.Venue.Website != "https://www.levittdenver.org" || cfg.Venue.Timezone != "America/Denver" || len(cfg.AdapterOptions) != 0 {
+	base, baseErr := url.Parse(cfg.AdapterOptions["event_base"])
+	if cfg.Source.Adapter != "venuepilot" || cfg.Venue.Key != cfg.Source.ID || baseErr != nil || base.Scheme != "https" || base.Host == "" || base.User != nil || len(cfg.AdapterOptions) != 1 {
 		return fail("unsupported configuration")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {
@@ -73,7 +74,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 			return fail("invalid identity")
 		}
 		seen[id.ID] = true
-		data, err := normalize(raw, loc)
+		data, err := normalize(raw, loc, cfg)
 		if err == nil && (data.Date < s.From || data.Date > s.Through) {
 			return fail("record outside query coverage")
 		}
@@ -110,13 +111,13 @@ func text(n *dom.Node) string {
 var allAges = regexp.MustCompile(`(?im)^\s*all[ -]ages\s*(?:[|.!]|$)`)
 var restricted = regexp.MustCompile(`(?i)\b(?:guests|patrons|attendees)\s+must\s+be\s+(13|16|18|21)\+`)
 
-func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
+func normalize(raw []byte, loc *time.Location, cfg artifact.SourceConfig) (artifact.EventData, error) {
 	var e record
 	d := artifact.EventData{Status: "Scheduled"}
 	if json.Unmarshal(raw, &e) != nil {
 		return d, fmt.Errorf("invalid fields")
 	}
-	if e.Venue.Name != "Levitt Pavilion Denver" {
+	if e.Venue.Name != cfg.Venue.Name {
 		return d, fmt.Errorf("unreviewed venue")
 	}
 	switch strings.ToUpper(strings.TrimSpace(e.Status)) {
@@ -132,7 +133,7 @@ func normalize(raw []byte, loc *time.Location) (artifact.EventData, error) {
 	if err != nil || day.Format("2006-01-02") != e.Date {
 		return d, fmt.Errorf("invalid date")
 	}
-	d.EventURL = "https://www.levittdenver.org/summer-concert-series#/events/" + strconv.FormatInt(e.ID, 10)
+	d.EventURL = cfg.AdapterOptions["event_base"] + strconv.FormatInt(e.ID, 10)
 	if e.TicketsURL != "" {
 		u, err := url.Parse(e.TicketsURL)
 		if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil {

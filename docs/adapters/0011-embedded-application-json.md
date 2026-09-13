@@ -1,5 +1,11 @@
 # ADR 0011: Embedded application JSON
 
+Meow Wolf operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
+`adapter_options.seller_id`, `rooms` (a JSON object encoded as a string), and
+`default_room` scope accepted detail identities. Venue website and timezone are
+configured. Capture requires `SITE_DIR`; `CAPTURE_SOURCE` selects a different
+configured source. Its origin, city slug and seller ID come from `capture.json`.
+
 - Status: Implemented — Meow Wolf profile; one-time local publication verified
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)

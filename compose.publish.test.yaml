@@ -18,12 +18,15 @@ services:
     build:
       context: .
       target: runtime
+      args:
+        LOCALE: denver
     ports:
       - "127.0.0.1:8092:8080"
     environment:
       CALENDAR_INITIAL_DATE: "2026-09-08"
     volumes:
       - ${PUBLICATION_TEST_STORE:?}:/data:ro
+      - ${PUBLICATION_TEST_SITE:-./tests/fixtures/site.json}:/app/site/site.json:ro
     read_only: true
     security_opt:
       - no-new-privileges:true

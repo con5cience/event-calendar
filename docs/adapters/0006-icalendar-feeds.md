@@ -1,5 +1,11 @@
 # ADR 0006: HoldMyTicket iCalendar feeds
 
+Operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
+`adapter_options.feed_id`, venue name and timezone select the calendar.
+Federal additionally sets `adapter_options.layout: federal` to retain its
+reviewed malformed-description and admission handling. Other calendars do not
+inherit that specialist behavior. Keep fixture configs separate from operational configs.
+
 - Status: Local snapshot adapter implemented; recurring retrieval remains proposed
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)

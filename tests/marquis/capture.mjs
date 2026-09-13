@@ -1,3 +1,4 @@
+import { captureProfile } from "../capture-profile.mjs";
 // Operator-only capture through the venue's normal public scroll flow.
 import { chromium } from "@playwright/test";
 import { isDeepStrictEqual } from "node:util";
@@ -7,19 +8,9 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export function venueProfile(source) {
-  const id =
-    source === "marquis"
-      ? "KovZpZAJeFkA"
-      : source === "summit"
-        ? "KovZpZAFFt1A"
-        : source === "fillmore"
-          ? "KovZpZAE6eJA"
-          : null;
-  if (!id) throw new Error("Unsupported venue");
-  return {
-    endpoint: `https://content.livenationapi.com/v1/venues/${id}/events`,
-    page: `https://www.${source}denver.com/shows`,
-  };
+  const p = captureProfile(source);
+  if (p.adapter !== "livenation-venue-events") throw Error("Unsupported venue");
+  return { endpoint: p.endpoint, page: p.page };
 }
 export function validatePages(pages, check) {
   if (!isDeepStrictEqual(pages, check)) throw new Error("Capture changed");
@@ -130,7 +121,7 @@ if (
     throw new Error(
       "Usage: node tests/marquis/capture.mjs [marquis|summit|fillmore]",
     );
-  const source = process.argv[2] ?? "marquis";
+  const source = process.argv[2];
   const { endpoint } = venueProfile(source);
   const result = await capture(source);
   const directory = mkdtempSync(join(tmpdir(), `event-calendar-${source}-`));

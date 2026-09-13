@@ -7,9 +7,13 @@ import (
 	ics "github.com/arran4/golang-ical"
 )
 
-func eventCalendar(e Event, now time.Time) (string, error) {
+func eventCalendar(e Event, now time.Time, namespace ...string) (string, error) {
 	cal := ics.NewCalendar()
-	entry := cal.AddEvent(e.ID + "@event-calendar")
+	domain := "event-calendar" // Legacy test/export identity; production supplies its locale namespace.
+	if len(namespace) > 0 && namespace[0] != "" {
+		domain = namespace[0]
+	}
+	entry := cal.AddEvent(e.ID + "@" + domain)
 	entry.SetDtStampTime(now.UTC())
 	entry.SetSummary(e.Title)
 	entry.SetLocation(e.Venue)

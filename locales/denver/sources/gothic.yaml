@@ -1,0 +1,41 @@
+schema_version: 1
+source: { id: gothic, adapter: aeg-json }
+state: established
+venue:
+  key: gothic
+  name: Gothic Theatre
+  timezone: America/Denver
+  website: https://www.gothictheatre.com
+admission_rules:
+  All ages:
+    url: https://www.gothictheatre.com/venue/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 10,
+          condition: Parent or legal guardian required,
+        }
+      - { min_age: 11, max_age: 17, condition: Permitted at this age }
+  16+:
+    url: https://www.gothictheatre.com/venue/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 10,
+          condition: Parent or legal guardian required,
+        }
+      - { min_age: 11, max_age: 15, condition: Ticketed adult required }
+      - { min_age: 16, max_age: 17, condition: Permitted at this age }
+  18+:
+    url: https://www.gothictheatre.com/venue/
+    reviewed_on: "2026-09-09"
+    ranges: []
+  21+:
+    url: https://www.gothictheatre.com/venue/
+    reviewed_on: "2026-09-09"
+    ranges: []
+adapter_options:
+  feed_id: "37"
+  venue_id: "2274"

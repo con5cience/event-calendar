@@ -1,4 +1,5 @@
 import { displayStatus, displayTime, type CalendarEvent } from "./calendar";
+import { site } from "./site";
 
 export interface Preferences {
   withAdult: boolean;
@@ -12,13 +13,15 @@ export const defaultPreferences = (): Preferences => ({
   venues: [],
   query: "",
 });
-const storageKey = "event-calendar.filters.v1";
+const storageKey = () => `${site.storage_namespace}.filters.v1`;
 
 export function readPreferences(
   storage: () => Pick<Storage, "getItem"> = () => localStorage,
 ): Preferences {
   try {
-    const value: unknown = JSON.parse(storage().getItem(storageKey) || "null");
+    const value: unknown = JSON.parse(
+      storage().getItem(storageKey()) || "null",
+    );
     if (
       value &&
       typeof value === "object" &&
@@ -49,7 +52,7 @@ export function savePreferences(
   storage: () => Pick<Storage, "setItem"> = () => localStorage,
 ): void {
   try {
-    storage().setItem(storageKey, JSON.stringify(value));
+    storage().setItem(storageKey(), JSON.stringify(value));
   } catch {
     /* Keep working with in-memory preferences when storage is blocked/full. */
   }

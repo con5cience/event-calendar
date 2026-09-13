@@ -13,6 +13,7 @@ func federalFixture(t *testing.T) (artifact.SourceConfig, []byte) {
 	c.Source.ID, c.Venue.Key = "federal", "federal"
 	c.Venue.Name, c.Venue.Website = "The Federal Theatre", "https://thefederaltheatre.com"
 	c.AdapterOptions["feed_id"] = "8693"
+	c.AdapterOptions["layout"] = "federal"
 	b = bytes.ReplaceAll(b, []byte("HQ"), []byte("The Federal Theatre"))
 	return c, b
 }
@@ -83,7 +84,8 @@ func TestFederalGuardsAndOverride(t *testing.T) {
 	if err == nil && r.Observations[0].Failure == "" {
 		t.Fatal("off-site detail accepted")
 	}
-	c.AdapterOptions["feed_id"] = "6457"
+	// Feed IDs are supplied by the locale profile, not a built-in venue map.
+	c.AdapterOptions["feed_id"] = "invalid"
 	if _, err := Decode(c, b, clock); err == nil {
 		t.Fatal("wrong feed accepted")
 	}

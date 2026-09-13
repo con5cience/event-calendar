@@ -1,0 +1,13 @@
+schema_version: 1
+source: { id: paramount, adapter: kse-venue-events }
+state: established
+venue:
+  key: paramount
+  name: Paramount Theatre
+  timezone: America/Denver
+  website: https://www.paramountdenver.com
+  address: 1621 Glenarm Place, Denver, CO 80202
+  phone: 303-623-0106
+  admission_policy:
+    text: Age restrictions vary by event; check the event listing
+    url: https://www.paramountdenver.com/theatre-policies-faq/

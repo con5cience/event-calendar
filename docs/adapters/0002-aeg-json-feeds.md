@@ -1,5 +1,10 @@
 # ADR 0002: AEG JSON feeds
 
+Operational profiles now live in `locales/<id>/sources/` under
+[ADR 0023](../adr/0023-locale-isolation.md). `adapter_options.feed_id` and
+`venue_id`, venue website and timezone replace the compiled Denver feed registry.
+Returned venue identities and timestamps must still match the selected profile.
+
 - Status: Five AEG venues supported and imported locally; scheduled fetching not implemented.
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)

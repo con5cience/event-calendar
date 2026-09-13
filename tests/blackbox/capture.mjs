@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("black-box");
 // Operator-only, public event query. No credentials are persisted.
 import { chromium } from "@playwright/test";
 import { isDeepStrictEqual } from "node:util";
@@ -6,12 +8,12 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const endpoint = "https://yotaohjqtxebyhlzezjl.supabase.co/rest/v1/events";
+const endpoint = captureSettings.endpoint;
 export function externalTicketRedirect(location) {
   if (!location) return false;
   return (
-    new URL(location, "https://events.blackboxdenver.co").origin !==
-    "https://events.blackboxdenver.co"
+    new URL(location, captureSettings.ticket_origin).origin !==
+    captureSettings.ticket_origin
   );
 }
 export async function readTicket(url, fetcher = fetch) {
@@ -93,7 +95,7 @@ export async function capture() {
       (r) => r.url().startsWith(endpoint + "?"),
       { timeout: 30000 },
     );
-    await page.goto("https://blackboxdenver.co/events", {
+    await page.goto(captureSettings.page, {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
@@ -143,7 +145,7 @@ export async function capture() {
         if (
           !/^[a-z0-9-]+$/.test(e.slug) ||
           e.ticket_url !==
-            `https://events.blackboxdenver.co/e/${e.slug}/tickets`
+            `${captureSettings.ticket_origin}/e/${e.slug}/tickets`
         )
           throw Error("Unexpected ticket URL");
         const ticket = await readTicket(e.ticket_url);

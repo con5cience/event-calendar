@@ -1,0 +1,69 @@
+{
+  "lost-lake": {
+    "origin": "https://lost-lake.com"
+  },
+  "larimer": {
+    "origin": "https://larimerlounge.com"
+  },
+  "globe-hall": {
+    "origin": "https://globehall.com"
+  },
+  "cervantes": {
+    "origin": "https://cervantesmasterpiece.com"
+  },
+  "marquis": {
+    "endpoint": "https://content.livenationapi.com/v1/venues/KovZpZAJeFkA/events",
+    "page": "https://www.marquisdenver.com/shows"
+  },
+  "summit": {
+    "endpoint": "https://content.livenationapi.com/v1/venues/KovZpZAFFt1A/events",
+    "page": "https://www.summitdenver.com/shows"
+  },
+  "fillmore": {
+    "endpoint": "https://content.livenationapi.com/v1/venues/KovZpZAE6eJA/events",
+    "page": "https://www.fillmoredenver.com/shows"
+  },
+  "levitt": {
+    "endpoint": "https://www.venuepilot.co/graphql",
+    "account_id": 1105,
+    "timezone": "America/Denver"
+  },
+  "hi-dive": {
+    "endpoint": "https://hi-dive.com/api/plot/v1/listings"
+  },
+  "red-rocks": {
+    "endpoint": "https://www.redrocksonline.com/wp-json/clique/v1/",
+    "timezone": "America/Denver"
+  },
+  "paramount": {
+    "endpoint": "https://alttix.ksehq.com/api/tm/venue/KovZpZAFa1nA"
+  },
+  "ball-arena": {
+    "endpoint": "https://alttix.ksehq.com/api/tm/Calendar?Id=1",
+    "page": "https://www.ballarena.com/misc/all-events/",
+    "timezone": "America/Denver"
+  },
+  "ophelias": {
+    "page": "https://opheliasdenver.com/calendar/"
+  },
+  "herbs": {
+    "page": "https://www.herbsbar.com/live-music-calendar-1"
+  },
+  "black-buzzard": {
+    "page": "https://www.theblackbuzzard.com/event-calendar",
+    "home": "https://www.theblackbuzzard.com/"
+  },
+  "roxy": {
+    "endpoint": "https://aftontickets.com/api/get-events?key=732e49e3d992ab7ff998f13c3a2d3f08&per_page=12&page="
+  },
+  "black-box": {
+    "endpoint": "https://yotaohjqtxebyhlzezjl.supabase.co/rest/v1/events",
+    "page": "https://blackboxdenver.co/events",
+    "ticket_origin": "https://events.blackboxdenver.co"
+  },
+  "meow-wolf-denver": {
+    "origin": "https://tickets.meowwolf.com",
+    "seller_id": "017a7f54-e443-a261-3c55-46ef4d921efb",
+    "city": "denver"
+  }
+}

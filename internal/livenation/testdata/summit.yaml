@@ -1,4 +1,6 @@
 schema_version: 1
+adapter_options:
+  venue_ids: "KovZpZAFFt1A,KovZ917AQXY"
 source: {id: summit, adapter: livenation-venue-events}
 state: new
 venue:

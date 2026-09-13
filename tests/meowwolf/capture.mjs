@@ -5,10 +5,15 @@ import { mkdtempSync, chmodSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { captureProfile } from "../capture-profile.mjs";
 
-const base = "https://tickets.meowwolf.com";
-const index = base + "/events/denver/";
-const sellerID = "017a7f54-e443-a261-3c55-46ef4d921efb";
+const captureSettings = captureProfile(
+  process.env.CAPTURE_SOURCE || "meow-wolf-denver",
+);
+const base = captureSettings.origin;
+const city = captureSettings.city;
+const index = base + `/events/${city}/`;
+const sellerID = captureSettings.seller_id;
 const identity =
   /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}__[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const selected = new Set([
@@ -54,9 +59,11 @@ export function listing(props, hrefs) {
   if (
     !isDeepStrictEqual(
       hrefs
-        .map((h) => h.replace(/^\/denver\/events\//, "/events/denver/"))
+        .map((h) =>
+          h.replace(new RegExp(`^/${city}/events/`), `/events/${city}/`),
+        )
         .sort(),
-      rows.map((e) => `/events/denver/${e.url}/`).sort(),
+      rows.map((e) => `/events/${city}/${e.url}/`).sort(),
     )
   )
     throw Error("Rendered listing mismatch");
@@ -64,7 +71,7 @@ export function listing(props, hrefs) {
 }
 export function detail(props, row) {
   if (
-    props?.__N_REDIRECT === "/events/denver/" ||
+    props?.__N_REDIRECT === `/events/${city}/` ||
     props?.isExhibitions === true
   )
     return { error: "unrelated redirect" };
@@ -161,7 +168,7 @@ export function documentProps(html) {
   const sellers = nodes.filter(
     (v) =>
       v.seller?.id === sellerID &&
-      ["denver/events", "events/denver"].includes(v.siteSlug),
+      [`${city}/events`, `events/${city}`].includes(v.siteSlug),
   );
   if (listings.length === 1 && sellers.length === 1)
     return {
@@ -214,7 +221,7 @@ async function read(browser) {
       if (!response?.ok())
         throw Error(`Detail HTTP ${response?.status()}: ${row.url}`);
       const path = new URL(page.url()).pathname;
-      if (["/events/denver/", "/denver/events/", "/denver/"].includes(path))
+      if ([`/events/${city}/`, `/${city}/events/`, `/${city}/`].includes(path))
         row.detail = { error: "unrelated redirect" };
       else row.detail = detail(documentProps(await response.text()), row);
       console.log(
@@ -261,7 +268,7 @@ if (
   for (const [name, value] of Object.entries({
     "snapshot.json": result.snapshot,
     "report.json": {
-      source: "meow-wolf-denver",
+      source: captureSettings.source_id,
       captured_at: result.captured_at,
       url: index,
     },

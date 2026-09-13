@@ -3,14 +3,16 @@ services:
     build:
       context: .
       target: runtime
+      args:
+        LOCALE: ${CALENDAR_LOCALE:?Select a locale with --env-file locales/<id>/compose.env}
     ports:
       - "127.0.0.1:${CALENDAR_PORT:-8090}:8080"
     environment:
-      WEEK_EVENT_LIMIT: ${WEEK_EVENT_LIMIT:-10}
-      MONTH_EVENT_LIMIT: ${MONTH_EVENT_LIMIT:-5}
-      DAY_EVENT_LIMIT: ${DAY_EVENT_LIMIT:-0}
+      WEEK_EVENT_LIMIT: ${WEEK_EVENT_LIMIT:-}
+      MONTH_EVENT_LIMIT: ${MONTH_EVENT_LIMIT:-}
+      DAY_EVENT_LIMIT: ${DAY_EVENT_LIMIT:-}
     volumes:
-      - ${CALENDAR_DATA_DIR:-./.artifacts}:/data:ro
+      - ${CALENDAR_DATA_DIR:-./.artifacts/${CALENDAR_LOCALE}}:/data:ro
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -18,15 +20,15 @@ services:
       - ALL
 
   # Explicit publication only; no live adapters or scheduled jobs yet.
-  # Uncomment to enable, then run: docker compose run --rm ingestion publish ...
+  # Uncomment to enable, then run: docker compose --env-file locales/<id>/compose.env run --rm ingestion publish ...
   # ingestion:
   #   build:
   #     context: .
   #     target: ingestion
   #   user: "${INGEST_UID:-65532}:${INGEST_GID:-65532}"
   #   volumes:
-  #     - ${CALENDAR_DATA_DIR:-./.artifacts}:/data
-  #     - ${CALENDAR_CANDIDATE_DIR:-./.candidates}:/input:ro
+  #     - ${CALENDAR_DATA_DIR:-./.artifacts/${CALENDAR_LOCALE}}:/data
+  #     - ${CALENDAR_CANDIDATE_DIR:-./.candidates/${CALENDAR_LOCALE}}:/input:ro
   #   read_only: true
   #   security_opt:
   #     - no-new-privileges:true

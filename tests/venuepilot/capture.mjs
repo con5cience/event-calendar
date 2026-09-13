@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile(process.env.CAPTURE_SOURCE || "levitt");
 // Public, read-only widget query scoped to Levitt. No credentials required.
 import { isDeepStrictEqual } from "node:util";
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
@@ -5,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const endpoint = "https://www.venuepilot.co/graphql";
+const endpoint = captureSettings.endpoint;
 const query = `query ($accountIds: [Int!]!, $startDate: String!, $endDate: String, $limit: Int, $page: Int) {
   paginatedEvents(arguments: {accountIds: $accountIds, startDate: $startDate, endDate: $endDate, limit: $limit, page: $page}) {
     collection { id name date doorTime startTime minimumAge status description ticketsUrl venue { name } }
@@ -19,7 +21,7 @@ export async function queryPage(from, through, page, fetcher = fetch) {
     body: JSON.stringify({
       query,
       variables: {
-        accountIds: [1105],
+        accountIds: [captureSettings.account_id],
         startDate: from,
         endDate: through,
         limit: 5,
@@ -87,7 +89,7 @@ export function validateSnapshot(events, check) {
 export async function capture() {
   const captured_at = new Date().toISOString();
   const from = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Denver",
+    timeZone: captureSettings.timezone,
   }).format(new Date(captured_at));
   const end = new Date(from + "T12:00:00Z");
   end.setUTCFullYear(end.getUTCFullYear() + 1);
@@ -107,13 +109,15 @@ if (
   if (process.argv.length !== 2)
     throw Error("Usage: node tests/venuepilot/capture.mjs");
   const result = await capture();
-  const directory = mkdtempSync(join(tmpdir(), "event-calendar-levitt-"));
+  const directory = mkdtempSync(
+    join(tmpdir(), `event-calendar-${captureSettings.source_id}-`),
+  );
   chmodSync(directory, 0o755);
   for (const [name, value] of Object.entries({
     "snapshot.json": result.snapshot,
     "report.json": {
-      source: "levitt",
-      account_id: 1105,
+      source: captureSettings.source_id,
+      account_id: captureSettings.account_id,
       endpoint,
       captured_at: result.captured_at,
     },

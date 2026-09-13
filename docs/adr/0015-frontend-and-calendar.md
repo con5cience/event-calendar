@@ -1,5 +1,8 @@
 # ADR 0015: React SPA with FullCalendar
 
+Locale presentation settings now come from the Go host's `/api/site`, as specified
+in [ADR 0023](0023-locale-isolation.md). There is no compiled-in Denver configuration.
+
 - Status: FullCalendar selection accepted; first-milestone integration verified. Remaining production design proposed.
 - Date: 2026-09-08
 - Scope: Implementation design and the first-milestone integration result below.
@@ -21,6 +24,20 @@ Graph, and summary-card metadata into the compiled Vite shell. Render basic
 event information or homepage event links inside the root; React replaces this
 content on startup. The response is the same for visitors and crawlers. There
 is no separate crawler route or user-agent detection. The calendar stays a SPA.
+
+The fallback list sorts a copy of the projected events by date, venue-local doors
+or show time, venue, artist/title and stable ID. Untimed events come first in each
+date. Text comparison uses the selected locale with numeric, case-insensitive
+ordering. Rendering must not reorder the catalog or the calendar API response.
+
+A small parser-blocking same-origin script in the head selects the loading state
+before body rendering. Critical theme/loading styles are in the initial head.
+The normal JavaScript path hides only the fallback and displays “Loading
+calendar…” until React has replaced it. No-JavaScript visitors retain the visible
+sorted fallback. Module/configuration failures or a 15-second startup deadline
+restore fallback visibility; slow or broken startup must not hide it forever.
+The script uses the existing `script-src 'self'` policy. No inline-script
+permission, crawler detection, data duplication or new framework is introduced.
 
 Canonical and preview URLs use the fixed public origin
 `https://denver.withadult.com`, never request headers. The existing approved

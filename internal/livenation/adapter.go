@@ -39,11 +39,7 @@ type venueProfile struct {
 	ids           map[string]bool
 }
 
-var profiles = map[string]venueProfile{
-	"fillmore": {"Fillmore Auditorium", "https://www.fillmoredenver.com", map[string]bool{"KovZpZAE6eJA": true}},
-	"marquis":  {"Marquis", "https://www.marquisdenver.com", map[string]bool{"KovZpZAJeFkA": true}},
-	"summit":   {"Summit", "https://www.summitdenver.com", map[string]bool{"KovZpZAFFt1A": true, "KovZ917AQXY": true}},
-}
+var venueID = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
 func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refresh, error) {
 	fail := func(s string) (artifact.Refresh, error) { return artifact.Refresh{}, fmt.Errorf("livenation: %s", s) }
@@ -55,8 +51,14 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	profile, ok := profiles[cfg.Source.ID]
-	if !ok || cfg.Source.Adapter != "livenation-venue-events" || cfg.Venue.Key != cfg.Source.ID || cfg.Venue.Name != profile.name || cfg.Venue.Timezone != "America/Denver" || cfg.Venue.Website != profile.website || len(cfg.AdapterOptions) != 0 {
+	profile := venueProfile{cfg.Venue.Name, cfg.Venue.Website, map[string]bool{}}
+	for _, id := range strings.Split(cfg.AdapterOptions["venue_ids"], ",") {
+		if !venueID.MatchString(id) {
+			return fail("invalid configured venue ID")
+		}
+		profile.ids[id] = true
+	}
+	if cfg.Source.Adapter != "livenation-venue-events" || cfg.Venue.Key != cfg.Source.ID || cfg.Venue.Website == "" || len(cfg.AdapterOptions) != 1 {
 		return fail("unsupported config")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {
@@ -129,7 +131,7 @@ func normalize(raw []byte, loc *time.Location, profile venueProfile) (artifact.E
 	d.EventURL = e.URL
 	d.TicketURL = e.URL
 	instant, err := time.Parse(time.RFC3339, e.UTC)
-	if err != nil || e.Timezone != "America/Denver" || instant.In(loc).Format("2006-01-02") != e.Date || instant.In(loc).Format("15:04:05") != e.Time {
+	if err != nil || e.Timezone != loc.String() || instant.In(loc).Format("2006-01-02") != e.Date || instant.In(loc).Format("15:04:05") != e.Time {
 		return d, fmt.Errorf("inconsistent date/time")
 	}
 	// The public listing timestamp matches doors in the reviewed records. Explicit

@@ -1,10 +1,12 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
 } from "react";
+import { site } from "./site";
 import FullCalendar, { type CalendarRef } from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/react/daygrid";
 import listPlugin from "@fullcalendar/react/list";
@@ -39,6 +41,10 @@ const viewName = (view: View, mobile: boolean) =>
   `${mobile ? "list" : "dayGrid"}${view[0].toUpperCase()}${view.slice(1)}`;
 
 export function App() {
+  useLayoutEffect(() => {
+    // React has replaced the fallback; reveal the app before this frame paints.
+    window.dispatchEvent(new Event("calendar-startup-ready"));
+  }, []);
   const [data, setData] = useState<CalendarData | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -58,9 +64,9 @@ export function App() {
     <div className="app-shell">
       <header className="page-header">
         <span className="brand-name">
-          withAdult(<span className="brand-city">denver</span>)
+          withAdult(<span className="brand-city">{site.city}</span>)
         </span>
-        <span className="brand-tagline">: Bring your people.</span>
+        <span className="brand-tagline">: {site.tagline}</span>
       </header>
       <main>
         {error ? (
@@ -214,7 +220,7 @@ function Calendar({ data }: { data: CalendarData }) {
     }
   }
   const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Denver",
+    timeZone: site.timezone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -387,7 +393,8 @@ function Calendar({ data }: { data: CalendarData }) {
               },
             }}
             initialDate={data.initial_date || today}
-            firstDay={0}
+            firstDay={site.week_start}
+            locale={site.language}
             timeZone="UTC"
             headerToolbar={false}
             height={fitGrid ? "100%" : "auto"}

@@ -2,6 +2,7 @@
 package main
 
 import (
+	"event-calendar/internal/locale"
 	"event-calendar/internal/store"
 	"fmt"
 	"io"
@@ -10,18 +11,32 @@ import (
 )
 
 func run(args []string, errout io.Writer) int {
+	var site *locale.Config
+	if len(args) == 4 && args[0] == "--site" {
+		c, err := locale.Load(args[1])
+		if err != nil {
+			fmt.Fprintln(errout, err)
+			return 1
+		}
+		if err := c.ValidateSourceFiles(args[1]); err != nil {
+			fmt.Fprintln(errout, err)
+			return 1
+		}
+		site = &c
+		args = args[2:]
+	}
 	if len(args) != 2 {
-		fmt.Fprintln(errout, "usage: package-snapshot INPUT_DIR NEW_OUTPUT_DIR")
+		fmt.Fprintln(errout, "usage: package-snapshot [--site SITE_DIR] INPUT_DIR NEW_OUTPUT_DIR")
 		return 2
 	}
-	if err := pack(args[0], args[1]); err != nil {
+	if err := pack(args[0], args[1], site); err != nil {
 		fmt.Fprintln(errout, err)
 		return 1
 	}
 	return 0
 }
 
-func pack(input, output string) error {
+func pack(input, output string, site ...*locale.Config) error {
 	root, err := os.OpenRoot(input)
 	if err != nil {
 		return err
@@ -33,7 +48,7 @@ func pack(input, output string) error {
 	}
 	// Keep the exact validated bytes. Never reopen mutable input while copying.
 	documents := map[string][]byte{"catalog.json": catalog}
-	_, _, err = store.Validate(catalog, func(name string) ([]byte, error) {
+	_, all, err := store.Validate(catalog, func(name string) ([]byte, error) {
 		b, err := store.ReadDocument(root, name)
 		if err == nil {
 			documents[name] = b
@@ -42,6 +57,11 @@ func pack(input, output string) error {
 	})
 	if err != nil {
 		return err
+	}
+	if len(site) > 0 && site[0] != nil {
+		if err := site[0].ValidateArtifacts(all); err != nil {
+			return err
+		}
 	}
 	// Refuse replacement, including the input directory. Build failure discards
 	// any partial output; this is not a live publication operation.

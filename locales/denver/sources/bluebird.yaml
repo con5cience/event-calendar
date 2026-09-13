@@ -1,0 +1,41 @@
+schema_version: 1
+source: { id: bluebird, adapter: aeg-json }
+state: established
+venue:
+  key: bluebird
+  name: Bluebird Theater
+  timezone: America/Denver
+  website: https://www.bluebirdtheater.net
+adapter_options:
+  feed_id: "2"
+  venue_id: "100811"
+admission_rules:
+  All ages:
+    url: https://www.bluebirdtheater.net/frequently-asked-questions/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 10,
+          condition: Parent or legal guardian required,
+        }
+      - { min_age: 11, max_age: 17, condition: Permitted at this age }
+  16+:
+    url: https://www.bluebirdtheater.net/frequently-asked-questions/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 10,
+          condition: Parent or legal guardian required,
+        }
+      - { min_age: 11, max_age: 15, condition: Ticketed adult required }
+      - { min_age: 16, max_age: 17, condition: Permitted at this age }
+  18+:
+    url: https://www.bluebirdtheater.net/frequently-asked-questions/
+    reviewed_on: "2026-09-09"
+    ranges: []
+  21+:
+    url: https://www.bluebirdtheater.net/frequently-asked-questions/
+    reviewed_on: "2026-09-09"
+    ranges: []

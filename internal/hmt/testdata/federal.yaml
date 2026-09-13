@@ -7,4 +7,5 @@ venue:
   timezone: America/Denver
   website: https://thefederaltheatre.com
 adapter_options:
+  layout: federal
   feed_id: "8693"

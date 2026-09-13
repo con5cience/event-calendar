@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"event-calendar/internal/artifact"
+	"event-calendar/internal/locale"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,6 +16,8 @@ import (
 )
 
 type Config struct {
+	Site                            locale.Config
+	SiteDir                         string
 	DataDir, AssetsDir, InitialDate string
 	WeekLimit, MonthLimit, DayLimit int
 	Now                             func() time.Time
@@ -22,12 +25,19 @@ type Config struct {
 
 func ConfigFromEnv() (Config, error) {
 	c := Config{DataDir: env("DATA_DIR", ".artifacts"), AssetsDir: env("ASSETS_DIR", "dist"), InitialDate: os.Getenv("CALENDAR_INITIAL_DATE")}
+	c.SiteDir = os.Getenv("SITE_DIR")
+	var err error
+	c.Site, err = locale.Load(c.SiteDir)
+	if err != nil {
+		return c, err
+	}
+	c.DataDir = env("DATA_DIR", filepath.Join(".artifacts", c.Site.ID))
 	for _, item := range []struct {
 		name              string
 		fallback, minimum int
 		dst               *int
 	}{
-		{"WEEK_EVENT_LIMIT", 10, 1, &c.WeekLimit}, {"MONTH_EVENT_LIMIT", 5, 1, &c.MonthLimit}, {"DAY_EVENT_LIMIT", 0, 0, &c.DayLimit},
+		{"WEEK_EVENT_LIMIT", c.Site.Limits.Week, 1, &c.WeekLimit}, {"MONTH_EVENT_LIMIT", c.Site.Limits.Month, 1, &c.MonthLimit}, {"DAY_EVENT_LIMIT", c.Site.Limits.Day, 0, &c.DayLimit},
 	} {
 		n, err := strconv.Atoi(env(item.name, strconv.Itoa(item.fallback)))
 		if err != nil || n < item.minimum {
@@ -72,7 +82,19 @@ type Event struct {
 
 func NewHandler(c Config) http.Handler {
 	mux := http.NewServeMux()
-	reader := &catalogReader{dir: c.DataDir}
+	reader := &catalogReader{dir: c.DataDir, site: c.Site}
+	mux.HandleFunc("GET /api/site", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method != http.MethodHead {
+			_ = json.NewEncoder(w).Encode(c.Site.Presentation)
+		}
+	})
+	if c.SiteDir != "" {
+		mux.HandleFunc("GET /assets/favicon.png", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filepath.Join(c.SiteDir, "assets", "favicon.png"))
+		})
+	}
 	now := c.Now
 	if now == nil {
 		now = time.Now
@@ -109,7 +131,7 @@ func NewHandler(c Config) http.Handler {
 	mux.HandleFunc("GET /robots.txt", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		if r.Method != http.MethodHead {
-			fmt.Fprint(w, "User-agent: *\nAllow: /\nSitemap: "+publicOrigin+"/sitemap.xml\n")
+			fmt.Fprint(w, "User-agent: *\nAllow: /\nSitemap: "+c.Site.Origin+"/sitemap.xml\n")
 		}
 	})
 	mux.HandleFunc("GET /sitemap.xml", func(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +143,7 @@ func NewHandler(c Config) http.Handler {
 				return
 			}
 		}
-		serveSitemap(w, r, events)
+		serveSitemap(w, r, events, c.Site.Origin)
 	})
 	eventHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
@@ -139,7 +161,7 @@ func NewHandler(c Config) http.Handler {
 				continue
 			}
 			if strings.HasSuffix(r.URL.Path, ".ics") {
-				body, err := eventCalendar(e, now())
+				body, err := eventCalendar(e, now(), c.Site.ICSNamespace)
 				if err != nil {
 					http.Error(w, "Event export is unavailable", 503)
 					return
@@ -153,7 +175,7 @@ func NewHandler(c Config) http.Handler {
 					log.Printf("event response: %v", err)
 				}
 			} else {
-				servePage(w, r, c.AssetsDir, eventPage(e))
+				servePage(w, r, c.AssetsDir, eventPage(e, c.Site))
 			}
 			return
 		}
@@ -167,7 +189,7 @@ func NewHandler(c Config) http.Handler {
 			if err != nil {
 				log.Printf("homepage artifact: %v", err)
 			}
-			servePage(w, r, c.AssetsDir, pageMetadata{Title: siteTitle, Description: siteDescription, Canonical: publicOrigin + "/", Events: events, Unavailable: events == nil && err != nil})
+			servePage(w, r, c.AssetsDir, pageMetadata{Site: c.Site, Title: c.Site.Title(), Description: c.Site.Description, Canonical: c.Site.Origin + "/", Events: events, Unavailable: events == nil && err != nil})
 			return
 		}
 		if r.URL.Path != "/" && !strings.HasPrefix(r.URL.Path, "/assets/") {

@@ -1,5 +1,7 @@
 # ADR 0014: Product and delivery contract
 
+Locale configuration and independent deployment now follow [ADR 0023](0023-locale-isolation.md).
+
 - Status: Accepted for the product decisions below; implementation choices marked open remain undecided.
 - Date: 2026-09-08
 - Basis: Product interview, rounds 1–8, and the final cost-bracket correction.

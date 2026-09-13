@@ -42,9 +42,13 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	if err != nil {
 		return artifact.Refresh{}, err
 	}
-	profiles := map[string]struct{ key, name, website string }{"6457": {"hq", "HQ", "https://www.hqdenver.com"}, "801": {"oriental", "The Oriental Theater", "https://www.theorientaltheater.com"}, "8693": {"federal", "The Federal Theatre", "https://thefederaltheatre.com"}}
-	p, ok := profiles[cfg.AdapterOptions["feed_id"]]
-	if !ok || cfg.Source.Adapter != "holdmyticket-ical" || cfg.Source.ID != p.key || cfg.Venue.Key != p.key || cfg.Venue.Name != p.name || cfg.Venue.Website != p.website || cfg.Venue.Timezone != "America/Denver" || len(cfg.AdapterOptions) != 1 {
+	p := struct{ name string }{cfg.Venue.Name}
+	layout := cfg.AdapterOptions["layout"]
+	options := 1
+	if layout != "" {
+		options++
+	}
+	if cfg.Source.Adapter != "holdmyticket-ical" || cfg.Venue.Key != cfg.Source.ID || cfg.Venue.Website == "" || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(cfg.AdapterOptions["feed_id"]) || (layout != "" && layout != "federal") || len(cfg.AdapterOptions) != options {
 		return fail("unsupported source configuration")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {
@@ -64,7 +68,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 		return fail("incomplete calendar envelope")
 	}
 	calendar := s.Calendar
-	if p.key == "federal" {
+	if layout == "federal" {
 		calendar, err = stripFederalDescriptions(calendar)
 		if err != nil {
 			return fail(err.Error())
@@ -78,7 +82,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 	for _, prop := range cal.CalendarProperties {
 		props[prop.IANAToken] = strings.TrimSpace(prop.Value)
 	}
-	if props["X-WR-TIMEZONE"] != "America/Denver" || props["X-WR-CALNAME"] != p.name {
+	if props["X-WR-TIMEZONE"] != cfg.Venue.Timezone || props["X-WR-CALNAME"] != p.name {
 		return fail("calendar timezone or venue mismatch")
 	}
 	loc, _ := time.LoadLocation(cfg.Venue.Timezone)
@@ -114,7 +118,7 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 		// Federal review (2026-09-10): explicit All Ages event evidence supports
 		// child admission. No accompaniment exception for restricted shows is
 		// inferred. Reconciliation still applies configured event overrides.
-		if err == nil && p.key == "federal" && data.AdmissionPolicy != nil && data.AdmissionPolicy.Category == "All ages" {
+		if err == nil && layout == "federal" && data.AdmissionPolicy != nil && data.AdmissionPolicy.Category == "All ages" {
 			data.AdmissionPolicy.WithAdult = &artifact.AdultAdmission{
 				URL: data.EventURL, ReviewedOn: "2026-09-10",
 				Ranges: []artifact.AdmissionRange{{MinAge: 0, MaxAge: 17, Condition: "All ages event; attend with adult and follow event conditions"}},

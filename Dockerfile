@@ -31,9 +31,12 @@ USER 65532:65532
 ENTRYPOINT ["/ingest"]
 
 FROM scratch AS runtime
+ARG LOCALE
 COPY --from=backend /calendar /calendar
 COPY --from=frontend /build/dist /app/dist
+COPY locales/${LOCALE}/site.json /app/site/site.json
+COPY locales/${LOCALE}/assets/ /app/site/assets/
 USER 65532:65532
-ENV PORT=8080 ASSETS_DIR=/app/dist DATA_DIR=/data
+ENV PORT=8080 ASSETS_DIR=/app/dist DATA_DIR=/data SITE_DIR=/app/site
 EXPOSE 8080
 ENTRYPOINT ["/calendar"]

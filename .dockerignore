@@ -2,6 +2,8 @@
 node_modules
 dist
 .artifacts
+.captures
+.builds
 coverage
 test-results
 playwright-report

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { venueColor, venueColors } from "./venueColors";
+import { venueColor } from "./venueColors";
+import { site } from "./site";
 
 describe("fixed venue palette", () => {
   it("assigns a unique approved color to every integrated venue", () => {
-    expect(Object.keys(venueColors)).toHaveLength(26);
-    expect(new Set(Object.values(venueColors)).size).toBe(26);
+    expect(Object.keys(site.venue_colors)).toHaveLength(26);
+    expect(new Set(Object.values(site.venue_colors)).size).toBe(26);
     expect(venueColor("Gothic Theatre")).toBe("#FFAD52");
     expect(venueColor("Mission Ballroom")).toBe("#56F0E5");
     expect(venueColor("Fiddler's Green Amphitheatre")).toBe("#228F60");

@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"event-calendar/internal/locale"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,7 +21,19 @@ func fixtureServer(t *testing.T) (http.Handler, string) {
 	if err := os.WriteFile(filepath.Join(assets, "index.html"), []byte(`<html><head><title>calendar shell</title></head><body><div id="root"></div><script src="/assets/app.js"></script><!-- calendar shell --></body></html>`), 0644); err != nil {
 		t.Fatal(err)
 	}
-	return NewHandler(Config{DataDir: filepath.Join(root, "data"), AssetsDir: assets, WeekLimit: 10, MonthLimit: 5}), root
+	return NewHandler(Config{Site: testSite(), DataDir: filepath.Join(root, "data"), AssetsDir: assets, WeekLimit: 10, MonthLimit: 5}), root
+}
+func testSite() locale.Config {
+	b, err := os.ReadFile("../../tests/contracts/site.json")
+	if err != nil {
+		panic(err)
+	}
+	c, err := locale.Decode(b)
+	if err != nil {
+		panic(err)
+	}
+	c.Sources = nil // These existing tests exercise catalog validation independently.
+	return c
 }
 func TestEmptyDirectoryReturnsEmptyCalendar(t *testing.T) {
 	h, root := fixtureServer(t)
@@ -86,6 +99,7 @@ func TestRoutesDoNotExposeArtifactsOrInventSPARoutes(t *testing.T) {
 	}
 }
 func TestConfigDefaultsAndValidation(t *testing.T) {
+	t.Setenv("SITE_DIR", "../../tests/contracts")
 	t.Setenv("WEEK_EVENT_LIMIT", "3")
 	t.Setenv("MONTH_EVENT_LIMIT", "2")
 	t.Setenv("DAY_EVENT_LIMIT", "0")

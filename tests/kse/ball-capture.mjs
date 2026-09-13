@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("ball-arena");
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -6,12 +8,12 @@ import { isDeepStrictEqual } from "node:util";
 
 export async function captureBall(fetcher = fetch, now = new Date()) {
   const from = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Denver",
+    timeZone: captureSettings.timezone,
   }).format(now);
   const [year, month, day] = from.split("-");
   const through = `${Number(year) + 1}-${month}-${day}`;
-  const api = `https://alttix.ksehq.com/api/tm/Calendar?Id=1&start=${from}&end=${through}`;
-  const listingURL = "https://www.ballarena.com/misc/all-events/";
+  const api = `${captureSettings.endpoint}&start=${from}&end=${through}`;
+  const listingURL = captureSettings.page;
   async function request(url) {
     const r = await fetcher(url, {
       redirect: "error",

@@ -2,6 +2,7 @@ package web
 
 import (
 	"event-calendar/internal/artifact"
+	"event-calendar/internal/locale"
 	"event-calendar/internal/store"
 	"io"
 	"os"
@@ -13,6 +14,7 @@ import (
 // catalogReader serializes refreshes so a slower request cannot install an older
 // snapshot after a newer request. A failed refresh never replaces lastGood.
 type catalogReader struct {
+	site        locale.Config
 	mu          sync.Mutex
 	dir         string
 	lastGood    []artifact.Artifact
@@ -46,6 +48,9 @@ func (r *catalogReader) load() ([]artifact.Artifact, error) {
 		return nil, err
 	}
 	_, next, err := store.Validate(b, func(name string) ([]byte, error) { return store.ReadDocument(root, name) })
+	if err == nil && r.site.Sources != nil {
+		err = r.site.ValidateArtifacts(next)
+	}
 	return next, err
 }
 

@@ -1,0 +1,9 @@
+schema_version: 1
+source: { id: roxy, adapter: afton }
+state: established
+venue:
+  key: roxy
+  name: The Roxy Theatre
+  timezone: America/Denver
+  website: https://www.theroxydenver.com/calendar
+  address: 2549 Welton St, Denver, CO 80205

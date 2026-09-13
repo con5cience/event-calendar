@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "id": "denver",
+  "city": "denver",
+  "name": "withAdult(denver)",
+  "tagline": "Bring your people.",
+  "description": "Find Denver-area events and explore reviewed venue admission policies with the With Adult age filter. Check event and venue details before buying tickets.",
+  "origin": "https://denver.withadult.com",
+  "timezone": "America/Denver",
+  "language": "en-US",
+  "week_start": 0,
+  "default_view": "week",
+  "storage_namespace": "event-calendar",
+  "ics_namespace": "event-calendar",
+  "image_alt": "Purple Denver emblem for withAdult(denver)",
+  "image_width": 554,
+  "image_height": 554,
+  "limits": {
+    "week": 10,
+    "month": 5,
+    "day": 0
+  },
+  "venue_colors": {
+    "Ball Arena": "#00B8D4",
+    "The Black Box": "#AC4FE8",
+    "The Black Buzzard": "#B8C0CC",
+    "Bluebird Theater": "#90D8FF",
+    "Cervantes": "#F4DD55",
+    "The Federal Theatre": "#899633",
+    "Fiddler's Green Amphitheatre": "#228F60",
+    "Fillmore Auditorium": "#D9B6FF",
+    "Globe Hall": "#D58A16",
+    "Gothic Theatre": "#FFAD52",
+    "Herb's": "#F6D8B0",
+    "Hi-Dive": "#BCED79",
+    "HQ": "#427BE8",
+    "Larimer Lounge": "#FF82C5",
+    "Levitt Pavilion Denver": "#A85583",
+    "Lost Lake": "#286C9B",
+    "Marquis": "#F1F1EC",
+    "Meow Wolf Denver": "#E335D1",
+    "Mission Ballroom": "#56F0E5",
+    "Ogden Theatre": "#B78059",
+    "Ophelia's Electric Soapbox": "#247F7B",
+    "The Oriental Theater": "#D0B7D0",
+    "Paramount Theatre": "#9F792D",
+    "Red Rocks Amphitheatre": "#DD7027",
+    "The Roxy Theatre": "#71828E",
+    "Summit": "#7379BD"
+  },
+  "sources": {
+    "ball-arena": {
+      "adapter": "kse-calendar",
+      "venue_key": "ball-arena"
+    },
+    "black-box": {
+      "adapter": "supabase-events",
+      "venue_key": "black-box"
+    },
+    "black-buzzard": {
+      "adapter": "html-buzzard",
+      "venue_key": "black-buzzard"
+    },
+    "bluebird": {
+      "adapter": "aeg-json",
+      "venue_key": "bluebird"
+    },
+    "cervantes": {
+      "adapter": "rhp-calendar",
+      "venue_key": "cervantes"
+    },
+    "federal": {
+      "adapter": "holdmyticket-ical",
+      "venue_key": "federal"
+    },
+    "fiddlers-green": {
+      "adapter": "aeg-json",
+      "venue_key": "fiddlers-green"
+    },
+    "fillmore": {
+      "adapter": "livenation-venue-events",
+      "venue_key": "fillmore"
+    },
+    "globe-hall": {
+      "adapter": "rhp-calendar",
+      "venue_key": "globe-hall"
+    },
+    "gothic": {
+      "adapter": "aeg-json",
+      "venue_key": "gothic"
+    },
+    "herbs": {
+      "adapter": "html-herbs",
+      "venue_key": "herbs"
+    },
+    "hi-dive": {
+      "adapter": "plot-listings",
+      "venue_key": "hi-dive"
+    },
+    "hq": {
+      "adapter": "holdmyticket-ical",
+      "venue_key": "hq"
+    },
+    "larimer": {
+      "adapter": "rhp-calendar",
+      "venue_key": "larimer"
+    },
+    "levitt": {
+      "adapter": "venuepilot",
+      "venue_key": "levitt"
+    },
+    "lost-lake": {
+      "adapter": "rhp-calendar",
+      "venue_key": "lost-lake"
+    },
+    "marquis": {
+      "adapter": "livenation-venue-events",
+      "venue_key": "marquis"
+    },
+    "meow-wolf-denver": {
+      "adapter": "embedded-nextjs",
+      "venue_key": "meow-wolf-denver"
+    },
+    "mission": {
+      "adapter": "aeg-json",
+      "venue_key": "mission"
+    },
+    "ogden": {
+      "adapter": "aeg-json",
+      "venue_key": "ogden"
+    },
+    "ophelias": {
+      "adapter": "html-ophelias",
+      "venue_key": "ophelias"
+    },
+    "oriental": {
+      "adapter": "holdmyticket-ical",
+      "venue_key": "oriental"
+    },
+    "paramount": {
+      "adapter": "kse-venue-events",
+      "venue_key": "paramount"
+    },
+    "red-rocks": {
+      "adapter": "clique-calendar",
+      "venue_key": "red-rocks"
+    },
+    "roxy": {
+      "adapter": "afton",
+      "venue_key": "roxy"
+    },
+    "summit": {
+      "adapter": "livenation-venue-events",
+      "venue_key": "summit"
+    }
+  }
+}

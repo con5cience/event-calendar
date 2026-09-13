@@ -1,0 +1,11 @@
+schema_version: 1
+source: { id: federal, adapter: holdmyticket-ical }
+state: established
+venue:
+  key: federal
+  name: The Federal Theatre
+  timezone: America/Denver
+  website: https://thefederaltheatre.com
+adapter_options:
+  layout: federal
+  feed_id: "8693"

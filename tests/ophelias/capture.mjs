@@ -1,3 +1,5 @@
+import { captureProfile } from "../capture-profile.mjs";
+const captureSettings = captureProfile("ophelias");
 // Read-only HTTP capture. Replay parses and compares event fields in both pages.
 import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { readHTML } from "../html/http.mjs";
 
 export async function capture(fetcher = fetch, now = new Date()) {
-  const read = () => readHTML("https://opheliasdenver.com/calendar/", fetcher);
+  const read = () => readHTML(captureSettings.page, fetcher);
   const from = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Denver",
   }).format(now);
@@ -42,7 +44,7 @@ if (
     join(directory, "report.json"),
     JSON.stringify({
       captured_at: result.captured_at,
-      url: "https://opheliasdenver.com/calendar/",
+      url: captureSettings.page,
       validation: "Replay must validate paired event fields before publication",
     }),
     { mode: 0o644 },

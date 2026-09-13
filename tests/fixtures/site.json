@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "denver",
+  "city": "denver",
+  "name": "withAdult(denver)",
+  "tagline": "Bring your people.",
+  "description": "Find Denver-area events and explore reviewed venue admission policies with the With Adult age filter. Check event and venue details before buying tickets.",
+  "origin": "https://denver.withadult.com",
+  "timezone": "America/Denver",
+  "language": "en-US",
+  "week_start": 0,
+  "default_view": "week",
+  "storage_namespace": "event-calendar",
+  "ics_namespace": "event-calendar",
+  "image_alt": "Purple Denver emblem for withAdult(denver)",
+  "image_width": 554,
+  "image_height": 554,
+  "limits": {
+    "week": 10,
+    "month": 5,
+    "day": 0
+  },
+  "venue_colors": {
+    "Ball Arena": "#00B8D4",
+    "The Black Box": "#AC4FE8",
+    "The Black Buzzard": "#B8C0CC",
+    "Bluebird Theater": "#90D8FF",
+    "Cervantes": "#F4DD55",
+    "The Federal Theatre": "#899633",
+    "Fiddler's Green Amphitheatre": "#228F60",
+    "Fillmore Auditorium": "#D9B6FF",
+    "Globe Hall": "#D58A16",
+    "Gothic Theatre": "#FFAD52",
+    "Herb's": "#F6D8B0",
+    "Hi-Dive": "#BCED79",
+    "HQ": "#427BE8",
+    "Larimer Lounge": "#FF82C5",
+    "Levitt Pavilion Denver": "#A85583",
+    "Lost Lake": "#286C9B",
+    "Marquis": "#F1F1EC",
+    "Meow Wolf Denver": "#E335D1",
+    "Mission Ballroom": "#56F0E5",
+    "Ogden Theatre": "#B78059",
+    "Ophelia's Electric Soapbox": "#247F7B",
+    "The Oriental Theater": "#D0B7D0",
+    "Paramount Theatre": "#9F792D",
+    "Red Rocks Amphitheatre": "#DD7027",
+    "The Roxy Theatre": "#71828E",
+    "Summit": "#7379BD"
+  },
+  "sources": {
+    "hq": {
+      "adapter": "synthetic",
+      "venue_key": "hq"
+    },
+    "gothic": {
+      "adapter": "synthetic",
+      "venue_key": "gothic"
+    },
+    "mission": {
+      "adapter": "synthetic",
+      "venue_key": "mission"
+    }
+  }
+}

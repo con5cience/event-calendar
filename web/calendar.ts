@@ -1,4 +1,5 @@
 import type { EventInput } from "@fullcalendar/react";
+import { site, siteCollator } from "./site";
 import type { AgeCategory, AdultAdmission } from "./artifacts/types";
 
 export const ageCategories: readonly AgeCategory[] = [
@@ -61,7 +62,7 @@ export function displayStatus(event: CalendarEvent): "Scheduled" | "Cancelled" {
 export function displayTime(event: CalendarEvent): string {
   const instant = event.doors_at || event.show_at;
   if (!instant) return "";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(site.language, {
     timeZone: event.timezone,
     hour: "2-digit",
     minute: "2-digit",
@@ -70,17 +71,13 @@ export function displayTime(event: CalendarEvent): string {
   }).format(new Date(instant));
 }
 
-const collator = new Intl.Collator("en", {
-  numeric: true,
-  sensitivity: "base",
-});
 export function compareEvents(a: CalendarEvent, b: CalendarEvent): number {
   return (
     a.date.localeCompare(b.date) ||
     displayTime(a).slice(0, 5).localeCompare(displayTime(b).slice(0, 5)) ||
-    collator.compare(a.venue, b.venue) ||
-    collator.compare(a.artist || a.title, b.artist || b.title) ||
-    collator.compare(a.title, b.title) ||
+    siteCollator.compare(a.venue, b.venue) ||
+    siteCollator.compare(a.artist || a.title, b.artist || b.title) ||
+    siteCollator.compare(a.title, b.title) ||
     a.id.localeCompare(b.id)
   );
 }
