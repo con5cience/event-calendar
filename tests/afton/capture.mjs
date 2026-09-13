@@ -8,6 +8,56 @@ import { readHTML } from "../html/http.mjs";
 import { compactHTML } from "../rhp/capture.mjs";
 
 const endpoint = captureSettings.endpoint;
+// Failure-only evidence, not an alternate event parser. Never emit body text.
+async function failureEvidence(response) {
+  const headers = {};
+  for (const name of [
+    "server",
+    "retry-after",
+    "x-amzn-waf-action",
+    "cf-mitigated",
+  ]) {
+    const value = response.headers.get(name);
+    if (value !== null) headers[name] = value.slice(0, 200);
+  }
+  const chunks = [];
+  let size = 0,
+    truncated = false,
+    failed = false;
+  const reader = response.body?.getReader();
+  try {
+    while (reader && size < 16384) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = value.subarray(0, 16384 - size);
+      chunks.push(chunk);
+      size += chunk.byteLength;
+      // Conservative: reaching the cap means the remainder was not inspected.
+      if (size === 16384) truncated = true;
+    }
+  } catch {
+    failed = true;
+  } finally {
+    try {
+      await reader?.cancel();
+    } catch {
+      failed = true;
+    }
+  }
+  const body = new TextDecoder().decode(Buffer.concat(chunks)).toLowerCase();
+  return JSON.stringify({
+    headers,
+    body_bytes_inspected: size,
+    body_truncated: truncated,
+    body_read_failed: failed,
+    markers: [
+      "awswaf",
+      "challenge-platform",
+      "captcha",
+      "access denied",
+    ].filter((marker) => body.includes(marker)),
+  });
+}
 const fields = [
   "event_type",
   "event_id",
@@ -82,7 +132,9 @@ export async function capture(fetcher = fetch, now = new Date()) {
       const diagnostic = `pass=${pass} page=${n} status=${r.status} content_type=${JSON.stringify(contentType?.slice(0, 200) ?? null)}`;
       console.error(`roxy listing: ${diagnostic}`);
       if (!r.ok || !contentType?.includes("application/json"))
-        throw Error(`Afton HTTP or type failure: ${diagnostic}`);
+        throw Error(
+          `Afton HTTP or type failure: ${diagnostic} evidence=${await failureEvidence(r)}`,
+        );
       const reader = r.body.getReader(),
         chunks = [];
       let size = 0;

@@ -77,6 +77,76 @@ test("HTTP failure is fatal", async () => {
     /Afton HTTP or type failure.*pass=1.*page=1.*status=403.*content_type="text\/plain;charset=UTF-8"/,
   );
 });
+test("failure diagnostics expose only bounded headers and fixed body markers", async () => {
+  await assert.rejects(
+    capture(
+      async () =>
+        new Response('<script>window.awsWaf = "private-body"</script>', {
+          status: 202,
+          headers: {
+            "content-type": "text/html",
+            "x-amzn-waf-action": "challenge",
+            "retry-after": "30",
+            server: "s".repeat(300),
+            "set-cookie": "private-cookie",
+          },
+        }),
+    ),
+    (error) => {
+      assert.match(error.message, /"x-amzn-waf-action":"challenge"/);
+      assert.match(error.message, /"retry-after":"30"/);
+      assert.match(error.message, /"markers":\["awswaf"\]/);
+      assert(!error.message.includes("private-"));
+      assert(!error.message.includes("s".repeat(201)));
+      return true;
+    },
+  );
+});
+test("failure body inspection is capped and cancels the stream", async () => {
+  let cancelled = false;
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        new TextEncoder().encode("x".repeat(17000) + "awswaf"),
+      );
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  await assert.rejects(
+    capture(
+      async () =>
+        new Response(body, {
+          status: 202,
+          headers: { "content-type": "text/html" },
+        }),
+    ),
+    (error) => {
+      assert.match(error.message, /"body_bytes_inspected":16384/);
+      assert.match(error.message, /"body_truncated":true/);
+      assert.match(error.message, /"markers":\[\]/);
+      return true;
+    },
+  );
+  assert.equal(cancelled, true);
+});
+test("unreadable failure bodies preserve the original HTTP failure", async () => {
+  const body = new ReadableStream({
+    start(controller) {
+      controller.error(Error("private-error"));
+    },
+  });
+  await assert.rejects(
+    capture(async () => new Response(body, { status: 202 })),
+    (error) => {
+      assert.match(error.message, /Afton HTTP or type failure:.*status=202/);
+      assert.match(error.message, /"body_read_failed":true/);
+      assert(!error.message.includes("private-error"));
+      return true;
+    },
+  );
+});
 test("wrong content type reports its page and pass without logging the body or widget key", async () => {
   let calls = 0;
   await assert.rejects(

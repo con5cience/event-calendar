@@ -44,10 +44,30 @@ detail passes. This does not establish why the GitHub requests failed.
 
 Listing responses now log pass, page number, HTTP status, and content type. A
 rejected HTTP/content-type response includes those fields in its error as well.
-Content type is bounded and JSON-escaped. Response bodies, cookies, headers other
-than content type, and the widget key are not logged. Tests cover HTTP 403 and a
+Content type is bounded and JSON-escaped. Raw response bodies, cookies, and the
+widget key are not logged. Tests cover HTTP 403 and a
 200 HTML response during the second pass. Existing failure and pagination rules
 remain unchanged; no retry, spoofing, or browser fallback is introduced.
+
+Run `34785826381` narrowed the failure to page 1, pass 1: HTTP 202 with
+`text/html; charset=UTF-8`. The same anonymous request later returned HTTP 200
+JSON locally. The CI artifact contained neither the HTML body nor challenge
+headers, so a bot challenge remains unconfirmed.
+
+Failed responses now include a diagnostic object in the existing error report.
+Only `server`, `retry-after`, `x-amzn-waf-action`, and `cf-mitigated` headers are
+added, each capped at 200 characters and JSON-escaped. At most 16 KiB of the body
+is inspected under the existing request timeout; the stream is then cancelled.
+The report contains byte count, truncation/read-failure flags, and fixed markers
+(`awswaf`, `challenge-platform`, `captcha`, `access denied`), never body excerpts.
+Markers are clues, not proof of a specific provider or cause. A body read failure
+does not replace the original HTTP failure. No challenge code is executed.
+
+Tests first failed for the missing diagnostics, then passed with coverage for
+header bounds, exclusion of cookies/body text, body caps, stream cancellation,
+and body read errors. The existing JSON acceptance and pagination rules are
+unchanged. A new CI run is still needed to observe these diagnostics on the
+actual failing response.
 
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
