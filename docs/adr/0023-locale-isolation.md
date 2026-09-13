@@ -132,13 +132,48 @@ code-owned adapter runner table. Capture subprocesses have explicit output paths
 and do not publish. Go remains responsible for normalization, admission rules,
 identity, retention, and publication. No aggregator or new venue is introduced.
 
-Sources execute sequentially against isolated savepoints. A source must confirm
+Captures use a bounded pool (default 2; `CAPTURE_CONCURRENCY=1` restores serial
+capture; accepted range 1–4). Each adapter family shares a provider slot. The
+two KSE adapters share a slot, as do the two Wix adapters. This deliberately
+serializes RHP venues even though their public hostnames differ. New adapters
+must review shared provider infrastructure when assigning their group.
+Requests and paired passes inside each capture remain unchanged. All capture
+processes settle before ingestion begins, including failed captures. Capture
+failures become per-source report entries, not unhandled promise rejections.
+
+Ingestion and publication execute sequentially against isolated savepoints in
+registry order, regardless of capture completion order. A source must confirm
 durable publication and pass snapshot validation before its output becomes the
 next job's input. Failed sources retain their prior data. Final export replaces
 only the selected locale's tracked snapshot; raw data, reports, and recovery
 copies remain ignored under `.artifacts/refresh/<locale>/`. A per-locale lock
 prevents competing refresh/export commands. This is not a live-store replacement
 protocol. Preserve the previous snapshot for recovery after an interrupted rename.
+
+This avoids concurrent catalog writers and keeps the existing failure recovery
+contract. A GitHub job matrix would require a separate artifact merge protocol;
+parallel detail requests would increase load on individual providers. Neither is
+part of this change. There is no database, queue service, or schema change.
+
+Run `34785826381` provides the sequential baseline: its refresh step lasted
+464 seconds, with 442 seconds inside successful capture subprocesses. Eight raw
+start/end timestamp pairs were checked before summing. These times describe one
+CI run, not a predicted speedup. Measure the next CI run and runner memory before
+raising the default. Provider serialization and network variability limit gains.
+
+Verification for the capture-pool change:
+
+| Evidence source                                                                                                      | Raw observation or test result                                                                                                   | Supported finding                                                                                              | Material limit                               |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `npm run test:refresh`                                                                                               | 19 tests passed; independent captures overlapped, same-provider captures did not; serial writes preserved all successful updates | Pool bounds, ordering, and failure retention hold for controlled inputs                                        | No live-provider timing claim                |
+| `docker build --target refresh-test -t event-calendar-refresh-test .`; `docker run --rm event-calendar-refresh-test` | Build and four integration tests passed                                                                                          | CLI capture, Go ingestion, export, and HTTP consumption still work; invalid concurrency rejects before locking | Local synthetic upstreams                    |
+| `npm run test:contracts`                                                                                             | Go checks reused the unchanged cached layer; handoff and 91 frontend tests passed                                                | Existing producer/consumer contract remains valid                                                              | UI behavior unchanged; no new browser checks |
+| `npm run test:refresh-dry-run`                                                                                       | Five tests passed after rerunning with loopback permission                                                                       | Report and workflow-shell contracts remain valid                                                               | First sandbox run failed with `listen EPERM` |
+
+All capture-adapter unit suites, capture-profile and locale-tool tests, lint,
+formatting, and the frontend build (including type checking) passed. No workflow
+or source artifact was changed. A new CI run is required to measure speed and
+memory use; this change does not resolve Roxy's upstream HTML response.
 
 Exit code 2 means partial publication with a usable validated snapshot; code 1
 means failure. All-source failure does not replace the tracked snapshot. Successful

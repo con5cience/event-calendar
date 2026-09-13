@@ -121,6 +121,14 @@ their executable paths), npm dependencies, and Playwright Chromium installed.
 The container supplies these dependencies. It runs only the explicitly requested
 operator action; Compose and application startup never refresh sources.
 
+Captures run with concurrency 2 by default. Set `CAPTURE_CONCURRENCY` to an integer
+from 1 to 4 to change the limit; use 1 for serial capture or a low-memory runner.
+For Docker, add `-e CAPTURE_CONCURRENCY=1` before the image name. Each adapter
+family is serialized, with shared groups for KSE's two adapters and the two Wix
+adapters. Capture passes and requests within a source stay sequential.
+All captures finish before serial ingestion and validated catalog publication.
+Failures retain the source's previous data. No concurrent catalog writers run.
+
 The CLI streams child stdout/stderr to stderr while retaining child stdout for
 JSON parsing. Its own stdout remains one final JSON result. Timestamped progress
 identifies each source and capture/ingestion/validation stage. Quiet subprocesses

@@ -142,6 +142,53 @@ const packStore = (site, input, output, logging = {}) =>
     },
   );
 
+async function captureSource({ site, sourceID, directory, logging }) {
+  await execute(
+    process.execPath,
+    [
+      join(codeRoot, "scripts/capture-source.mjs"),
+      sourceID,
+      join(directory, "capture"),
+    ],
+    {
+      ...logging,
+      label: `${sourceID} capture`,
+      env: { SITE_DIR: site, CAPTURE_SOURCE: sourceID },
+    },
+  );
+}
+
+// Conservative provider groups: one active capture per adapter family. Distinct
+// KSE and Wix adapters also share infrastructure, so share a slot within it.
+function providerGroup(adapter) {
+  if (["kse-calendar", "kse-venue-events"].includes(adapter)) return "kse";
+  if (["html-buzzard", "html-herbs"].includes(adapter)) return "wix";
+  return adapter;
+}
+
+async function capturePool(jobs, limit, capture) {
+  const pending = [...jobs],
+    active = new Map(),
+    outcomes = new Map();
+  while (pending.length || active.size) {
+    while (active.size < limit) {
+      const index = pending.findIndex((job) => !active.has(job.group));
+      if (index < 0) break;
+      const [job] = pending.splice(index, 1);
+      const task = Promise.resolve()
+        .then(() => capture(job))
+        .then(
+          () => outcomes.set(job.sourceID, { ok: true }),
+          (error) => outcomes.set(job.sourceID, { ok: false, error }),
+        )
+        .finally(() => active.delete(job.group));
+      active.set(job.group, task);
+    }
+    if (active.size) await Promise.race(active.values());
+  }
+  return outcomes;
+}
+
 async function refreshSource({
   site,
   sourceID,
@@ -151,15 +198,6 @@ async function refreshSource({
   logging,
 }) {
   const capture = join(directory, "capture");
-  await execute(
-    process.execPath,
-    [join(codeRoot, "scripts/capture-source.mjs"), sourceID, capture],
-    {
-      ...logging,
-      label: `${sourceID} capture`,
-      env: { SITE_DIR: site, CAPTURE_SOURCE: sourceID },
-    },
-  );
   const report = JSON.parse(readFileSync(join(capture, "report.json"), "utf8"));
   const raw = await execute(
     process.env.INGEST_BIN || "ingest",
@@ -249,6 +287,14 @@ export async function snapshotLocale(id, input, options = {}) {
   }
 }
 export async function refreshLocale(id, options = {}) {
+  const captureConcurrency =
+    options.captureConcurrency ?? Number(process.env.CAPTURE_CONCURRENCY ?? 2);
+  if (
+    !Number.isInteger(captureConcurrency) ||
+    captureConcurrency < 1 ||
+    captureConcurrency > 4
+  )
+    throw Error("Capture concurrency must be an integer from 1 to 4");
   const ctx = context(id, options);
   const progress = (message) => options.progress?.(message);
   progress(`${id}: refresh started`);
@@ -266,20 +312,39 @@ export async function refreshLocale(id, options = {}) {
     }
     let store = join(ctx.workspace, "seed");
     await ctx.pack(ctx.site, ctx.target, store);
-    for (const [sourceID, source] of sources) {
-      progress(`${sourceID}: source started`);
+    const jobs = sources.map(([sourceID, source]) => {
       const directory = join(ctx.workspace, sourceID);
       mkdirSync(directory);
+      return {
+        site: ctx.site,
+        sourceID,
+        runner: runnerFor(source.adapter),
+        directory,
+        logging: options,
+        group: providerGroup(source.adapter),
+      };
+    });
+    progress(`${id}: capturing with concurrency ${captureConcurrency}`);
+    // Finish all captures before publishing. No background writer or child is
+    // left running if a later savepoint/export fails and releases the locale lock.
+    const captured = await capturePool(
+      jobs,
+      captureConcurrency,
+      async (job) => {
+        progress(`${job.sourceID}: source started`);
+        await (options.capture || captureSource)(job);
+      },
+    );
+    for (const job of jobs) {
+      const { sourceID, directory } = job;
       const candidate = join(directory, "store");
-      await ctx.pack(ctx.site, store, candidate);
+      const outcome = captured.get(sourceID);
+      if (outcome.ok) await ctx.pack(ctx.site, store, candidate);
       try {
+        if (!outcome.ok) throw outcome.error;
         const result = await (options.refresh || refreshSource)({
-          site: ctx.site,
-          sourceID,
-          runner: runnerFor(source.adapter),
+          ...job,
           store: candidate,
-          directory,
-          logging: options,
         });
         if (!result.published || !result.durable || result.error)
           throw Error("Ingestion did not confirm durable publication");

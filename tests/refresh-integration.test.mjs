@@ -125,6 +125,16 @@ test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consume
   const script = new URL("../scripts/refresh-locale.mjs", import.meta.url)
     .pathname;
   const env = { CALENDAR_REPO: root };
+  await assert.rejects(
+    execute(process.execPath, [script, "test-city"], {
+      env: { ...env, CAPTURE_CONCURRENCY: "0" },
+    }),
+    /Capture concurrency must be an integer/,
+  );
+  assert.equal(
+    spawnSync("test", ["-e", join(site, ".refresh-lock")]).status,
+    1,
+  );
   await execute(process.execPath, [script, "--snapshot", "test-city", seed], {
     env,
   });
@@ -200,6 +210,7 @@ test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consume
     );
     assert.equal(JSON.parse(resultJSON).status, "partial");
     assert.match(progress, /gothic capture: started/);
+    assert.match(progress, /capturing with concurrency 2/);
     assert.match(progress, /gothic ingest: completed/);
     assert.match(progress, /mission: failed; retaining last valid data/);
     const after = json(join(target, "catalog.json"));
@@ -218,7 +229,9 @@ test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consume
     failAll = true;
     const bytes = readFileSync(join(target, "catalog.json"), "utf8");
     await assert.rejects(
-      execute(process.execPath, [script, "test-city"], { env }),
+      execute(process.execPath, [script, "test-city"], {
+        env: { ...env, CAPTURE_CONCURRENCY: "1" },
+      }),
       /No source refreshed/,
     );
     assert.equal(readFileSync(join(target, "catalog.json"), "utf8"), bytes);

@@ -38,10 +38,107 @@ function fixture() {
       errorOnExist: true,
       force: false,
     });
-  return { root, site, pack };
+  return { root, site, pack, capture: async () => {} };
 }
 const read = (dir) =>
   JSON.parse(readFileSync(join(dir, "catalog.json"), "utf8"));
+test("capture pool overlaps independent providers, serializes shared providers and publication", async () => {
+  const f = fixture();
+  const sources = {
+    one: { adapter: "aeg-json" },
+    two: { adapter: "aeg-json" },
+    three: { adapter: "holdmyticket-ical" },
+    four: { adapter: "kse-calendar" },
+    five: { adapter: "kse-venue-events" },
+  };
+  writeFileSync(
+    join(f.site, "site.json"),
+    JSON.stringify({ id: "test-city", sources }),
+  );
+  let active = 0,
+    maximum = 0,
+    writers = 0;
+  const groups = new Set(),
+    completed = [];
+  const result = await refreshLocale("test-city", {
+    ...f,
+    capture: async ({ sourceID, runner }) => {
+      const group =
+        sourceID === "four" || sourceID === "five"
+          ? "kse"
+          : sources[sourceID].adapter;
+      assert(!groups.has(group));
+      assert(runner.command);
+      groups.add(group);
+      maximum = Math.max(maximum, ++active);
+      await new Promise((resolve) =>
+        setTimeout(resolve, sourceID === "one" ? 35 : 10),
+      );
+      groups.delete(group);
+      active--;
+      completed.push(sourceID);
+      if (sourceID === "three") throw Error("capture failed");
+    },
+    refresh: async ({ sourceID, store }) => {
+      assert(completed.includes(sourceID));
+      assert.equal(++writers, 1);
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      writeFileSync(
+        join(store, "catalog.json"),
+        JSON.stringify({ ...read(store), [sourceID]: "updated" }),
+      );
+      writers--;
+      return { published: true, durable: true };
+    },
+  });
+  assert.equal(maximum, 2);
+  assert(completed.indexOf("three") < completed.indexOf("one"));
+  assert.deepEqual(
+    result.sources.map((s) => s.source),
+    Object.keys(sources),
+  );
+  assert.equal(result.sources[2].status, "failed");
+  assert.deepEqual(read(join(f.site, "catalog")), {
+    one: "updated",
+    two: "updated",
+    four: "updated",
+    five: "updated",
+  });
+  assert.equal(active, 0);
+});
+test("capture concurrency can be set to one and invalid limits fail before writes", async () => {
+  for (const captureConcurrency of [0, -1, 1.5, "2", 5]) {
+    const f = fixture();
+    await assert.rejects(
+      refreshLocale("test-city", { ...f, captureConcurrency }),
+      /concurrency/i,
+    );
+    assert(!existsSync(join(f.site, ".refresh-lock")));
+  }
+  const f = fixture();
+  let active = 0;
+  writeFileSync(
+    join(f.site, "site.json"),
+    JSON.stringify({
+      id: "test-city",
+      sources: {
+        one: { adapter: "aeg-json" },
+        two: { adapter: "holdmyticket-ical" },
+      },
+    }),
+  );
+  await refreshLocale("test-city", {
+    ...f,
+    captureConcurrency: 1,
+    capture: async () => {
+      assert.equal(++active, 1);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active--;
+    },
+    refresh: async () => ({ published: true, durable: true }),
+  });
+  assert.equal(active, 0);
+});
 test("refresh retains failed source even if its staging store was modified", async () => {
   const f = fixture();
   const result = await refreshLocale("test-city", {
@@ -78,6 +175,29 @@ test("all failures leave tracked snapshot unchanged and report failure", async (
     one: "original",
     two: "original",
   });
+});
+test("all capture failures settle without ingestion or replacing the catalog", async () => {
+  const f = fixture();
+  const completed = [];
+  await assert.rejects(
+    refreshLocale("test-city", {
+      ...f,
+      capture: async ({ sourceID }) => {
+        completed.push(sourceID);
+        throw Error("capture offline");
+      },
+      refresh: async () => {
+        assert.fail("failed capture must never ingest");
+      },
+    }),
+    /No source refreshed/,
+  );
+  assert.deepEqual(completed, ["one", "two"]);
+  assert.deepEqual(read(join(f.site, "catalog")), {
+    one: "original",
+    two: "original",
+  });
+  assert(!existsSync(join(f.site, ".refresh-lock")));
 });
 test("final validation failure does not replace tracked snapshot", async () => {
   const f = fixture();
