@@ -1,0 +1,2 @@
+# Exact validated bytes are covered by catalog checksums. Never reformat them.
+locales/*/catalog/
