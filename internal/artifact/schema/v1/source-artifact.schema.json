@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://event-calendar.invalid/schema/v1/source-artifact.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "source": {
+      "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/source"
+    },
+    "venue": {
+      "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/venue",
+      "type": "object",
+      "required": ["timezone"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "coverage": {
+      "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/coverage"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/event"
+      },
+      "maxItems": 50000
+    }
+  },
+  "required": [
+    "schema_version",
+    "source",
+    "venue",
+    "generated_at",
+    "coverage",
+    "events"
+  ],
+  "additionalProperties": false
+}

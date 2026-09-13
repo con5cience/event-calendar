@@ -1,0 +1,13 @@
+schema_version: 1
+source: {id: black-buzzard, adapter: html-buzzard}
+state: new
+venue:
+  key: black-buzzard
+  name: The Black Buzzard
+  timezone: America/Denver
+  website: https://www.theblackbuzzard.com/event-calendar
+  address: 1624 Market St, Denver, CO 80202
+  admission_policy:
+    text: 18+ unless otherwise posted; ID required
+    category: 18+
+    url: https://www.theblackbuzzard.com/faq

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://event-calendar.invalid/schema/v1/event-data.schema.json",
+  "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/data"
+}

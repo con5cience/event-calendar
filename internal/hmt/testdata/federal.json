@@ -1,0 +1,24 @@
+{
+  "calendar": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nX-WR-TIMEZONE:America/Denver\r\nX-WR-CALNAME:The Federal Theatre\r\nBEGIN:VEVENT\r\nUID:fixture-hq\r\nDTSTART:20260912T200000\r\nSUMMARY:Fixture Ensemble\r\nURL;VALUE=URI:http://holdmyticket.com/event/1001 \r\nEND:VEVENT\r\nEND:VCALENDAR\r\n",
+  "details": {
+    "1001": {
+      "@type": "Event",
+      "name": "Fixture Ensemble",
+      "startDate": "2026-09-12T20:00:00-06:00",
+      "doorTime": "19:00",
+      "typicalAgeRange": "All Ages",
+      "location": {
+        "name": "The Federal Theatre"
+      },
+      "eventStatus": "https://schema.org/EventScheduled",
+      "offers": [
+        {
+          "name": "General Admission",
+          "price": "20.55",
+          "priceCurrency": "USD",
+          "url": "https://tickets.holdmyticket.com/tickets/1001"
+        }
+      ]
+    }
+  }
+}

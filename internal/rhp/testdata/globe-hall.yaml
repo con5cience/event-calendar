@@ -1,0 +1,10 @@
+schema_version: 1
+source: {id: globe-hall, adapter: rhp-calendar}
+state: new
+venue:
+  key: globe-hall
+  name: Globe Hall
+  timezone: America/Denver
+  website: https://globehall.com
+  address: 4483 Logan St, Denver, CO 80216
+  phone: "303.296.1003"

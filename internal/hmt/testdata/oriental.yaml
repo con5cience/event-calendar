@@ -1,0 +1,10 @@
+schema_version: 1
+source: {id: oriental, adapter: holdmyticket-ical}
+state: new
+venue:
+  key: oriental
+  name: The Oriental Theater
+  timezone: America/Denver
+  website: https://www.theorientaltheater.com
+adapter_options:
+  feed_id: "801"

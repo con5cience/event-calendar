@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://event-calendar.invalid/schema/v1/source-config.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "source": {
+      "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/source"
+    },
+    "venue": {
+      "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/venue",
+      "type": "object",
+      "required": ["timezone"]
+    },
+    "state": {
+      "enum": ["new", "established"]
+    },
+    "adapter_options": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 4096
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/override"
+      }
+    },
+    "admission_rules": {
+      "type": "object",
+      "propertyNames": {
+        "enum": ["All ages", "13+", "16+", "18+", "21+"]
+      },
+      "additionalProperties": {
+        "$ref": "https://event-calendar.invalid/schema/v1/common.schema.json#/$defs/adultAdmission"
+      }
+    }
+  },
+  "required": ["schema_version", "source", "venue", "state"],
+  "additionalProperties": false
+}

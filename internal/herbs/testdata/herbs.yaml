@@ -1,0 +1,13 @@
+schema_version: 1
+source: {id: herbs, adapter: html-herbs}
+state: new
+venue:
+  key: herbs
+  name: Herb's
+  timezone: America/Denver
+  website: https://www.herbsbar.com/live-music-calendar-1
+  address: 2057 Larimer Street, Denver, CO 80205
+  admission_policy:
+    text: 21+; minors may attend until 10:30 PM with a parent
+    category: 21+
+    url: https://www.herbsbar.com/

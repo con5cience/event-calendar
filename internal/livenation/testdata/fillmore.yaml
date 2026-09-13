@@ -1,0 +1,24 @@
+schema_version: 1
+source: {id: fillmore, adapter: livenation-venue-events}
+state: new
+venue:
+  key: fillmore
+  name: Fillmore Auditorium
+  timezone: America/Denver
+  website: https://www.fillmoredenver.com
+  address: 1510 North Clarkson Street, Denver, CO 80218
+  phone: 303-837-0360
+  admission_policy:
+    text: Age requirements vary by event; check the event listing
+    url: https://www.fillmoredenver.com/visit
+admission_rules:
+  All ages:
+    url: https://www.fillmoredenver.com/visit
+    reviewed_on: '2026-09-11'
+    ranges:
+      - {min_age: 0, max_age: 17, condition: Ticket required regardless of age}
+  16+:
+    url: https://www.fillmoredenver.com/visit
+    reviewed_on: '2026-09-11'
+    ranges:
+      - {min_age: 16, max_age: 17, condition: Ticket and valid ID required; no admission under 16 even with an adult}

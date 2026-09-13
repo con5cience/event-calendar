@@ -1,0 +1,33 @@
+schema_version: 1
+source: {id: mission, adapter: aeg-json}
+state: new
+venue:
+  key: mission
+  name: Mission Ballroom
+  timezone: America/Denver
+  website: https://www.missionballroom.com
+admission_rules:
+  All ages:
+    url: https://www.missionballroom.com/faq/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {min_age: 0, max_age: 10, condition: Parent or legal guardian required}
+      - {min_age: 11, max_age: 17, condition: Permitted at this age}
+  16+:
+    url: https://www.missionballroom.com/faq/
+    reviewed_on: "2026-09-09"
+    ranges:
+      - {min_age: 0, max_age: 10, condition: Parent or legal guardian required}
+      - {min_age: 11, max_age: 15, condition: Ticketed adult required}
+      - {min_age: 16, max_age: 17, condition: Permitted at this age}
+  18+:
+    url: https://www.missionballroom.com/faq/
+    reviewed_on: "2026-09-09"
+    ranges: []
+  21+:
+    url: https://www.missionballroom.com/faq/
+    reviewed_on: "2026-09-09"
+    ranges: []
+adapter_options:
+  feed_id: "89"
+  venue_id: "127278"

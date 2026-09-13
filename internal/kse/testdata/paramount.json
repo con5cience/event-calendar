@@ -1,0 +1,4 @@
+{
+ "events":[{"id":"synthetic","type":"event","name":"Synthetic Paramount Show","url":"https://www.ticketmaster.com/event/1E00643B96BD5EEF","dates":{"timezone":"America/Denver","start":{"localDate":"2026-09-12T00:00:00Z","dateTime":"2026-09-13T02:00:00Z"},"status":{"code":"onsale"}},"pleaseNote":"This event is 12+","_embedded":{"venues":[{"id":"KovZpZAFa1nA","name":"Paramount Theatre"}]}}],
+ "check":[{"id":"synthetic","type":"event","name":"Synthetic Paramount Show","url":"https://www.ticketmaster.com/event/1E00643B96BD5EEF","dates":{"timezone":"America/Denver","start":{"localDate":"2026-09-12T00:00:00Z","dateTime":"2026-09-13T02:00:00Z"},"status":{"code":"onsale"}},"pleaseNote":"This event is 12+","_embedded":{"venues":[{"id":"KovZpZAFa1nA","name":"Paramount Theatre"}]}}]
+}

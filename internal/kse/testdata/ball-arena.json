@@ -1,0 +1,20 @@
+{
+  "events": [
+    {
+      "title": "Denver Nuggets vs. Test",
+      "url": "https://www.ticketmaster.com/test/event/1E006434E7FB9F65",
+      "start": "2026-09-12T19:00:00",
+      "end": null
+    }
+  ],
+  "check": [
+    {
+      "title": "Denver Nuggets vs. Test",
+      "url": "https://www.ticketmaster.com/test/event/1E006434E7FB9F65",
+      "start": "2026-09-12T19:00:00",
+      "end": null
+    }
+  ],
+  "listing": "<div class=\"card-wrap\" data-subgenre=\"NBA\"><h5 class=\"card-title\">Denver Nuggets vs. Test</h5><span class=\"datetime\">Sat • Sep 12 2026 • 7:00 PM</span><div class=\"status-code\"></div><a href=\"https://www.ticketmaster.com/test/event/1E006434E7FB9F65\">Find Tickets</a></div>",
+  "listing_check": "<div class=\"card-wrap\" data-subgenre=\"NBA\"><h5 class=\"card-title\">Denver Nuggets vs. Test</h5><span class=\"datetime\">Sat • Sep 12 2026 • 7:00 PM</span><div class=\"status-code\"></div><a href=\"https://www.ticketmaster.com/test/event/1E006434E7FB9F65\">Find Tickets</a></div>"
+}

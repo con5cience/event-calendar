@@ -1,0 +1,7 @@
+{
+  "from": "2026-09-10",
+  "through": "2027-09-10",
+  "upcoming": [{"ID": 123, "post_status": "publish", "post_type": "event", "post_title": "Fixture & Friends", "guid": "https://www.redrocksonline.com/events/fixture-friends/", "post_content": "A concert.", "acf": {"showing_id": ["101"], "event_start": ["2026-09-12 19:30:00"], "event_doors_open": ["6:30 PM"], "event_ticket_link": ["https://www.axs.com/events/123/fixture-tickets"]}}],
+  "range": [{"id": "101", "url": "https://www.redrocksonline.com/events/fixture-friends/", "title": "Fixture & Friends", "start": "2026-09-12T19:30:00-06:00"}],
+  "windows": [{"start": "2026-09-10", "end": "2027-09-11", "events": [{"id": "101", "url": "https://www.redrocksonline.com/events/fixture-friends/", "title": "Fixture & Friends", "start": "2026-09-12T19:30:00-06:00"}]}]
+}

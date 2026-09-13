@@ -1,0 +1,23 @@
+schema_version: 1
+source: {id: cervantes, adapter: rhp-calendar}
+state: new
+venue:
+  key: cervantes
+  name: Cervantes
+  timezone: America/Denver
+  website: https://cervantesmasterpiece.com
+  address: 2635 Welton St, Denver, CO 80205
+  phone: "303.297.1772"
+admission_rules:
+  "16+":
+    url: https://cervantesmasterpiece.com/faq/
+    reviewed_on: "2026-09-10"
+    ranges:
+      - {min_age: 14, max_age: 15, condition: Parent or guardian required}
+      - {min_age: 16, max_age: 17, condition: Permitted at this age}
+  "All ages":
+    url: https://cervantesmasterpiece.com/faq/
+    reviewed_on: "2026-09-10"
+    ranges:
+      - {min_age: 0, max_age: 14, condition: Parent or guardian encouraged}
+      - {min_age: 15, max_age: 17, condition: Permitted at this age}

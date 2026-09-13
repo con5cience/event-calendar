@@ -1,0 +1,40 @@
+{
+  "pages": [
+    [
+      {
+        "tm_id": "1E00646DB543AD47",
+        "name": "Synthetic Fillmore event",
+        "type": "REGULAR",
+        "event_data_type": "discovery",
+        "url": "https://www.ticketmaster.com/test/event/1E00646DB543AD47",
+        "start_date_local": "2026-09-12",
+        "start_time_local": "19:00:00",
+        "start_datetime_utc": "2026-09-13T01:00:00Z",
+        "timezone": "America/Denver",
+        "status_code": "onsale",
+        "important_info": "Doors: 7PM Show: 8PM This show is ALL AGES",
+        "venue": { "discovery_id": "KovZpZAE6eJA" }
+      }
+    ],
+    []
+  ],
+  "check": [
+    [
+      {
+        "tm_id": "1E00646DB543AD47",
+        "name": "Synthetic Fillmore event",
+        "type": "REGULAR",
+        "event_data_type": "discovery",
+        "url": "https://www.ticketmaster.com/test/event/1E00646DB543AD47",
+        "start_date_local": "2026-09-12",
+        "start_time_local": "19:00:00",
+        "start_datetime_utc": "2026-09-13T01:00:00Z",
+        "timezone": "America/Denver",
+        "status_code": "onsale",
+        "important_info": "Doors: 7PM Show: 8PM This show is ALL AGES",
+        "venue": { "discovery_id": "KovZpZAE6eJA" }
+      }
+    ],
+    []
+  ]
+}

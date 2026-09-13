@@ -1,0 +1,27 @@
+schema_version: 1
+source: {id: hi-dive, adapter: plot-listings}
+state: new
+venue:
+  key: hi-dive
+  name: Hi-Dive
+  timezone: America/Denver
+  website: https://hi-dive.com
+  admission_policy:
+    text: See event restriction; underage guests may attend with a parent or legal guardian
+    url: https://hi-dive.com/faqs/
+    with_adult:
+      url: https://hi-dive.com/faqs/
+      reviewed_on: "2026-09-11"
+      ranges:
+        - {min_age: 0, max_age: 17, condition: Parent or legal guardian required}
+admission_rules:
+  "21+":
+    url: https://hi-dive.com/faqs/
+    reviewed_on: "2026-09-11"
+    ranges:
+      - {min_age: 0, max_age: 17, condition: Parent or legal guardian required}
+  "18+":
+    url: https://hi-dive.com/faqs/
+    reviewed_on: "2026-09-11"
+    ranges:
+      - {min_age: 0, max_age: 17, condition: Parent or legal guardian required}

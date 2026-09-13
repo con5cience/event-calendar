@@ -1,0 +1,19 @@
+schema_version: 1
+source: {id: meow-wolf-denver, adapter: embedded-nextjs}
+state: new
+venue:
+  key: meow-wolf-denver
+  name: Meow Wolf Denver
+  timezone: America/Denver
+  website: https://tickets.meowwolf.com/events/denver/
+  address: 1338 1st St, Denver, CO 80204
+  admission_policy:
+    text: Event restrictions apply; no adult exception for restricted shows
+    url: https://faq.meowwolf.com/are-there-age-restrictions-for-shows-and-events
+admission_rules:
+  All ages:
+    url: https://faq.meowwolf.com/are-there-age-restrictions-for-shows-and-events
+    reviewed_on: '2026-09-12'
+    ranges:
+      - {min_age: 0, max_age: 15, condition: Ticketed guardian over 18 required; all guests need tickets}
+      - {min_age: 16, max_age: 17, condition: Ticket and valid identification required}

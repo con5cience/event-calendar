@@ -1,0 +1,39 @@
+{
+  "from": "2026-09-11",
+  "through": "2027-09-11",
+  "total": 1,
+  "events": [
+    {
+      "id": "6a860478-c968-4422-9205-00330a1e615e",
+      "slug": "synthetic",
+      "title": "Synthetic Black Box event",
+      "ticket_title": "Synthetic Black Box event",
+      "date": "2026-09-12",
+      "time": "09:01 PM",
+      "venue": "The Lounge",
+      "location": "Denver",
+      "address": "314 East 13th Avenue, Denver, 80203",
+      "status": "published",
+      "ticket_url": "https://events.blackboxdenver.co/e/synthetic/tickets",
+      "summary_html": "<p>Doors: 9PM<br>Music: 9PM</p>",
+      "age_restriction": "All Ages"
+    }
+  ],
+  "check": [
+    {
+      "id": "6a860478-c968-4422-9205-00330a1e615e",
+      "slug": "synthetic",
+      "title": "Synthetic Black Box event",
+      "ticket_title": "Synthetic Black Box event",
+      "date": "2026-09-12",
+      "time": "09:01 PM",
+      "venue": "The Lounge",
+      "location": "Denver",
+      "address": "314 East 13th Avenue, Denver, 80203",
+      "status": "published",
+      "ticket_url": "https://events.blackboxdenver.co/e/synthetic/tickets",
+      "summary_html": "<p>Doors: 9PM<br>Music: 9PM</p>",
+      "age_restriction": "All Ages"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "from": "2026-09-11",
+  "through": "2027-09-11",
+  "total": 1,
+  "events": [
+    {
+      "id": "019f1aa0-d978-0ee7-4153-a9518ceb4d9a__be822f61-3e04-0559-7a43-ca5b19313b79",
+      "title": "Fixture &amp; Friends",
+      "startDateTime": "2026-09-13T00:00:00Z",
+      "url": "fixture",
+      "text": {
+        "date": "Sep 12th Doors @ 6:00 PM",
+        "banner": null,
+        "supportingActs": null
+      },
+      "tags": [
+        "all ages"
+      ],
+      "detail": {
+        "id": "019f1aa0-d978-0ee7-4153-a9518ceb4d9a",
+        "title": "Fixture &amp; Friends",
+        "sellerId": "017a7f54-e443-a261-3c55-46ef4d921efb",
+        "venueId": "14f4d967-6acc-4d09-2e5b-f2707768c20d",
+        "meta": [
+          {
+            "metakey": "eventAge",
+            "value": "All Ages (Ticketed Guests Under 16 Admitted with Ticketed Guardian)"
+          },
+          {
+            "metakey": "doorsOpen",
+            "value": "6:00 PM"
+          },
+          {
+            "metakey": "showStart",
+            "value": "7:00 PM"
+          },
+          {
+            "metakey": "venue",
+            "value": "The Perplexiplex"
+          }
+        ],
+        "timeslots": [
+          {
+            "id": "be822f61-3e04-0559-7a43-ca5b19313b79",
+            "startTime": "2026-09-13T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ],
+  "check": [
+    {
+      "id": "019f1aa0-d978-0ee7-4153-a9518ceb4d9a__be822f61-3e04-0559-7a43-ca5b19313b79",
+      "title": "Fixture &amp; Friends",
+      "startDateTime": "2026-09-13T00:00:00Z",
+      "url": "fixture",
+      "text": {
+        "date": "Sep 12th Doors @ 6:00 PM",
+        "banner": null,
+        "supportingActs": null
+      },
+      "tags": [
+        "all ages"
+      ],
+      "detail": {
+        "id": "019f1aa0-d978-0ee7-4153-a9518ceb4d9a",
+        "title": "Fixture &amp; Friends",
+        "sellerId": "017a7f54-e443-a261-3c55-46ef4d921efb",
+        "venueId": "14f4d967-6acc-4d09-2e5b-f2707768c20d",
+        "meta": [
+          {
+            "metakey": "eventAge",
+            "value": "All Ages (Ticketed Guests Under 16 Admitted with Ticketed Guardian)"
+          },
+          {
+            "metakey": "doorsOpen",
+            "value": "6:00 PM"
+          },
+          {
+            "metakey": "showStart",
+            "value": "7:00 PM"
+          },
+          {
+            "metakey": "venue",
+            "value": "The Perplexiplex"
+          }
+        ],
+        "timeslots": [
+          {
+            "id": "be822f61-3e04-0559-7a43-ca5b19313b79",
+            "startTime": "2026-09-13T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}

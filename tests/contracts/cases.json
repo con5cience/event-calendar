@@ -1,0 +1,3132 @@
+[
+  {
+    "name": "full-source",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "sparse-untimed",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "empty-source",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": []
+    }
+  },
+  {
+    "name": "removed-retained",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": false,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "event-policy-replaces",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "21+",
+            "category": "21+"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "off-site-unknown-timezone",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/warehouse/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": true,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "venue": {
+            "key": "warehouse",
+            "name": "Test warehouse"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "off-site-known-timezone",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/warehouse/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": true,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "venue": {
+            "key": "warehouse",
+            "name": "Test warehouse",
+            "timezone": "America/Denver"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "explicit-free",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "Free",
+            "amount_minor": 0,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-range",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20–30",
+            "min_minor": 2000,
+            "max_minor": 3000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown-price",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "schema-version",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 2,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "invalid-date",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-02-31",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "blank-title",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": " \t",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown-field",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "secret": "not allowed"
+        }
+      ]
+    }
+  },
+  {
+    "name": "null-policy",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "unsafe-link",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "javascript:alert(1)",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "credential-link",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://user:pass@example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "backslash-link",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com\\evil",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown-timezone",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Not_A_Place",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "host-local-timezone",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "Local",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "floating-instant",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "mismatched-venue-date",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T01:00:00Z",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "off-site-no-timezone-with-instant",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": true,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "venue": {
+            "key": "warehouse",
+            "name": "Test warehouse"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "off-site-flag-missing",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "venue": {
+            "key": "warehouse",
+            "name": "Test warehouse"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "on-site-marked-off-site",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": true,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "off-site-same-key",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": true,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "venue": {
+            "key": "gothic",
+            "name": "Gothic Theatre",
+            "timezone": "America/Denver",
+            "address": "3263 S Broadway, Englewood, CO",
+            "phone": "+1-303-000-0000",
+            "website": "https://example.com/gothic",
+            "admission_policy": {
+              "text": "16+",
+              "url": "https://example.com/policy",
+              "category": "16+"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "duplicate-id",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        },
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "duplicate-occurrence",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        },
+        {
+          "id": "gothic-012345abcdee",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdee",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "invalid-expiry",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-10"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-fractional-minor",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 20.5,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-negative",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": -1,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-unsafe-integer",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 9007199254740992,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-currency-missing",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "price-reversed-range",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "range",
+            "min_minor": 3000,
+            "max_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "incomplete-publication",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": false
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "reversed-coverage",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2026-09-01",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "path-traversal",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/../private",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "path-wrong-date",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-11-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "valid-catalog",
+    "kind": "catalog",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": [
+        {
+          "source_id": "gothic",
+          "artifact": "sources/gothic/generation-001.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    }
+  },
+  {
+    "name": "empty-catalog",
+    "kind": "catalog",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": []
+    }
+  },
+  {
+    "name": "catalog-duplicate-source",
+    "kind": "catalog",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": [
+        {
+          "source_id": "gothic",
+          "artifact": "sources/gothic/generation-001.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "source_id": "gothic",
+          "artifact": "sources/gothic/generation-001.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    }
+  },
+  {
+    "name": "catalog-path-traversal",
+    "kind": "catalog",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": [
+        {
+          "source_id": "gothic",
+          "artifact": "../events.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    }
+  },
+  {
+    "name": "catalog-remote-path",
+    "kind": "catalog",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": [
+        {
+          "source_id": "gothic",
+          "artifact": "https://example.com/events.json",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ]
+    }
+  },
+  {
+    "name": "catalog-checksum",
+    "kind": "catalog",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "generation": "generation-001",
+      "generated_at": "2026-09-08T12:00:00Z",
+      "sources": [
+        {
+          "source_id": "gothic",
+          "artifact": "sources/gothic/generation-001.json",
+          "sha256": "bad"
+        }
+      ]
+    }
+  },
+  {
+    "name": "valid-config",
+    "kind": "source-config",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": []
+    }
+  },
+  {
+    "name": "established-config",
+    "kind": "source-config",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "established",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": []
+    }
+  },
+  {
+    "name": "override-content",
+    "kind": "source-config",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "set": {
+            "title": "Configured",
+            "admission_policy": {
+              "text": "18+",
+              "category": "18+"
+            }
+          },
+          "remove": ["price"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "override-date",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "set": {
+            "date": "2026-09-11"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "override-venue",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "set": {
+            "venue": {
+              "key": "other",
+              "name": "Other"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "override-public-path",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "set": {
+            "public_path": "/events/other"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "override-null",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "set": {
+            "admission_policy": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "override-remove-title",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [
+        {
+          "match": {
+            "upstream_id": "provider-1",
+            "date": "2026-09-10",
+            "venue_key": "gothic"
+          },
+          "remove": ["title"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "config-unknown-key",
+    "kind": "source-config",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "state": "new",
+      "adapter_options": {
+        "feed_id": "37"
+      },
+      "overrides": [],
+      "stat": "new"
+    }
+  },
+  {
+    "name": "id-wrong-source",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "mission-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "path-wrong-venue",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/mission/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "path-wrong-suffix",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdee",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09"
+        }
+      ]
+    }
+  },
+  {
+    "name": "reviewed-admission",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "https://example.com/policy",
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 15,
+                  "condition": "Ticketed adult required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "denied-admission",
+    "kind": "source-artifact",
+    "valid": true,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "https://example.com/policy",
+              "reviewed_on": "2026-09-09",
+              "ranges": []
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reversed-admission",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "https://example.com/policy",
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 10,
+                  "condition": "Ticketed adult required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "overlapping-admission",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "https://example.com/policy",
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 15,
+                  "condition": "Ticketed adult required"
+                },
+                {
+                  "min_age": 15,
+                  "max_age": 17,
+                  "condition": "Adult"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "missing-admission-citation",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 15,
+                  "condition": "Ticketed adult required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "unsafe-admission-citation",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "javascript:alert(1)",
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 15,
+                  "condition": "Ticketed adult required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "adult-age-outside-child-range",
+    "kind": "source-artifact",
+    "valid": false,
+    "document": {
+      "schema_version": 1,
+      "source": {
+        "id": "gothic",
+        "adapter": "aeg-json"
+      },
+      "venue": {
+        "key": "gothic",
+        "name": "Gothic Theatre",
+        "timezone": "America/Denver",
+        "address": "3263 S Broadway, Englewood, CO",
+        "phone": "+1-303-000-0000",
+        "website": "https://example.com/gothic",
+        "admission_policy": {
+          "text": "16+",
+          "url": "https://example.com/policy",
+          "category": "16+"
+        }
+      },
+      "generated_at": "2026-09-08T12:00:00Z",
+      "coverage": {
+        "from": "2026-09-08",
+        "through": "2027-09-08",
+        "complete": true
+      },
+      "events": [
+        {
+          "id": "gothic-012345abcdef",
+          "upstream_id": "provider-1",
+          "public_path": "/events/gothic/2026-09-10-test-show-012345abcdef",
+          "date": "2026-09-10",
+          "title": "Test show",
+          "doors_at": "2026-09-10T19:00:00-06:00",
+          "show_at": "2026-09-10T20:00:00-06:00",
+          "performers": ["Test artist"],
+          "event_url": "https://example.com/event",
+          "ticket_url": "https://example.com/tickets?id=123",
+          "price": {
+            "text": "$20",
+            "amount_minor": 2000,
+            "currency": "USD"
+          },
+          "off_site": false,
+          "listed": true,
+          "expires_on": "2026-12-09",
+          "admission_policy": {
+            "text": "16+",
+            "category": "16+",
+            "with_adult": {
+              "url": "https://example.com/policy",
+              "reviewed_on": "2026-09-09",
+              "ranges": [
+                {
+                  "min_age": 11,
+                  "max_age": 18,
+                  "condition": "Ticketed adult required"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+]

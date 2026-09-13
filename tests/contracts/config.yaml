@@ -1,0 +1,25 @@
+# Synthetic operator configuration; does not enable ingestion.
+schema_version: 1
+source:
+  id: gothic
+  adapter: aeg-json
+state: new
+venue:
+  key: gothic
+  name: Gothic Theatre
+  timezone: America/Denver
+  admission_policy:
+    text: 16+
+    category: 16+
+adapter_options:
+  feed_id: "37"
+overrides:
+  - match:
+      upstream_id: provider-1
+      date: 2026-09-10
+      venue_key: gothic
+    set:
+      title: Configured title
+      admission_policy:
+        text: 18+
+        category: 18+

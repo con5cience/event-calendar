@@ -1,0 +1,7 @@
+{
+  "from": "2026-09-11",
+  "through": "2027-09-11",
+  "total": 1,
+  "events": [{"id": 123, "name": "Fixture &amp; Friends", "date": "2026-09-12", "doorTime": "18:00:00", "startTime": "19:00:00", "minimumAge": null, "status": "FREE RSVP", "venue": {"name": "Levitt Pavilion Denver"}, "description": "<p>All Ages | Rain or Shine</p>", "ticketsUrl": "https://t.venuepilot.com/e/fixture"}],
+  "check": [{"id": 123, "name": "Fixture &amp; Friends", "date": "2026-09-12", "doorTime": "18:00:00", "startTime": "19:00:00", "minimumAge": null, "status": "FREE RSVP", "venue": {"name": "Levitt Pavilion Denver"}, "description": "<p>All Ages | Rain or Shine</p>", "ticketsUrl": "https://t.venuepilot.com/e/fixture"}]
+}

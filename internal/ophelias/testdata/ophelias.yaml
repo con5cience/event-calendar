@@ -1,0 +1,19 @@
+schema_version: 1
+source: {id: ophelias, adapter: html-ophelias}
+state: new
+venue:
+  key: ophelias
+  name: Ophelia's Electric Soapbox
+  timezone: America/Denver
+  website: https://opheliasdenver.com/calendar/
+  address: 1215 20th St, Denver, CO 80202
+  admission_policy:
+    text: 21+ unless stated otherwise; nobody under 13 admitted
+    category: 21+
+    url: https://opheliasdenver.com/faq/
+admission_rules:
+  18+:
+    url: https://opheliasdenver.com/faq/
+    reviewed_on: '2026-09-12'
+    ranges:
+      - {min_age: 13, max_age: 17, condition: Ticket and legal guardian required}

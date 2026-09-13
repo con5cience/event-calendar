@@ -1,0 +1,19 @@
+schema_version: 1
+source: {id: black-box, adapter: supabase-events}
+state: new
+venue:
+  key: black-box
+  name: The Black Box
+  timezone: America/Denver
+  website: https://blackboxdenver.co
+  address: 314 East 13th Avenue, Denver, CO 80203
+  admission_policy:
+    text: 18+; check the event's admission terms
+    category: 18+
+    url: https://blackboxdenver.co/about
+admission_rules:
+  All ages:
+    url: https://blackboxdenver.co/about
+    reviewed_on: '2026-09-11'
+    ranges:
+      - {min_age: 0, max_age: 17, condition: Explicit All Ages event; event ticket requirements apply}

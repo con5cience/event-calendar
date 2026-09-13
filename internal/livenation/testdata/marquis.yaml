@@ -1,0 +1,21 @@
+schema_version: 1
+source: {id: marquis, adapter: livenation-venue-events}
+state: new
+venue:
+  key: marquis
+  name: Marquis
+  timezone: America/Denver
+  website: https://www.marquisdenver.com
+  address: 2009 Larimer St, Denver, CO 80205
+  phone: 303-487-0111
+  admission_policy:
+    text: All Ages unless an event lists a restriction; ages 3 and older need a ticket
+    category: All ages
+    url: https://www.marquisdenver.com/visit
+admission_rules:
+  All ages:
+    url: https://www.marquisdenver.com/visit
+    reviewed_on: '2026-09-11'
+    ranges:
+      - {min_age: 0, max_age: 2, condition: Ear protection recommended}
+      - {min_age: 3, max_age: 17, condition: Ticket required; ear protection recommended}

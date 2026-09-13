@@ -1,0 +1,13 @@
+schema_version: 1
+source: {id: ball-arena, adapter: kse-calendar}
+state: new
+venue:
+  key: ball-arena
+  name: Ball Arena
+  timezone: America/Denver
+  website: https://www.ballarena.com
+  address: 1000 Chopper Circle, Denver, CO 80204
+  phone: 303-405-1100
+  admission_policy:
+    text: Concert and special-event age policies vary; check the event listing
+    url: https://www.ballarena.com/arena-information/arena-policies-faq/

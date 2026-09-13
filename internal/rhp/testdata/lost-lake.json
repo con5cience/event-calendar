@@ -1,0 +1,20 @@
+{
+  "calendar": {
+    "success": true,
+    "data": {
+      "events": [
+        {
+          "plaintitle": "Fixture &#038; Friends",
+          "url": "https://lost-lake.com/event/fixture/room/denver-colorado/",
+          "start": "2026-09-12T20:00:00",
+          "end": "2026-09-12T23:59:59",
+          "venuename": "",
+          "strctaHtml": "<a href=\"https://www.etix.com/ticket/p/123/fixture\">Buy Tickets</a>"
+        }
+      ]
+    }
+  },
+  "details": {
+    "https://lost-lake.com/event/fixture/room/denver-colorado/": "<html><head><script type=\"application/ld+json\">{\"@type\":\"Event\",\"name\":\"Fixture & Friends\",\"url\":\"https://lost-lake.com/event/fixture/room/denver-colorado/\",\"startDate\":\"2026-09-12T20:00:00-0600\",\"location\":{\"name\":\"Lost Lake\",\"address\":\"123 Test Street\"},\"offers\":{\"url\":\"https://www.etix.com/ticket/p/123/fixture\",\"price\":20}}</script></head><body class=\"singleEventDescription\"><h1>Fixture &amp; Friends</h1><div class=\"eventAgeRestriction\">Ages 16 and up</div><div class=\"eventDoorStartDate\">Doors: 7 pm Show: 8 pm</div><ul><li>All ages, ticketed guests under 16 ONLY ADMITTED WITH TICKETED GUARDIAN 21+</li></ul></body></html>"
+  }
+}

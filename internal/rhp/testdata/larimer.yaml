@@ -1,0 +1,10 @@
+schema_version: 1
+source: {id: larimer, adapter: rhp-calendar}
+state: new
+venue:
+  key: larimer
+  name: Larimer Lounge
+  timezone: America/Denver
+  website: https://larimerlounge.com
+  address: 2721 Larimer St, Denver, CO 80205
+  phone: "303.296.1003"
