@@ -21,6 +21,17 @@ Missing details remain rejected observations, not silently removed records.
 The local refresh coordinator can run this path; no schedule or remote deployment
 is enabled. See ADR 0023 and README for commands and verification limits.
 
+The first full operator run exposed canonical feed redirects. Capture profiles
+now use the exact verified `/feeds2/events/ics/6457` (HQ),
+`/feeds2/events/ics/801` (Oriental), and `/feeds2/events/ics_user/8693` (Federal)
+paths on `https://holdmyticket.com`. Redirect following remains disabled.
+
+| Evidence source                                       | Raw observation or test result                                                 | Supported finding                                                         | Material limit                                  |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | ----------------------------------------------- |
+| Original three subscription URLs                      | Each returned HTTP 302 with its corresponding `/feeds2/events/` Location       | Redirect rejection prevented the new capture client from reading the feed | Observed September 13, 2026                     |
+| Exact canonical feed URLs                             | Each returned HTTP 200 and the expected venue name and America/Denver timezone | Canonical profiles avoid redirects while preserving source scope          | Provider routes can change                      |
+| Retried capture and `replay-hmt` for all three venues | Capture completed; each publication was durable with no rejected records       | Canonical profiles work through the existing capture and Go parsing path  | Local Docker network, not GitHub-hosted runners |
+
 Oriental and HQ publish HoldMyTicket calendar subscriptions using the same format.
 
 ## Decision

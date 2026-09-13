@@ -14,9 +14,11 @@
   "fiddlers-green": {
     "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/44/events.json"
   },
-  "hq": { "endpoint": "https://holdmyticket.com/ics/6457" },
-  "oriental": { "endpoint": "https://holdmyticket.com/ics/801" },
-  "federal": { "endpoint": "https://holdmyticket.com/ics_user/8693" },
+  "hq": { "endpoint": "https://holdmyticket.com/feeds2/events/ics/6457" },
+  "oriental": { "endpoint": "https://holdmyticket.com/feeds2/events/ics/801" },
+  "federal": {
+    "endpoint": "https://holdmyticket.com/feeds2/events/ics_user/8693"
+  },
   "lost-lake": {
     "origin": "https://lost-lake.com"
   },
