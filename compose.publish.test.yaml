@@ -1,0 +1,31 @@
+services:
+  publisher:
+    build:
+      context: .
+      target: ingestion
+    user: "${PUBLICATION_TEST_UID:?}:${PUBLICATION_TEST_GID:?}"
+    volumes:
+      - ${PUBLICATION_TEST_STORE:?}:/data
+      - ./tests/fixtures/sources:/input:ro
+      - ./internal/aeg/testdata:/aeg:ro
+    network_mode: none
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+  published-app:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "127.0.0.1:8092:8080"
+    environment:
+      CALENDAR_INITIAL_DATE: "2026-09-08"
+    volumes:
+      - ${PUBLICATION_TEST_STORE:?}:/data:ro
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

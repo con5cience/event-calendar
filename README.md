@@ -1,0 +1,976 @@
+# Event calendar
+
+The site favicon is `web/public/assets/favicon.png`, copied from the approved
+`docs/denver-purple.png`: transparent background and `#6C5CE7` artwork.
+Vite copies it into the build, and the Go host serves it at `/assets/favicon.png`.
+
+The Go host serves page-specific titles, descriptions, canonical URLs, Open Graph
+and summary-card metadata, plus basic HTML content before React starts. The
+approved Denver logo is also the shared preview image. Canonical URLs always use
+`https://denver.withadult.com`; request hosts and query strings cannot change them.
+`/sitemap.xml` includes the homepage and listed, unexpired events; `/robots.txt`
+points crawlers to it. Removed-but-retained events remain accessible with
+`noindex`; expired events still return 404. Copy Event Link still copies the
+venue's event URL, not this site's URL. External preview rendering must be checked
+after deployment. These features require the Go host, not the Vite dev server.
+
+The app is a React/FullCalendar interface served by Go, with local JSON input.
+Its charcoal-and-purple palette matches music-finder: near-black background,
+charcoal surfaces, purple controls, and gray text. Small links and focus outlines
+use lighter purple for contrast; cancellation remains red. Layout and fonts are unchanged.
+Startup with an empty data directory has no events. No ingestion jobs, database, or external API calls run.
+The app reads version-one catalogs and source artifacts. A separate ingestion image
+can publish prepared artifacts locally or replay source snapshots. Supported capture
+scripts run only when an operator invokes them. Scheduled jobs are not enabled.
+
+This workspace's main app was populated with one-time real imports on
+September 9, 2026: 248 events across Gothic, Mission, Bluebird, Ogden, and Fiddler's
+Green at [localhost:8090](http://localhost:8090). The data lives
+in ignored `.artifacts/`, not in committed fixtures. Reload the page to read it.
+It will not refresh automatically. See the [initial import record](docs/adr/0019-implementation-and-verification-plan.md#aeg-source-expansion--2026-09-09) and the source additions below.
+
+## Run locally
+
+### Roxy / Afton capture and replay
+
+Run `node tests/afton/capture.mjs` to read all pages of Roxy's public Afton widget
+twice and enrich its Afton-hosted events with linked event pages. The
+[Afton profile](docs/adapters/0022-afton-venue-events.md) validates identities,
+pagination, both detail layouts, Denver clocks and explicit event admission.
+External ticket pages are not fetched; their unverified ages and times stay unset.
+No prices are published. No browser or credentials are needed for capture.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/afton/testdata` read-only at
+`/config`, then run:
+
+```sh
+replay-afton --store /data --config /config/roxy.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Never publish the synthetic HTML fixture. Subsequent refreshes need an operator
+config with `state: established`. Validate staging before generation-guarded
+publication. Run `npm run test:afton`, `npm run test:rhp` (shared compaction),
+`npm run test:contracts`, and `tests/browser/afton.spec.ts` with `ROXY_BASE_URL`.
+Unknown empty or incomplete responses fail safely. Recurring jobs remain disabled.
+
+The September 12 local import added 26 Roxy events through March 4, 2027: 20 All
+Ages, one 21+, and five externally ticketed events with unknown ages. The first 20
+qualify for the child-age filter; no blanket venue exception is inferred. The
+catalog now contains all 26 dedicated venue candidates, with the previous 25
+sources unchanged. Aggregators remain deferred.
+
+### Herb's capture and replay
+
+Run `node tests/herbs/capture.mjs` to read the ordinary public calendar twice.
+The [Herb's HTML profile](docs/adapters/0012-html-event-listings.md#herbs-implementation-and-admission-review--september-12-2026)
+does not fetch JSON, month queries, incoming ICS or ticket pages. Printed dates
+and clocks are treated as Denver-local by explicit approval, despite the site's
+New York setting. This is an assumption, not confirmation from the venue.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/herbs/testdata` read-only at
+`/config`, then run:
+
+```sh
+replay-herbs --store /data --config /config/herbs.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Never publish the synthetic HTML fixture. Later refreshes need an operator config
+with `state: established`. Validate staging before generation-guarded publication.
+Run `npm run test:herbs`, `npm run test:contracts`, and `tests/browser/herbs.spec.ts`
+with `HERBS_BASE_URL` pointing to the staged app. Empty or changed layout fails
+safely. Recurring jobs remain disabled.
+
+The September 12 import added 22 events through September 30. All start before
+22:30 and support the age-14 parent filter with the condition
+`Parent required; minors must leave by 10:30 PM`. No prices, ticket links or doors
+are inferred. The local catalog now contains 25 dedicated venue sources; all 24
+earlier imports are unchanged. Roxy remains to be integrated.
+
+### Black Buzzard capture and replay
+
+Run `node tests/buzzard/capture.mjs` for two reads each of the public calendar and
+homepage. The [Black Buzzard HTML profile](docs/adapters/0012-html-event-listings.md)
+cross-checks calendar cards, homepage Event JSON-LD and age cards before accepting
+the snapshot. It never follows `/events/` pages or ticket links. No prices or
+ambiguous times are published. The reviewed 18+ venue default supplies no guardian
+exception; placeholder age text is ignored.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/buzzard/testdata`
+read-only at `/config`, then run:
+
+```sh
+replay-buzzard --store /data --config /config/black-buzzard.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Never publish the synthetic fixtures. For later refreshes, use an operator config
+with `state: established`. Validate staging before generation-guarded publication.
+Run `npm run test:buzzard`, `npm run test:ophelias` (shared HTTP transport),
+`npm run test:contracts`, and `tests/browser/buzzard.spec.ts` with `BUZZARD_BASE_URL`.
+Empty or changed markup fails safely. Recurring jobs remain disabled.
+
+The September 12 local import added 13 events through December 5, 2026, all using
+the reviewed 18+ default without guardian clearance. The catalog contains 24
+dedicated venue sources; earlier imports are unchanged.
+
+### Ophelia's capture and replay
+
+Run `node tests/ophelias/capture.mjs` for two ordinary HTTP reads of the public
+calendar. Replay uses the [scoped HTML profile](docs/adapters/0012-html-event-listings.md)
+to compare parsed event fields; dynamic page scripts are never executed. Raw pages
+are temporary operator evidence, not application input. No prices are published.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/ophelias/testdata`
+read-only at `/config`, then run:
+
+```sh
+replay-ophelias --store /data --config /config/ophelias.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use an operator config with `state: established` for later refreshes. Never
+publish the synthetic HTML fixture. Validate staging before guarded publication.
+Run `npm run test:ophelias`, `npm run test:contracts`, and
+`tests/browser/ophelias.spec.ts` with `OPHELIAS_BASE_URL` set.
+An unrecognized or empty page fails without removing prior events; the site's
+empty-calendar markup has not been verified. No recurring jobs are enabled.
+
+The September 12 import added 38 events through December 12, 2026: seven 16+,
+four 18+, and 27 21+. Eleven have reviewed age-14 guardian eligibility.
+The local catalog contains 23 dedicated venue sources; prior imports are unchanged.
+
+### Meow Wolf capture and replay
+
+The [Meow Wolf embedded-data profile](docs/adapters/0011-embedded-application-json.md)
+uses `node tests/meowwolf/capture.mjs`. Chromium reads the venue's normal public
+calendar and detail pages. A snapshot is written only after two complete passes
+agree. The reader supports the inspected legacy and replacement serializations.
+No prices or automatic jobs are added.
+
+Build the ingestion image, mount a verified capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/meowwolf/testdata`
+read-only at `/config`, then run:
+
+```sh
+replay-meowwolf --store /data --config /config/meow-wolf-denver.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Never publish the synthetic JSON fixture. Use an operator configuration with
+`state: established` for later refreshes. Validate staging before guarded
+publication. Checks are `npm run test:meowwolf`, `npm run test:contracts`, and
+`tests/browser/meowwolf.spec.ts` with `MEOWWOLF_BASE_URL` set. With Adult eligibility
+requires explicit All Ages terms; restricted events receive no underage waiver.
+
+The September 12 local import added 50 events through January 23, 2027: 24 All
+Ages, 14 18+, 11 21+, and one with unknown admission. One event is cancelled.
+The catalog now contains 22 dedicated venue sources. Earlier imports are unchanged.
+
+### Levitt capture and replay
+
+Levitt uses the [VenuePilot GraphQL adapter](docs/adapters/0020-venuepilot-widgets.md).
+Run `node tests/venuepilot/capture.mjs` to capture and recheck the public calendar.
+No credentials or browser session are required. The request covers today through
+12 months ahead; only available events are returned.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/venuepilot/testdata`
+read-only at `/config`, then run:
+
+```sh
+replay-venuepilot --store /data --config /config/levitt.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use an operator config with `state: established` for later refreshes. Validate
+staging before generation-guarded publication. Never publish synthetic fixtures.
+Run `npm run test:venuepilot`, `npm run test:contracts`, and the browser spec
+`tests/browser/venuepilot.spec.ts` with `LEVITT_BASE_URL` set.
+Explicit All Ages events support With Adult filtering; guests 16 and younger need
+an adult. Restricted or unknown events receive no inferred adult exception.
+No prices, automatic jobs, or application changes are added.
+The September 12 local import added ten events through October 11, 2026: eight
+All Ages and two 21+. The catalog contains 21 dedicated venue sources.
+
+### Black Box capture and replay
+
+Black Box uses the [scoped Supabase adapter](docs/adapters/0004-supabase-rest-api.md)
+with admission enrichment from official ticket pages.
+Run `node tests/blackbox/capture.mjs`; it enumerates and rechecks the public
+event query and event-level admission terms. Anonymous credentials stay in memory.
+The main room and Lounge share The Black Box venue filter. External ticket
+provider redirects are rejected without fetching the external destination.
+
+Build the ingestion image, mount the reported capture read-only at `/capture`,
+an empty staging directory at `/data`, and `internal/blackbox/testdata`
+read-only at `/config`, then run:
+
+```sh
+replay-blackbox --store /data --config /config/black-box.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use an operator config with `state: established` when refreshing a store that
+already contains Black Box. Validate staging before generation-guarded publication.
+Do not publish synthetic fixtures. Run `npm run test:blackbox`,
+`npm run test:contracts`, and the browser spec `tests/browser/blackbox.spec.ts`
+with `BLACKBOX_BASE_URL` set. No adult exception to the reviewed 18+ policy
+was found; unknown terms do not receive clearance. No prices or schedules are added.
+The September 11 local import added 43 events through November 21, 2026, all 18+.
+One Dice-linked event was rejected. There are now 20 dedicated venue sources.
+
+### Fillmore capture and replay
+
+Fillmore uses the [Live Nation browser-flow adapter](docs/adapters/0021-livenation-venue-events.md#fillmore-profile-and-admission-review--september-11-2026)
+against the official venue site, not the supplied independent resale guide.
+Run `node tests/marquis/capture.mjs fillmore`, then use the Marquis container
+workflow below with `/config/fillmore.yaml`. Subsequent imports into a store
+containing Fillmore require an operator config with `state: established`.
+Do not publish synthetic JSON fixtures.
+
+The September 11 local import added 46 valid events through April 3, 2027.
+Three multi-day passes reject on conflicting time data; daily events remain.
+All Ages requires a ticket at every age. The 16+ policy permits ages 16–17 with
+valid ID, but never younger guests even with an adult. Missing restrictions remain
+unknown. Set `FILLMORE_BASE_URL` for `tests/browser/marquis.spec.ts`.
+No prices, schedules, or app changes are introduced.
+The local catalog now contains 19 dedicated venue sources.
+
+### Summit capture and replay
+
+Summit uses the [Live Nation browser-flow adapter](docs/adapters/0021-livenation-venue-events.md#summit-profile-and-admission-review--september-11-2026).
+It includes Summit and Moonroom under one venue filter, with separately ticketed
+events kept separate. Run `node tests/marquis/capture.mjs summit` explicitly.
+Use the Marquis container workflow below, replacing the config with
+`/config/summit.yaml`. Use `state: established` for subsequent imports into a
+store that already contains Summit. Never publish synthetic JSON fixtures.
+
+The September 11 local import added 53 events through May 2, 2027: 48 All Ages,
+four 18+, and one 21+. The Itchy-O two-day pass rejects because its midnight
+listing timestamp conflicts with its 7 p.m. doors note; daily listings remain.
+Summit's reviewed policy permits All Ages clearance but provides no adult waiver
+for restricted shows. Set `SUMMIT_BASE_URL` for `tests/browser/marquis.spec.ts`.
+No prices, schedules, or application changes are required.
+The local catalog now contains 18 dedicated venue sources.
+
+### Ball Arena capture and replay
+
+Ball uses the [KSE calendar variant](docs/adapters/0009-kse-event-apis.md), enriched
+with its official HTML listing. The September 11 import added 119 dated events
+through May 16, 2027; one undated listing was rejected. There are now 17 dedicated
+venue sources locally. Run `node tests/kse/ball-capture.mjs` explicitly;
+it captures and rechecks both interfaces without publishing. Build the ingestion
+image, mount the reported capture directory read-only at `/capture`, a staging
+directory at `/data`, and `internal/kse/testdata` read-only at `/config`, then run:
+
+```sh
+replay-kse-calendar --store /data --config /config/ball-arena.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use `state: established` in an operator config copy for subsequent imports into a
+store containing Ball. Validate staging before generation-guarded `publish`; never
+publish the synthetic fixture. `npm run test:kse` and `npm run test:contracts`
+verify capture and normalization. Set `BALL_BASE_URL` for `tests/browser/ball.spec.ts`.
+Game-specific admission does not imply concert clearance. No prices or scheduling
+are added; the app continues to consume local artifacts without venue requests.
+
+### Marquis capture and replay
+
+Marquis uses the [Live Nation browser-flow adapter](docs/adapters/0021-livenation-venue-events.md).
+The September 11 import added 74 events through February 10, 2027: 73 All Ages
+and one 18+ event. The local catalog now contains 16 dedicated venue sources.
+With the existing Playwright Chromium installation available, run:
+
+```sh
+node tests/marquis/capture.mjs
+docker build --target ingestion -t event-calendar-ingestion .
+```
+
+Capture scrolls the normal public page twice and requires matching complete event
+pages. It does not publish. Mount the reported capture directory read-only at
+`/capture`, an empty staging directory at `/data`, and `internal/livenation/testdata`
+read-only at `/config`, then run the ingestion image with:
+
+```sh
+replay-livenation --store /data --config /config/marquis.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+For subsequent imports into a store containing Marquis, use an operator config
+copy with `state: established`. Validate staging before generation-guarded
+`publish`; do not publish synthetic fixtures. `npm run test:marquis` tests capture
+validation; `npm run test:contracts` tests Go and artifact handoff. Set
+`MARQUIS_BASE_URL` for `tests/browser/marquis.spec.ts`. Browser capture runs outside
+the Go container; the app has no new browser dependency, prices, or automatic jobs.
+
+### Paramount capture and replay
+
+Paramount uses the [KSE venue-events adapter](docs/adapters/0009-kse-event-apis.md).
+The September 11 local import added 72 events through April 10, 2027; two records
+with inconsistent doors dates were rejected. The catalog now has 15 venue sources.
+Capture is explicit: `node tests/kse/capture.mjs`. Build the ingestion image, mount
+the reported capture directory read-only at `/capture`, a staging directory at
+`/data`, and `internal/kse/testdata` read-only at `/config`, then run:
+
+```sh
+replay-kse --store /data --config /config/paramount.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use an operator config copy with `state: established` for subsequent imports into
+a store containing Paramount. Validate staging before generation-guarded `publish`.
+Never publish the synthetic fixture. `npm run test:kse` tests capture;
+`npm run test:contracts` tests normalization and publication. Set `KSE_BASE_URL`
+for `tests/browser/kse.spec.ts`. Unknown admission restrictions do not grant
+With Adult clearance. No prices or automatic refresh are enabled.
+
+### Hi-Dive capture and replay
+
+Hi-Dive uses the [Plot adapter](docs/adapters/0005-plot-listings-api.md), with
+reviewed parent/legal-guardian admission conditions. A one-time September 11
+import added 33 events to the main local catalog. Capture is operator-triggered:
+
+```sh
+node tests/plot/capture.mjs
+docker build --target ingestion -t event-calendar-ingestion .
+```
+
+Mount the reported capture directory read-only at `/capture`, a staging directory
+at `/data`, and `internal/plot/testdata` read-only at `/config`. Run the image with:
+
+```sh
+replay-plot --store /data --config /config/hi-dive.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+Use `state: established` in an operator config copy for a store that already
+contains Hi-Dive. Validate staging before generation-guarded `publish`; never
+publish the synthetic fixture. `npm run test:plot` checks capture and
+`npm run test:contracts` checks normalization, reconciliation, publication, and
+consumer contracts. Use `PLOT_BASE_URL` with `tests/browser/plot.spec.ts` for UI
+checks against the chosen staging or main app. No schedule or automatic refresh
+is enabled.
+
+### Red Rocks capture and replay
+
+Red Rocks uses the [Clique adapter](docs/adapters/0003-wordpress-clique-api.md),
+including its reviewed admission policy. Capture does not publish or run on startup:
+
+```sh
+node tests/clique/capture.mjs
+docker build --target ingestion -t event-calendar-ingestion .
+```
+
+The capture prints its new temporary directory and timestamp. Mount that directory
+read-only at `/capture`, a staging directory at `/data`, and
+`internal/clique/testdata` read-only at `/config`, then run the ingestion image with:
+
+```sh
+replay-clique --store /data --config /config/red-rocks.yaml --snapshot /capture/snapshot.json --now <captured_at>
+```
+
+The supplied YAML declares a new source. For subsequent replay into a store that
+already contains Red Rocks, use an operator copy with `state: established`.
+Validate the staged source before promoting it with the existing `publish --expect`
+workflow. Do not publish the synthetic JSON fixture. Capture aborts on HTTP errors
+or invalid responses; replay rejects inconsistent coverage. Run `npm run test:clique`
+for capture tests and `npm run test:contracts` for adapter and publication tests.
+
+### Start the application
+
+Install Docker with Compose, then run:
+
+```sh
+docker compose up --build -d
+```
+
+Open [localhost:8090](http://localhost:8090). Stop the application with `docker compose stop app`.
+The read-only `.artifacts` mount is empty on first startup. The server returns an empty
+event list when that directory is empty. A missing directory or a nonempty directory
+without a valid catalog is an error, not an empty calendar.
+
+Optional environment settings:
+
+| Variable            | Default        | Meaning                                       |
+| ------------------- | -------------- | --------------------------------------------- |
+| `CALENDAR_PORT`     | `8090`         | Local HTTP port; bound to loopback            |
+| `CALENDAR_DATA_DIR` | `./.artifacts` | Directory containing `catalog.json`           |
+| `WEEK_EVENT_LIMIT`  | `10`           | Visible event cards per date in week view     |
+| `MONTH_EVENT_LIMIT` | `5`            | Visible event cards per date in month view    |
+| `DAY_EVENT_LIMIT`   | `0`            | Per-date day-view limit; zero means unlimited |
+
+Week and month limits must be positive integers. These limits apply only to
+the phone's scrolling lists; desktop Week and Month use available cell height instead.
+A finite day limit also shows a
+Show All control; full day expansion is covered by the UI tests when configured.
+
+## Railway snapshot deployment
+
+`Dockerfile.railway` replaces the former Pages build reference. It builds the
+React frontend and Go server, validates `.artifacts/catalog.json` and every
+referenced source file, then includes only that generation in `/data`. Missing
+or invalid input fails the build. Unreferenced generations and capture reports
+are not copied into the final image. IDs, public paths, and checksums stay unchanged.
+No volume, bucket, database, ingestion job, or runtime write access is required.
+The existing `Dockerfile`, `.dockerignore`, and Compose workflow are unchanged.
+
+Build and run locally without a data mount:
+
+```sh
+docker build -f Dockerfile.railway -t event-calendar-railway .
+docker run --rm --read-only -p 127.0.0.1:8095:8080 event-calendar-railway
+```
+
+### Supplying ignored data to Railway
+
+Git-based builds do not contain the ignored `.artifacts/` directory. Instead,
+prepare a dedicated local upload context after ingestion has completed:
+
+```sh
+railway_context=$(mktemp -d)
+docker build -f Dockerfile.railway --target upload-context --output "type=local,dest=$railway_context" .
+docker build -f "$railway_context/Dockerfile.railway" -t event-calendar-railway "$railway_context"
+```
+
+`Dockerfile.railway.dockerignore` permits the local snapshot only for this Dockerfile.
+The `upload-context` target exports the required build inputs and only the validated,
+catalog-referenced artifacts. Inspect the directory before upload. It contains no
+Git metadata, `.env` files, `node_modules`, or unrelated workspace directories.
+Source-code fixtures are build inputs, not published calendar data.
+
+Create or select a Railway service and configure:
+
+- Dockerfile variable: `RAILWAY_DOCKERFILE_PATH=Dockerfile.railway`.
+- Healthcheck path: `/healthz` (process health; also check `/api/calendar` after deployment).
+- Public networking: the app listens on `PORT`, default `8080`.
+- Leave the start command unset; use the image entry point. Do not attach a volume
+  at `/data`, which would hide the packaged snapshot.
+- Keep Git autodeploys disabled for this snapshot workflow.
+
+After authenticating with the Railway CLI, replace the three placeholders below
+with the exact intended deployment target. This command uploads and deploys:
+
+```sh
+railway up "$railway_context" --path-as-root --no-gitignore --project YOUR_PROJECT_ID --service YOUR_SERVICE --environment YOUR_ENVIRONMENT
+```
+
+Use `--no-gitignore` only with the dedicated exported context, not the repository
+root. This includes the hidden snapshot without adding data to Git or broadly
+uploading ignored local files. See Railway's [CLI file handling](https://docs.railway.com/cli/up#file-handling)
+and [Dockerfile selection](https://docs.railway.com/builds/dockerfiles#custom-dockerfile-path).
+
+Refresh by ingesting locally, exporting a **new** context, rebuilding, and uploading
+again. Redeploying an old upload does not collect new local data. Retain the previous
+image/deployment for rollback. The server still enforces event expiry at read time,
+so a snapshot loses expired events even without a refresh. No live source fetching
+runs during image build or application startup. Remote Railway deployment requires
+its own smoke test; local image verification is not evidence of a successful upload.
+
+## Explicit test-data preview
+
+```sh
+docker compose -f compose.yaml -f compose.test.yaml up --build -d
+```
+
+The normal app keeps its own data at port 8090. A separate app at
+[localhost:8091](http://localhost:8091) reads only synthetic fixtures from
+`tests/fixtures/catalog.json` and its referenced source files, and opens the week of
+September 6, 2026. These dated preview events start expiring on December 7, 2026;
+update their dates, paths, expiry values, and checksums together when refreshing
+fixtures. `CALENDAR_INITIAL_DATE` selects a view date, not the server clock.
+Stop the preview with `docker compose -f compose.yaml -f compose.test.yaml stop fixture-app`.
+Do not use the fixture override for ordinary startup or deployment.
+
+## Checks
+
+Node 24 or newer is required for host-side frontend development. Go runs in Docker;
+there is no host Go requirement.
+
+```sh
+npm ci
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+docker build --target go-test .
+npm run test:contracts
+docker compose -f compose.yaml -f compose.test.yaml up --build --wait
+npm exec playwright -- install chromium --no-remove
+npm run test:e2e
+npm run test:aeg
+npm run test:publication
+```
+
+Browser tests exercise both containers through their real HTTP interfaces. They
+cover desktop and touch-sized Chromium layouts. Traces for failures and screenshots
+are written to ignored `test-results/`. `CALENDAR_BASE_URL` changes the fixture app
+address; `CALENDAR_EMPTY_URL` changes the empty app address.
+
+`npm run test:publication` builds both images, starts a separate app on port 8092,
+publishes synthetic candidates through the real ingestion command, checks stale-generation
+rejection and untouched references, then runs the browser suite against that app.
+Keep the empty normal app on port 8090 running for the empty-startup check. The script
+uses the host UID/GID on macOS/Linux, stops its own Compose project afterward, and
+prints a retained temporary-store path for inspection. It never writes `.artifacts`.
+
+If port 8090 contains imported data, point `CALENDAR_EMPTY_URL` at a separate empty
+test instance when running the browser or publication suites. Do not clear the
+development data to satisfy the empty-startup test.
+
+`npm run test:contracts` builds and tests Go in Docker, writes synthetic source and
+catalog files to `test-results/contracts/`, and checks those exact bytes and their
+checksum in TypeScript. Ordinary `npm test` skips that handoff test because it needs
+the Go output. Browser tests can replace `test-results/`; rerun the contract command
+to regenerate the files. These files are not application input or live venue data.
+
+Use `npm run format` for frontend formatting. For Go formatting without host Go:
+
+```sh
+docker run --rm --mount type=bind,src="$PWD",dst=/workspace --workdir /workspace golang:1.26-bookworm gofmt -w cmd internal
+```
+
+`npm run dev` starts Vite on port 5173 and proxies `/api` to the Go app on port 8090.
+Build changes into the container with `docker compose up --build -d`.
+
+## Application input
+
+Place `catalog.json` and its referenced source artifacts under `CALENDAR_DATA_DIR`.
+See the [preview catalog](tests/fixtures/catalog.json), [source example](tests/fixtures/sources/mission/preview.json),
+and [artifact contract](docs/adr/0017-artifact-contract-and-publication.md).
+The old prototype `events.json` format is no longer supported.
+
+Each API request reads one catalog and validates every referenced source file,
+including its SHA-256 and source identity. Paths are confined to the data directory.
+Documents must be regular files, at most 4 MiB each; one generation is limited to
+64 MiB of input bytes. This is a safety limit, not a measured capacity target.
+The publication command writes complete source files under new names, then replaces
+the catalog last. See the local publication workflow below.
+
+Only a fully valid generation replaces the in-memory snapshot. On a refresh error,
+the server logs the error and serves the last valid snapshot. With no valid snapshot,
+it returns HTTP 503. Empty startup does not count as a valid published snapshot.
+A valid catalog with an empty `sources` array explicitly clears the calendar.
+Fallback state exists only in memory and does not survive a process restart.
+
+The server resolves actual venue attribution and admission-policy inheritance.
+The UI shows policy links when supplied and marks off-site events in the popup. It does not show
+source health or provider configuration. Unlisted and expired events are omitted.
+Month and Week cards show only the event title on one line, with an ellipsis when
+it overflows. Day cards show `Event @ Venue` and allow wrapping. No card shows
+times. Full titles remain accessible and available in event details.
+Cancelled cards use a red strikethrough across their text,
+without a dot or `Cancelled` suffix. Event ordering is unchanged.
+The popup heading combines a purple date and white event title at the same 1.6rem
+font size. It shows the
+event title as `YYYY-MM-DD : Event title`, with natural wrapping on narrow screens.
+Popup status is `Scheduled` or `Cancelled`, and its links are labeled `View Event` and
+`Buy Tickets`. The popup's `Cancelled` status is bold red; `Scheduled` is unchanged.
+This display mapping does not modify the stored provider status.
+Popup actions use icon-only, locally bundled Font Awesome SVGs with accessible names:
+`Copy Event Link`, `Download Calendar Entry`, `View Event`, and `Buy Tickets`. All four have matching button
+styles, targets at least 44px wide and tall, and visible keyboard focus.
+`aria-label` provides each accessible name. Equal-width slots distribute available
+actions evenly across the row. Custom tooltips appear after 300ms of mouse hover
+or immediately on keyboard focus; Escape dismisses the tooltip before the modal.
+Native `title` tooltips are omitted to avoid duplicates. Decorative
+SVGs are hidden from screen readers. Links and downloads retain native behavior.
+The icons are Font Awesome Free 7.3.1 by Fonticons, Inc., licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); their geometry is unchanged.
+
+The event title is the popup heading; there is no separate Artist row. Artist
+metadata remains available for search and sorting.
+Expiry uses midnight at the actual venue on `expires_on`; untimed off-site records
+without a timezone use the source venue timezone for expiry only.
+The calendar shows all retained, listed events, including past events, by default.
+There is no past-events toggle. Old saved past-visibility settings are ignored;
+saved venue, With Adult, child age, and search filters remain intact. The 90-day retention rule is
+unchanged. Event details retain times and timezone labels; there is no timezone footer.
+
+The toolbar starts with date navigation and the date range at the left content edge.
+Venue selection and With Adult stay between the date range and search. There is no
+filter drawer, hamburger button, Reset filters button, or age-category dropdown.
+Retired age-category selections are ignored so they cannot silently hide events.
+
+Venue accents use the fixed palette in `web/venueColors.ts`. Each integrated venue
+has a unique color, shown as a 2px calendar-card edge and a
+decorative marker beside its name in the venue picker and event details. Titles
+remain white; card backgrounds share the same dark surface without venue tints.
+Cancellations keep their red strikethrough. Colors do not change
+when filtering or reloading. Add a fixed assignment when integrating a venue;
+unknown venue names temporarily use the app's purple accent. These are UI colors,
+not official venue branding, and venue names remain available without using color.
+
+The `Venues` dropdown contains multi-select checkboxes. Its button shows `All venues`,
+the selected venue's name, or `N venues selected`. It stays open while checking venues;
+Escape closes it and returns focus to the button. Clicking outside or tabbing away
+also closes it. Opening the dropdown is not a saved preference.
+Venue checkboxes match any selected venue; `All` removes the venue restriction.
+Removing the last selected venue also returns to `All`. Search matches every query
+word, case-insensitively, across available public event metadata throughout the
+loaded date range. It does not change the calendar date or view. All active filters
+combine before the day/week/month display limits are applied.
+
+Advertised age policies remain available in event details and search. Event policies
+replace venue defaults. There is no separate age-category filter.
+
+`With Adult` reveals a native `Child’s age` dropdown (0–17, default 14).
+The adjacent information button, named `About With Adult`, explains reviewed
+policies and advises checking event details and venue policy before buying tickets.
+Its help opens on hover, keyboard focus or tap; Escape or an outside tap dismisses
+it. Opening help never changes the filter.
+Display `With Adult · Age:` beside numeric options `0` through `17`. The dot is
+decorative and hidden from assistive technology. Labels and the select inherit
+the same font family, size and weight and remain vertically centered.
+It offers only those 18 integer values, with a fixed 64px select width and a 44px minimum
+height. The saved age and accessible policy help remain unchanged.
+In the open venue picker, typing a name prefix focuses and scrolls to its first
+match without selecting it. Repeating a letter cycles matches; the prefix resets
+after 750ms or reopening. Space toggles the focused checkbox; Escape closes.
+It matches only reviewed admission ranges; unknown policies do not match. Turning
+it off removes the admission restriction. Venue and search filters still
+apply. The checkbox and age are saved with the other browser preferences.
+Bluebird, Gothic, Mission, Ogden, and Fiddler's Green have reviewed rules. Advertised restrictions stay unchanged;
+event details show a `With Adult` metadata row below `Age Policy`, with the child age
+and applicable condition followed by a policy-link icon. The icon has an accessible
+`Venue admission policy` name and the shared tooltip behavior. The row aligns text
+baselines for single-line and wrapped values. The icon is 14px with a 44px touch
+target positioned outside text flow so it does not increase metadata row spacing.
+The icon is left-aligned within that target to keep it close to the policy text.
+Review dates remain in the data
+but are not displayed in the modal. Follow those conditions; this filter is not a
+guarantee of admission.
+
+`Age Policy` always uses plain text. When its own policy URL is available, a
+`Venue admission policy` icon follows it, using the same styling as With Adult.
+All external links open a new tab/window with `noopener noreferrer`; internal
+navigation and calendar downloads are unchanged. The browser chooses tab versus
+window. Display-only corrections in `displayAgePolicy` normalize the reviewed
+Globe Hall guardian phrase and Paramount's `RECOMMENDED AGE 18+`. Unfamiliar text,
+abbreviations, source records, age numbers, and admission filtering are unchanged.
+
+Price data is retired across all venues. Adapters do not extract it, and reconciliation
+and publication strip prices from new artifacts, including legacy candidates and retained
+records. Price overrides cannot restore it. Existing immutable artifacts and raw source
+captures are not rewritten; the v1 price schema remains readable for compatibility.
+The API omits `price` and `cost_category`, and the UI, search, and `.ics` exports do not
+use them. Rebuilding the app removes price information from existing local events without
+re-ingestion. Ticket and event links remain available for visitors to check current prices.
+The Cost filter and classification are removed. `COST_BRACKET_LIMITS` is ignored and no
+longer passed by Compose. Previously saved cost selections are ignored; other preferences
+remain intact. The API still supplies optional `age_category` metadata.
+
+Venue selections, search text, With Adult, and child age are saved in browser
+`localStorage` under `event-calendar.filters.v1`, never in URLs. Clear each control
+directly: select All venues, clear search, or uncheck With Adult. Retired age, cost,
+and past-visibility selections are ignored. Invalid saved settings use defaults;
+blocked or full storage does not prevent in-memory filtering. A saved venue absent
+from the latest data stays in the selector so it can be deselected.
+
+The browser still consumes the compact `/api/calendar` display projection, not raw
+source artifacts. Validation runs in Go; no browser schema compiler or relaxed CSP is
+needed. Reload the page to request refreshed data. There is no background polling.
+
+The brand is `withAdult(denver)` for the intended `denver.withadult.com` site.
+A 36px header reads `withAdult(denver): Bring your people.` in the existing system
+font, uniformly 20px and weight 700. It uses the original purple for `withAdult()`
+and light gray for the city, colon, and tagline. The colon and tagline are hidden
+below 768px. There is no footer or header border. The gap below the header is
+halved: `clamp(6px, 1dvh, 12px)` on desktop and 6px on phones. Keep the existing
+proportional gutters. Calendar sizing reserves only the header's 36px,
+with scrolling on short screens. The browser title uses the same branding string.
+This does not configure
+DNS, TLS, or deployment for the domain.
+First-time visits open Week on desktop and phone, with today's existing highlight.
+Explicit view choices (including date drill-in) persist in `event-calendar.view.v1`
+in local storage. Reload restores that view; invalid or unavailable storage falls
+back to Week. Direct event URLs open the event's Week with the detail panel visible
+without replacing the saved view.
+Search sits to the left of Day/Week/Month on desktop and wraps below on phones.
+The empty field has no visible placeholder text; its accessible name remains
+Search events. On a single toolbar row, the venue and With Adult controls form
+one group centered between the date range and search, including the age picker
+when enabled. Narrow layouts retain wrapping.
+A right-aligned Font Awesome magnifying glass appears only when search is empty
+and unfocused. The decorative icon does not intercept clicks; the input retains
+its accessible Search events label. The venue dropdown and With Adult checkbox
+sit between the date range and search. With Adult reveals the adjacent child's
+age picker; they stay together when controls wrap. The event modal Close button
+uses a centered 44px target.
+FullCalendar owns date layout, navigation, and event placement. Desktop uses DayGrid;
+phones use List views. A presentation-only Show All row caps mobile dates without
+changing the domain data. All-day placement is used only to arrange date cards; it
+does not assign an event duration. Visible time labels always use the venue timezone.
+Month view shows only the selected month's dates and events. The desktop grid uses
+only the required week rows, with blank cells for weekday alignment.
+Desktop Month and Week fit the available viewport height.
+Desktop Week marks today's full weekday-and-date label with a purple
+pill and gives today's column a faint plum tint; phone and Day remain unchanged.
+Neither desktop grid has a
+count cap: `Show All` appears only when events overflow the available day-cell
+height. FullCalendar shows as many cards as fit. Desktop grids disable event
+slicing to reserve only the measured overflow-link height, not a whole event row. `Show All`
+opens the full day. Month cards use tighter vertical padding without smaller text.
+Desktop event cards size to their text and padding; Day cards can grow when text
+wraps. Phone event cards retain a 44px minimum touch height; toolbar
+and Show All controls keep their existing sizing.
+`Show All` is horizontally centered within its date cell or mobile date section.
+It uses a muted plum background with bold lavender text, a brighter hover state,
+and an inset keyboard-focus outline without adding height.
+Phone lists and desktop Day retain their scrolling layout. Side gutters are each
+5% of the window width, with a 12px minimum; there is no fixed calendar-width cap.
+Month has a 36rem minimum grid height and Week has a 16rem minimum. Short windows
+scroll vertically instead of compressing those grids. Spacing scales within
+12–24px. The date heading scales within 1.15–1.35rem;
+event text and 44px control targets are not shrunk. Resize preserves the current
+date, view, selections, and open event. No page zoom or scaling transform is used.
+
+Event cards use their stored `public_path`. Direct links open the event's week and
+detail panel with temporary default filters; saved preferences remain unchanged
+unless the visitor changes a filter. Back/Forward and closing the panel retain
+calendar context. Retained unlisted records show `No longer listed`; expired or
+unknown records return HTTP 404. Unavailable storage uses the last valid snapshot,
+or HTTP 503 when none exists.
+
+Clicking or tapping the background closes event details, as do Escape and the close
+button. Clicks inside the popup and drags that start inside it do not dismiss it.
+Closing restores focus and keeps the current calendar date/view.
+
+`Copy Event Link` copies the venue event URL used by `View Event`, not the app URL.
+If clipboard access fails, show that URL for manual copying. Omit the copy action
+when no venue event URL exists; keep `.ics` export independently available.
+`Download Calendar Entry` exports one event as an `.ics` file using doors time, then show time, or a
+date-only entry marked `Time not provided`. No end time is invented. The UID stays
+stable across title/time changes. The export uses CRLF line endings and includes
+available metadata and source/ticket links. Routes are `/events/…`,
+`/api/events/…`, and either route with `.ics` appended. Downloads use the API route
+so they also work through the Vite development proxy.
+
+Live ingestion, object-store publication/cleanup, and deployment remain later work. See
+[the delivery plan](docs/adr/0019-implementation-and-verification-plan.md) and
+[the product contract](docs/adr/0014-product-and-delivery-contract.md).
+
+## Version-one contract library
+
+The bundled [schemas](internal/artifact/schema/v1/), Go package
+[`internal/artifact`](internal/artifact/), and TypeScript validation module
+[`web/artifacts`](web/artifacts/) share valid and rejected fixtures in
+[`tests/contracts`](tests/contracts/). Operator configuration uses YAML; published
+source artifacts and catalogs use JSON. See [ADR 0017](docs/adr/0017-artifact-contract-and-publication.md)
+for the implemented fields and remaining integration work.
+
+The Go reconciler takes configuration, prior state, normalized observations, coverage,
+and a caller-supplied civil date. It returns a validated candidate and record rejections,
+or an error with no replacement. It assigns stable paths, applies overrides, preserves
+history, and removes expired records. Policy inheritance is available as a shared
+helper. The library does not fetch providers, publish files, or run jobs. The web
+reader consumes and validates its artifact format.
+
+## Local publication
+
+For local AEG fixture replay, see the workflow below this publication section.
+
+`ingest publish` accepts **already reconciled version-one source artifacts**, not raw
+provider responses or operator YAML. It does not fetch events or invoke the reconciler.
+All supplied candidates must pass validation; untouched sources keep their existing
+catalog references. There is no source-removal command or automatic artifact cleanup.
+
+To enable manual publication, uncomment only the `ingestion` service block in
+`compose.yaml`. Set `CALENDAR_CANDIDATE_DIR` to your prepared input directory and
+`CALENDAR_DATA_DIR` to the existing destination store. Ensure the store is writable
+by `INGEST_UID`/`INGEST_GID` (default 65532:65532) and readable by the app. Keep inputs
+mounted read-only. Do not make a shared production directory world-writable.
+
+For a deliberately new store with no catalog, and an input named `source.json`:
+
+```sh
+docker compose build ingestion
+docker compose run --rm ingestion publish --store /data --expect none /input/source.json
+```
+
+For later updates, replace `none` with the catalog's `generation` captured when preparing
+the candidates. Put all options before file arguments. Multiple file arguments publish
+as one generation. A mismatch fails without replacing the catalog; do not simply retry
+with a newer generation unless the candidates have been reconciled against that state.
+`none` is reserved for an absent catalog, not a way to recover a lost established catalog.
+The command supports `publish --help`. Default `docker compose up` remains app-only
+unless you explicitly uncomment the service.
+
+The command emits a JSON report with `generation`, `published`, `durable`, and optional
+`error`. Exit 0 means publication and filesystem sync calls succeeded. Exit 1 means
+the command did not publish; exit 2 means invalid usage. Exit 3 means publication
+occurred but durability confirmation or report delivery failed. After interruption or
+exit 3, inspect the current catalog before retrying; a missing report does not establish
+that no publication occurred. `durable` records successful sync calls, not a tested
+hardware power-loss guarantee.
+
+Writers use an advisory lock on the destination directory inode. Cooperating writers
+fail fast on contention; process death releases the lock without stale lock files.
+Do not rename/replace the store directory or bypass the lock with other writers.
+Linux Docker is verified; native macOS and network filesystems need separate checks.
+
+Before catalog replacement, a failure leaves the prior catalog unchanged. It may leave
+unreferenced immutable files or a `.catalog-*.json` staging file. A fresh invocation
+uses new names and does not overwrite these files. If the first publication was
+interrupted, a known-new store can be retried with `--expect none`; until success the
+reader can report 503 because that store is no longer empty. No command removes orphan
+files, old generations, or backups. Inspect and retain the prior catalog when planning
+an operator rollback; automatic rollback and cleanup remain out of scope.
+
+## Local RHP snapshot replay
+
+RHP snapshot ingestion is available for Lost Lake, Larimer Lounge, Globe Hall,
+and on-site Cervantes events. See the [RHP operator and fixture instructions](internal/rhp/testdata/README.md)
+for explicit captures, `replay-rhp`, and validation. The shared adapter enriches
+reviewed event-level guardian conditions, preserves actual off-site venues, and
+ignores prices. These jobs do not run on app startup.
+
+## Local HoldMyTicket snapshot replay
+
+HQ, The Oriental Theater, and The Federal Theatre use one local-only HoldMyTicket adapter. It reads a
+complete saved iCalendar feed plus saved Event JSON-LD details. It does not fetch
+URLs or run a schedule. The snapshot format and synthetic inputs are documented in
+[the fixture README](internal/hmt/testdata/README.md).
+
+Inside the ingestion container, with a writable isolated store at `/data` and
+`internal/hmt/testdata` mounted read-only at `/hmt`:
+
+```sh
+/ingest replay-hmt --store /data --config /hmt/hq.yaml --snapshot /hmt/hq.json --now 2026-09-10T14:30:00Z
+```
+
+Use the matching `oriental.yaml` and `oriental.json` for Oriental. Never publish
+these synthetic fixtures into `.artifacts`. `replay-hmt --help` lists the flags.
+The existing replay publication workflow validates and publishes the artifact;
+the application needs no provider-specific configuration or restart.
+
+For an approved live capture, save the entire feed from
+`https://holdmyticket.com/ics/6457` (HQ) or `https://holdmyticket.com/ics/801`
+(Oriental), then save the single Event JSON-LD object from each feed event URL
+under its numeric provider ID. Parse HTML as data; do not execute page scripts.
+Stop on failed fetches, incomplete feeds, ambiguous detail selection, or unexpected
+redirects. Review raw samples and stage the bundle before publication. Snapshots
+are limited to 4 MiB. Capture and recurring access remain operator-managed.
+
+Federal uses `https://holdmyticket.com/ics_user/8693` and `federal.yaml`, not an
+inferred `/ics/8693` route. Its unused DESCRIPTION blocks contain malformed raw
+paragraph breaks. Only the Federal profile removes these blocks in memory before
+standard parsing. It requires the observed valid CREATED timestamp boundary and
+rejects intervening property-like lines, duplicate blocks, or missing boundaries.
+Raw captures remain unchanged. All event fields still undergo normal validation.
+
+Federal's explicitly All Ages details receive reviewed child-admission metadata
+linked to that event's page (reviewed September 10, 2026). Restricted or ambiguous
+labels receive no inferred permission. Event overrides still win. HQ/Oriental
+policies and the application's independent `.ics` export are unchanged.
+
+After an approved Federal publication, verify desktop and phone behavior with:
+
+```sh
+FEDERAL_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/federal.spec.ts
+```
+
+The replay keeps only available events within the next 12 months. `complete` means
+the supplied snapshot was enumerated, not that the provider publishes every show.
+Do not automate established-source refresh/removal until feed coverage is reviewed.
+Offer URLs supply ticket links; offer price data is ignored. Age labels support exact
+category filtering. With Adult remains unavailable
+for these venues until accompaniment policies are reviewed.
+
+After explicit publication into a local test or development instance:
+
+```sh
+HMT_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/hmt.spec.ts
+```
+
+This opt-in test checks both venues on desktop and phone. Run browser workflows
+sequentially because they share test output directories.
+
+## Local AEG fixture replay
+
+The AEG snapshot adapter supports Gothic, Mission, Bluebird, Ogden, and Fiddler's
+Green. It has no HTTP client or schedule. Approved one-time live imports are
+recorded in ADR 0019; recurring access and completeness remain separate work. Its authored
+[fixtures and configurations](internal/aeg/testdata/) must not become public listings.
+See [the AEG adapter contract](docs/adapters/0002-aeg-json-feeds.md).
+
+Run the isolated container workflow with Docker, Node, and installed Chromium:
+
+```sh
+npm run test:aeg
+```
+
+This builds the ingestion and application images, replays each venue in a separate
+process, validates the resulting HTTP records, and checks the calendar on desktop
+and phone. The publisher container has networking disabled. The script uses a fresh
+temporary store, never writes `.artifacts`, and removes only its own test containers
+and network afterward. It retains the store and prints its path. Do not run it at the
+same time as `test:publication`: both use port 8092 and browser output directories.
+Run browser suites sequentially to preserve their failure artifacts.
+
+Inside an ingestion container with a writable test store at `/data` and the synthetic
+fixture directory mounted read-only at `/aeg`, the command is:
+
+```sh
+/ingest replay-aeg --store /data --config /aeg/gothic.yaml --snapshot /aeg/gothic.json --now 2026-09-09T12:00:00Z
+```
+
+Use the matching `.yaml` and `.json` pair for `mission`, `bluebird`, `ogden`, or
+`fiddlers-green`. `replay-aeg --help` lists the flags.
+
+Reviewed rules live in optional source-config `admission_rules`, keyed by the exact
+age category. See the Bluebird YAML and the artifact ADR for the range contract.
+Deploy the updated reader before publishing these optional version-one fields;
+older strict readers reject them. Ordinary replay applies the current configured
+rules to newly normalized records, after configured policy overrides.
+
+To annotate existing records without fetching or reconciling upstream listings,
+mount the intended store at `/data` and its matching established-source config at
+`/input/bluebird.yaml`, then run inside the ingestion container:
+
+```sh
+/ingest enrich-admission --store /data --config /input/bluebird.yaml
+```
+
+Back up the catalog first. This publishes only that source, preserves event IDs,
+URLs and records, and does not refresh or remove events. It preserves existing
+`with_adult` metadata and already-applied policy overrides; it is not a command for
+applying new override values or replacing previously enriched rules. Use normal
+replay for those updates. Do not publish the synthetic JSON fixture into live data.
+
+The same enrichment command supports Gothic, Mission, Ogden, and Fiddler's Green
+with their matching established-source configurations. Fiddler's Green has only an
+All ages rule; restricted or missing categories remain unknown. Its Stick Figure
+listing currently has no restriction and therefore does not match With Adult.
+Gothic, Mission, and Ogden use the same reviewed ranges as Bluebird, each citing
+its own policy page. Policies are curated, not automatically refreshed.
+
+After publishing reviewed data for all five venues, verify the local reader and UI with:
+
+```sh
+LIVE_ADMISSION_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/live-admission.spec.ts
+```
+
+After an explicit live import, run the opt-in local smoke check:
+
+```sh
+LIVE_AEG_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/live-aeg.spec.ts
+```
+
+This checks new venue details, link destinations, and filter options without
+changing stored events. It skips in the default fixture test run.
+The explicit clock controls reconciliation, not the app's runtime expiry clock.
+These synthetic September 12 events expire on December 11, 2026; update fixtures
+and browser expectations together before running the workflow after that date.
+
+The first replay of each source uses `state: new`. For subsequent replays, use a
+separate configuration copy with `state: established`; the prior source artifact
+must exist and validate. Overrides use the existing config structure. The command
+captures the catalog generation before normalization and fails if another writer
+publishes first. Retry from the new prior state, not from an old prepared candidate.
+
+Reports include the normal publication fields plus `rejected` records. Exit statuses
+match `publish`: 0 committed and synced, 1 not published, 2 usage error, 3 committed
+but durability confirmation or report delivery failed. A valid empty snapshot removes
+future listings within its coverage; a failed replay does not change the catalog.
+Invalid known updates retain the last valid event. Metadata remains optional: `$0`
+placeholders do not become Free, and literal status text does not alter listing state.
+
+Rebuild readers before publishing artifacts with `status`. This is an additive change
+to the local version-one schema; older strict readers reject that property.

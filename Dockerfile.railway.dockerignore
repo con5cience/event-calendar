@@ -1,0 +1,27 @@
+# This allowlist overrides .dockerignore only for Dockerfile.railway.
+**
+!Dockerfile.railway
+!Dockerfile.railway.dockerignore
+!package.json
+!package-lock.json
+!tsconfig.json
+!vite.config.ts
+!go.mod
+!go.sum
+!web/
+!web/**
+!cmd/
+!cmd/**
+!internal/
+!internal/**
+!tests/
+!tests/contracts/
+!tests/contracts/**
+!.artifacts/
+!.artifacts/catalog.json
+!.artifacts/sources/
+!.artifacts/sources/**
+**/.env
+**/.env.*
+**/node_modules
+**/.DS_Store

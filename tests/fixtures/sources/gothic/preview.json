@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "source": {
+    "id": "gothic",
+    "adapter": "synthetic"
+  },
+  "venue": {
+    "key": "gothic",
+    "name": "Gothic Theatre",
+    "timezone": "America/Denver"
+  },
+  "generated_at": "2026-09-08T12:00:00Z",
+  "coverage": {
+    "from": "2026-09-08",
+    "through": "2027-09-08",
+    "complete": true
+  },
+  "events": [
+    {
+      "id": "gothic-000000000001",
+      "upstream_id": "01",
+      "public_path": "/events/gothic/2026-09-08-untimed-alpha-000000000001",
+      "date": "2026-09-08",
+      "title": "Untimed Alpha",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07"
+    },
+    {
+      "id": "gothic-000000000004",
+      "upstream_id": "04",
+      "public_path": "/events/gothic/2026-09-08-amber-000000000004",
+      "date": "2026-09-08",
+      "title": "Amber",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "show_at": "2026-09-09T01:00:00Z"
+    },
+    {
+      "id": "gothic-000000000015",
+      "upstream_id": "15",
+      "public_path": "/events/gothic/2026-09-09-next-evening-000000000015",
+      "date": "2026-09-09",
+      "title": "Next evening",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-08",
+      "doors_at": "2026-09-09T19:00:00-06:00"
+    },
+    {
+      "id": "gothic-000000000017",
+      "upstream_id": "17",
+      "public_path": "/events/gothic/2026-09-08-removed-session-000000000017",
+      "date": "2026-09-08",
+      "title": "Removed session",
+      "off_site": false,
+      "listed": false,
+      "expires_on": "2026-12-07"
+    },
+    {
+      "id": "gothic-000000000018",
+      "upstream_id": "18",
+      "public_path": "/events/gothic/2000-01-01-expired-session-000000000018",
+      "date": "2000-01-01",
+      "title": "Expired session",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2000-03-31"
+    }
+  ]
+}

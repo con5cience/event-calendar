@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "generation": "preview",
+  "generated_at": "2026-09-08T12:00:00Z",
+  "sources": [
+    {
+      "source_id": "hq",
+      "artifact": "sources/hq/preview.json",
+      "sha256": "ec6551b26cf5a3ad98b57ddb463068eeae465da8a59d2e53a1029ac5f01c1bd9"
+    },
+    {
+      "source_id": "gothic",
+      "artifact": "sources/gothic/preview.json",
+      "sha256": "a26b128a3bbc13fd19741b8bddcd9f69d7c506f28b69bc647bb6921cd2578305"
+    },
+    {
+      "source_id": "mission",
+      "artifact": "sources/mission/preview.json",
+      "sha256": "db0ccc03ec81976c6de520b0080c5328b936943666972270e5ac7d7c811ae58c"
+    }
+  ]
+}

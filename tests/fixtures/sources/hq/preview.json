@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "source": {
+    "id": "hq",
+    "adapter": "synthetic"
+  },
+  "venue": {
+    "key": "hq",
+    "name": "HQ",
+    "timezone": "America/Denver"
+  },
+  "generated_at": "2026-09-08T12:00:00Z",
+  "coverage": {
+    "from": "2026-09-08",
+    "through": "2027-09-08",
+    "complete": true
+  },
+  "events": [
+    {
+      "id": "hq-000000000014",
+      "upstream_id": "14",
+      "public_path": "/events/hq/2026-09-08-kestrel-000000000014",
+      "date": "2026-09-08",
+      "title": "Kestrel",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000007",
+      "upstream_id": "07",
+      "public_path": "/events/hq/2026-09-08-dune-000000000007",
+      "date": "2026-09-08",
+      "title": "Dune",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T19:30:00-06:00"
+    },
+    {
+      "id": "hq-000000000008",
+      "upstream_id": "08",
+      "public_path": "/events/hq/2026-09-08-ember-000000000008",
+      "date": "2026-09-08",
+      "title": "Ember",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000009",
+      "upstream_id": "09",
+      "public_path": "/events/hq/2026-09-08-fern-000000000009",
+      "date": "2026-09-08",
+      "title": "Fern",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000010",
+      "upstream_id": "10",
+      "public_path": "/events/hq/2026-09-08-grove-000000000010",
+      "date": "2026-09-08",
+      "title": "Grove",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000011",
+      "upstream_id": "11",
+      "public_path": "/events/hq/2026-09-08-hazel-000000000011",
+      "date": "2026-09-08",
+      "title": "Hazel",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000012",
+      "upstream_id": "12",
+      "public_path": "/events/hq/2026-09-08-iris-000000000012",
+      "date": "2026-09-08",
+      "title": "Iris",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    },
+    {
+      "id": "hq-000000000013",
+      "upstream_id": "13",
+      "public_path": "/events/hq/2026-09-08-juniper-000000000013",
+      "date": "2026-09-08",
+      "title": "Juniper",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T20:00:00-06:00"
+    }
+  ]
+}

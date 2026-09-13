@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "source": {
+    "id": "mission",
+    "adapter": "synthetic"
+  },
+  "venue": {
+    "key": "mission",
+    "name": "Mission Ballroom",
+    "timezone": "America/Denver",
+    "admission_policy": {
+      "text": "16+",
+      "url": "https://example.com/age-policy",
+      "category": "16+"
+    }
+  },
+  "generated_at": "2026-09-08T12:00:00Z",
+  "coverage": {
+    "from": "2026-09-08",
+    "through": "2027-09-08",
+    "complete": true
+  },
+  "events": [
+    {
+      "id": "mission-000000000002",
+      "upstream_id": "02",
+      "public_path": "/events/mission/2026-09-08-untimed-zulu-000000000002",
+      "date": "2026-09-08",
+      "title": "Untimed Zulu",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "admission_policy": {
+        "text": "21+",
+        "category": "21+"
+      }
+    },
+    {
+      "id": "mission-000000000003",
+      "upstream_id": "03",
+      "public_path": "/events/mission/2026-09-08-early-doors-000000000003",
+      "date": "2026-09-08",
+      "title": "Early doors",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T18:00:00-06:00",
+      "show_at": "2026-09-08T22:00:00-06:00",
+      "event_url": "https://example.com/event",
+      "ticket_url": "https://example.com/tickets",
+      "performers": ["Test performers"],
+      "price": {
+        "text": "$20",
+        "amount_minor": 2000,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "mission-000000000006",
+      "upstream_id": "06",
+      "public_path": "/events/mission/2026-09-08-cedar-000000000006",
+      "date": "2026-09-08",
+      "title": "Cedar",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T19:00:00-06:00"
+    },
+    {
+      "id": "mission-000000000005",
+      "upstream_id": "05",
+      "public_path": "/events/mission/2026-09-08-birch-000000000005",
+      "date": "2026-09-08",
+      "title": "Birch",
+      "off_site": false,
+      "listed": true,
+      "expires_on": "2026-12-07",
+      "doors_at": "2026-09-08T19:00:00-06:00"
+    },
+    {
+      "id": "mission-000000000016",
+      "upstream_id": "16",
+      "public_path": "/events/warehouse/2026-09-10-off-site-session-000000000016",
+      "date": "2026-09-10",
+      "title": "Off-site session",
+      "venue": {
+        "key": "warehouse",
+        "name": "Warehouse"
+      },
+      "off_site": true,
+      "listed": true,
+      "expires_on": "2026-12-09"
+    }
+  ]
+}
