@@ -83,7 +83,8 @@ The exported Dockerfile pins the selected locale as its build-argument default.
 It builds outside the repository, with no other locale directory available. Each
 Railway service receives its own exported context and has independent domain,
 deployment history and rollback. No remote deployment is implied by local tests.
-Keep Git auto-deploy disabled for this ignored-artifact snapshot workflow.
+For explicit CLI deployment, keep Git auto-deploy disabled to avoid duplicate
+deployments. Git-only builds can use autodeploy with the tracked snapshot.
 
 Direct repository builds must pass `--build-arg LOCALE=<id>`. Compose selects the
 same argument through an explicit locale env file, with independent project names
@@ -143,7 +144,7 @@ Exit code 2 means partial publication with a usable validated snapshot; code 1
 means failure. All-source failure does not replace the tracked snapshot. Successful
 jobs can change generation metadata even when event data is identical; semantic
 no-op detection remains future work. No Git writes, deployment, or schedule is
-part of this command. Runtime and Railway build inputs are unchanged by this step.
+part of this command. Runtime input format is unchanged.
 
 AEG capture preserves raw JSON for the existing strict decoder. HMT capture uses
 URL discovery only, not an alternate iCalendar parser; the existing Go parser
@@ -171,3 +172,18 @@ cache files; the reader correctly rejected that nonempty directory without a
 catalog. A dedicated empty mount corrected the test setup, and the final suite
 passed. The temporary empty container was removed. No application data was
 deleted or replaced. No live refresh, Git commit/push, or deployment was performed.
+
+## Tracked-snapshot build integration — September 13, 2026
+
+`Dockerfile.railway` and `scripts/package-locale.mjs` now select
+`locales/<locale>/catalog/`, not `.artifacts/<locale>`. The Docker allowlist no
+longer includes ignored working stores. The exporter copies explicit site config,
+assets, source profiles, and capture profiles, then the validated referenced
+snapshot. It does not copy the entire locale directory or any refresh lock.
+
+Git checkouts can therefore build without local ignored data. Exported contexts
+retain the same tracked layout and pin the selected locale's Docker build
+argument. The existing two-locale test now constructs both contexts without an
+`.artifacts` directory and checks their running HTTP interfaces. Compose still
+reads its separate working store; neither builds nor app startup run ingestion.
+No remote workflow or deployment configuration is changed here.

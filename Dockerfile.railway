@@ -20,8 +20,11 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /package-snapshot ./cmd
 
 FROM backend AS snapshot
 ARG LOCALE
-COPY locales/${LOCALE}/ /site/
-COPY .artifacts/${LOCALE}/ /input/
+COPY locales/${LOCALE}/site.json /site/site.json
+COPY locales/${LOCALE}/assets/ /site/assets/
+COPY locales/${LOCALE}/sources/ /site/sources/
+COPY locales/${LOCALE}/capture.json /site/capture.json
+COPY locales/${LOCALE}/catalog/ /input/
 RUN test -n "$LOCALE" && /package-snapshot --site /site /input /snapshot
 
 # Optional local export for railway up: only build inputs and the active snapshot.
@@ -35,7 +38,7 @@ COPY cmd /cmd
 COPY internal /internal
 COPY tests/contracts /tests/contracts
 COPY --from=snapshot /site/ /locales/${LOCALE}/
-COPY --from=snapshot /snapshot/ /.artifacts/${LOCALE}/
+COPY --from=snapshot /snapshot/ /locales/${LOCALE}/catalog/
 
 FROM scratch AS runtime
 COPY --from=backend /calendar /calendar

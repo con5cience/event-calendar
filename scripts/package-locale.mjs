@@ -9,6 +9,9 @@ export function validateLocaleID(id) {
     throw Error("Select exactly one locale identifier");
   return id;
 }
+export function snapshotPath(root, id) {
+  return join(root, "locales", validateLocaleID(id), "catalog", "catalog.json");
+}
 export function packageLocale(id, destination) {
   validateLocaleID(id);
   const root = fileURLToPath(new URL("../", import.meta.url));
@@ -17,7 +20,7 @@ export function packageLocale(id, destination) {
   );
   if (site.id !== id)
     throw Error("Locale directory and configuration ID differ");
-  if (!existsSync(join(root, ".artifacts", id, "catalog.json")))
+  if (!existsSync(snapshotPath(root, id)))
     throw Error("Locale catalog is missing");
   const output = resolve(destination);
   const within = relative(root, output);

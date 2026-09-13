@@ -155,8 +155,8 @@ The integration image uses local synthetic HTTP responses and the real Go
 publisher, snapshot validator, and calendar HTTP consumer. It also checks HMT
 HTML extraction against the Go parser. These checks do not prove live access
 from GitHub-hosted runners. Scheduling, Git publishing, and Railway automation
-remain separate work. `Dockerfile.railway` still consumes `.artifacts/<id>`;
-switching its input to the tracked catalog is the next build-integration step.
+remain separate work. `Dockerfile.railway` consumes the tracked catalog; the local
+Compose app still consumes its independent `.artifacts/<id>` working store.
 
 ### Roxy / Afton capture and replay
 
@@ -530,7 +530,7 @@ Show All control; full day expansion is covered by the UI tests when configured.
 ## Railway snapshot deployment
 
 `Dockerfile.railway` replaces the former Pages build reference. It builds the
-React frontend and Go server, validates `.artifacts/<locale>/catalog.json` and every
+React frontend and Go server, validates `locales/<locale>/catalog/catalog.json` and every
 referenced source file, then includes only that generation in `/data`. Missing
 or invalid input fails the build. Unreferenced generations and capture reports
 are not copied into the final image. IDs, public paths, and checksums stay unchanged.
@@ -545,10 +545,14 @@ docker build -f Dockerfile.railway --build-arg LOCALE=denver -t event-calendar-d
 docker run --rm --read-only -p 127.0.0.1:8095:8080 event-calendar-denver
 ```
 
-### Supplying ignored data to Railway
+### Git builds and optional upload contexts
 
-Git-based builds do not contain the ignored `.artifacts/` directory. Instead,
-prepare a dedicated local upload context after ingestion has completed:
+Git-based builds use the committed snapshot in `locales/<locale>/catalog/` and
+need no ignored local artifacts. Refresh and validate the snapshot, review its
+report and diff, then commit it before triggering a build. Merely rebuilding the
+same commit does not fetch new events.
+
+For a CLI deployment, optionally prepare a dedicated single-locale upload context:
 
 ```sh
 railway_parent=$(mktemp -d)
@@ -557,7 +561,7 @@ node scripts/package-locale.mjs denver "$railway_context"
 docker build -f "$railway_context/Dockerfile.railway" -t event-calendar-railway "$railway_context"
 ```
 
-`Dockerfile.railway.dockerignore` permits the local snapshot only for this Dockerfile.
+`Dockerfile.railway.dockerignore` excludes `.artifacts/` and permits tracked locale inputs.
 The `upload-context` target exports the required build inputs and only the validated,
 catalog-referenced artifacts. Inspect the directory before upload. It contains no
 Git metadata, `.env` files, `node_modules`, or unrelated workspace directories.
@@ -566,26 +570,29 @@ Source-code fixtures are build inputs, not published calendar data.
 Create or select a Railway service and configure:
 
 - Dockerfile variable: `RAILWAY_DOCKERFILE_PATH=Dockerfile.railway`.
+- Select the locale with build variable `LOCALE=denver` (or the selected city).
 - Healthcheck path: `/healthz` (process health; also check `/api/calendar` after deployment).
 - Public networking: the app listens on `PORT`, default `8080`.
 - Leave the start command unset; use the image entry point. Do not attach a volume
   at `/data`, which would hide the packaged snapshot.
-- Keep Git autodeploys disabled for this snapshot workflow.
+- When deploying explicitly from a CLI or future Actions workflow, disable Git
+  autodeploys to avoid duplicate deployments. A Git-only deployment can instead
+  use Railway autodeploys; no Actions workflow is configured yet.
 
 After authenticating with the Railway CLI, replace the three placeholders below
 with the exact intended deployment target. This command uploads and deploys:
 
 ```sh
-railway up "$railway_context" --path-as-root --no-gitignore --project YOUR_PROJECT_ID --service YOUR_SERVICE --environment YOUR_ENVIRONMENT
+railway up "$railway_context" --path-as-root --project YOUR_PROJECT_ID --service YOUR_SERVICE --environment YOUR_ENVIRONMENT
 ```
 
-Use `--no-gitignore` only with the dedicated exported context, not the repository
-root. This includes the hidden snapshot without adding data to Git or broadly
-uploading ignored local files. See Railway's [CLI file handling](https://docs.railway.com/cli/up#file-handling)
+The snapshot is no longer ignored, so `--no-gitignore` is unnecessary. The exported
+context omits unrelated locales and working data. See Railway's [CLI file handling](https://docs.railway.com/cli/up#file-handling)
 and [Dockerfile selection](https://docs.railway.com/builds/dockerfiles#custom-dockerfile-path).
 
-Refresh by ingesting locally, exporting a **new** context, rebuilding, and uploading
-again. Redeploying an old upload does not collect new local data. Retain the previous
+Refresh the tracked snapshot, then either commit it for a Git build or export a
+**new** context, rebuild, and upload again. Redeploying an old upload does not
+collect new local data. Retain the previous
 image/deployment for rollback. The server still enforces event expiry at read time,
 so a snapshot loses expired events even without a refresh. No live source fetching
 runs during image build or application startup. Remote Railway deployment requires

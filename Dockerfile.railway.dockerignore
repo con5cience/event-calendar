@@ -17,8 +17,6 @@
 !tests/
 !tests/contracts/
 !tests/contracts/**
-!.artifacts/
-!.artifacts/**
 !locales/
 !locales/**
 **/.env

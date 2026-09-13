@@ -106,7 +106,7 @@ try {
   packageLocale("denver", denver);
   mkdirSync(coastal);
   for (const name of readdirSync(denver))
-    if (!["locales", ".artifacts"].includes(name))
+    if (name !== "locales")
       cpSync(join(denver, name), join(coastal, name), { recursive: true });
   const site = JSON.parse(
     readFileSync(join(denver, "locales/denver/site.json")),
@@ -161,8 +161,11 @@ try {
     adapter_options: { feed_id: "987", venue_id: "654" },
   });
   const bytes = Buffer.from(JSON.stringify(source));
-  save(join(coastal, ".artifacts/coastal/sources/harbor/fixture.json"), bytes);
-  save(join(coastal, ".artifacts/coastal/catalog.json"), {
+  save(
+    join(coastal, "locales/coastal/catalog/sources/harbor/fixture.json"),
+    bytes,
+  );
+  save(join(coastal, "locales/coastal/catalog/catalog.json"), {
     schema_version: 1,
     generation: "fixture",
     generated_at: source.generated_at,
@@ -183,7 +186,8 @@ try {
     ),
   );
   assert.deepEqual(readdirSync(join(coastal, "locales")), ["coastal"]);
-  assert.deepEqual(readdirSync(join(coastal, ".artifacts")), ["coastal"]);
+  assert.ok(!readdirSync(coastal).includes(".artifacts"));
+  assert.ok(!readdirSync(denver).includes(".artifacts"));
   const denImage = `withadult-denver-check:${process.pid}`,
     coastImage = `withadult-coastal-check:${process.pid}`;
   command("docker", [
