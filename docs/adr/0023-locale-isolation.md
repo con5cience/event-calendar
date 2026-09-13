@@ -187,3 +187,30 @@ argument. The existing two-locale test now constructs both contexts without an
 `.artifacts` directory and checks their running HTTP interfaces. Compose still
 reads its separate working store; neither builds nor app startup run ingestion.
 No remote workflow or deployment configuration is changed here.
+
+## Supervised live refresh — September 13, 2026
+
+The first full run is retained under `.artifacts/refresh/denver/run-WMqyM4/`.
+It published 23 sources and retained the three HMT sources after redirect errors.
+Their prior catalog references and checksums were confirmed unchanged. The exact
+canonical feed paths were verified and fixed separately; see adapter ADR 0006.
+Only those three captures were retried under
+`.artifacts/refresh/denver/retry-ifjRMz/`. Their successful Go publications were
+merged into a validated copy of the first run's output, then exported with the
+existing `--snapshot` command. The resulting catalog generation is
+`g-6f389a49a733f3d66d94e124839e835d`.
+
+| Evidence source                                                 | Raw observation or test result                                                                                                          | Supported finding                                                                                        | Material limit                                                   |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Full run report and three retry ingestion reports               | 23 initial durable publications plus three successful HMT retries; 21 rejected observations in the original run and none in the retries | All 26 configured sources published; invalid observations were reported rather than weakening validation | One local run, not scheduled GitHub execution                    |
+| Final manifest and every referenced artifact                    | Checksums match; source IDs match the seed; surviving event IDs retain their dates and public paths                                     | Refresh preserved source ownership and existing URL identity                                             | Does not prove every upstream listing is correct                 |
+| Five final event samples and six HMT detail samples             | Venue identity, event title, date/time, provider ID, and public event path inspected where applicable                                   | Samples represent event records for the intended venues                                                  | Sampling is supplementary to full Go validation                  |
+| Original working-store manifest versus pre-refresh snapshot     | Exact bytes match                                                                                                                       | The existing Compose application's store was not changed                                                 | Tracked deployment snapshot was intentionally replaced           |
+| Git-only export of commit `b776154`                             | Docker build succeeded without ignored files; no-volume container returned HTTP 200 for health, site config, and calendar               | Committed inputs suffice for the Denver build                                                            | Local Docker, not Railway                                        |
+| Final refreshed Railway image and HMT/Federal/AEG browser tests | Build validation passed; all eight desktop/phone checks passed on port 8097                                                             | Refreshed artifacts reach the running app and event detail/export flows                                  | Other source browser suites were not rerun against this snapshot |
+
+Rejected observations cover TBA dates, unsupported ticket URLs/providers,
+Cervantes off-site listings outside its reviewed scope, and invalid/conflicting
+times. Existing rejection and last-valid retention rules remain unchanged.
+Previous snapshots remain in the ignored run directories and Git history.
+No remote push, deployment, or schedule was enabled.
