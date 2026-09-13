@@ -86,6 +86,25 @@ test("proxy CLI sends credentials to the proxy and reports failure without leaki
   }
 });
 
+test("real proxy connection refusal produces a safe connection category", async () => {
+  const { probeRoxyProxy } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  const proxy = createServer();
+  proxy.listen(0, "127.0.0.1");
+  await once(proxy, "listening");
+  const port = proxy.address().port;
+  await new Promise((resolve) => proxy.close(resolve));
+  const result = await probeRoxyProxy(
+    "https://aftontickets.com/api/get-events?key=fixture",
+    `http://fixture-user:fixture-password@127.0.0.1:${port}`,
+  );
+  assert.equal(result.request_failed, true);
+  assert.equal(result.error_category, "connection");
+  assert(Number.isInteger(result.elapsed_ms) && result.elapsed_ms >= 0);
+  assert(!JSON.stringify(result).includes("fixture"));
+  assert(!JSON.stringify(result).includes("127.0.0.1"));
+});
+
 test("Roxy browser probe observes iframe feed success, challenge and absence", async () => {
   const { probeRoxyBrowser } =
     await import("../scripts/probe-roxy-user-agent.mjs");

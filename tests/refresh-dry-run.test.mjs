@@ -75,6 +75,54 @@ test("proxy failures never expose credentials or exception messages", async () =
       },
     );
     assert.equal(result.request_failed, true);
+    assert.equal(
+      result.error_category,
+      proxy?.startsWith("http:") ? "client_setup" : "configuration",
+    );
+    assert(Number.isInteger(result.elapsed_ms));
+    assert(!JSON.stringify(result).includes("private"));
+  }
+});
+test("proxy request errors have fixed categories without raw error text", async () => {
+  const { probeRoxyProxy } =
+    await import("../scripts/probe-roxy-user-agent.mjs");
+  const cases = [
+    [Object.assign(Error("private"), { name: "TimeoutError" }), "timeout"],
+    [
+      Error(
+        "apiRequestContext.get: Timeout 30000ms exceeded.\nCall log:\nprivate",
+      ),
+      "timeout",
+    ],
+    [
+      Error(
+        "apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:123\nprivate",
+      ),
+      "connection",
+    ],
+    [Object.assign(Error("private"), { cause: { code: "ENOTFOUND" } }), "dns"],
+    [Error("apiRequestContext.get: self-signed certificate\nprivate"), "tls"],
+    [Error("private timeout password"), "unknown"],
+  ];
+  for (const [error, category] of cases) {
+    let disposed = false;
+    const result = await probeRoxyProxy(
+      "https://aftontickets.com/api/get-events?page=1",
+      "http://u:p@proxy.example",
+      {
+        newContext: async () => ({
+          get: async () => {
+            throw error;
+          },
+          dispose: async () => {
+            disposed = true;
+          },
+        }),
+      },
+    );
+    assert.equal(result.error_category, category);
+    assert(result.elapsed_ms >= 0);
+    assert(disposed);
     assert(!JSON.stringify(result).includes("private"));
   }
 });

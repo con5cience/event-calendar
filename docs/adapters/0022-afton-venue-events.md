@@ -147,12 +147,19 @@ The client makes one request to the reviewed Afton feed with certificate
 verification enabled, no redirects, no retries, and a 30-second timeout. The
 context is disposed afterward. The two-minute workflow step limit remains.
 `roxy-proxy.json` contains only a numeric status, normalized content-type and
-challenge indicators, or a fixed request-failure flag. Even arbitrary response
+challenge indicators, or a fixed request-failure category and elapsed milliseconds. Even arbitrary response
 header values are not copied into the report. No cookies, response body, proxy
 address, credentials, or event artifacts are logged or retained by this probe.
 Success establishes access through that proxy at that time, not recurring-access
-permission or a complete validated source capture. Proxy failure is deliberately
-generic so transport errors cannot leak credentials. The real GitHub secret and
+permission or a complete validated source capture. Failure categories are
+`configuration`, `client_setup`, `timeout`, `dns`, `connection`, `tls`, and
+`unknown`. Configuration and setup are separated by execution stage. Request
+errors use recognized codes/names or anchored Playwright error prefixes; raw
+messages are never returned. Unknown errors remain unknown. Categories do not
+identify the failed network hop or establish a provider-side cause.
+Run `34790353335` returned only `request_failed: true`; its cause is not known.
+A new remote run is required to collect these additional diagnostics.
+The real GitHub secret and
 provider connection require remote verification.
 
 The local CLI test uses a synthetic authenticated CONNECT proxy. Playwright
@@ -168,6 +175,13 @@ unchanged Go checks reused their cached layer). Workflow lint, code lint,
 formatting and build/type checks passed. The HTTP test needed loopback permission
 after an initial sandbox `listen EPERM`. No real proxy connection, deployment,
 or source-artifact replacement occurred during local verification.
+
+The error-category update passed 14 dry-run tests, seven rebuilt-container
+integration tests, 19 coordinator/feed tests, and all 91 frontend contract tests.
+Lint, formatting, build/type checks and `git diff --check` passed. The container
+test observed a real refused local proxy connection categorized as `connection`;
+other request categories were tested with synthetic exceptions. No real provider
+connection was made. Normal ingestion and HTTP-response reporting are unchanged.
 
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup

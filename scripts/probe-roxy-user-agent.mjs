@@ -3,8 +3,67 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { captureProfile } from "../tests/capture-profile.mjs";
 
+function proxyErrorCategory(error) {
+  const codes = [error?.code, error?.cause?.code];
+  if (error?.name === "TimeoutError" || codes.includes("ETIMEDOUT"))
+    return "timeout";
+  if (codes.some((code) => ["ENOTFOUND", "EAI_AGAIN"].includes(code)))
+    return "dns";
+  if (
+    codes.some((code) =>
+      [
+        "ECONNREFUSED",
+        "ECONNRESET",
+        "EPIPE",
+        "EHOSTUNREACH",
+        "ENETUNREACH",
+      ].includes(code),
+    )
+  )
+    return "connection";
+  if (
+    codes.some((code) =>
+      [
+        "CERT_HAS_EXPIRED",
+        "DEPTH_ZERO_SELF_SIGNED_CERT",
+        "SELF_SIGNED_CERT_IN_CHAIN",
+        "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+        "ERR_TLS_CERT_ALTNAME_INVALID",
+      ].includes(code),
+    )
+  )
+    return "tls";
+  // Playwright can serialize away error codes. Match known error prefixes only;
+  // never return messages, URLs, addresses, or credentials from the exception.
+  const firstLine = String(error?.message ?? "").split("\n", 1)[0];
+  if (/^apiRequestContext\.get: Timeout \d+ms exceeded\.?$/.test(firstLine))
+    return "timeout";
+  if (
+    /^apiRequestContext\.get: getaddrinfo (ENOTFOUND|EAI_AGAIN)\b/.test(
+      firstLine,
+    )
+  )
+    return "dns";
+  if (
+    /^apiRequestContext\.get: (?:(?:connect|read|write) )?(?:ECONNREFUSED|ECONNRESET|EPIPE|EHOSTUNREACH|ENETUNREACH)\b/.test(
+      firstLine,
+    ) ||
+    firstLine === "apiRequestContext.get: socket hang up"
+  )
+    return "connection";
+  if (
+    /^apiRequestContext\.get: (?:self-signed certificate|certificate has expired|unable to verify the first certificate|Hostname\/IP does not match certificate's altnames)\b/.test(
+      firstLine,
+    )
+  )
+    return "tls";
+  return "unknown";
+}
+
 export async function probeRoxyProxy(endpoint, proxyURL, requestAPI) {
   let context;
+  let stage = "configuration";
+  const started = performance.now();
   try {
     const target = new URL(endpoint),
       proxy = new URL(proxyURL);
@@ -19,19 +78,22 @@ export async function probeRoxyProxy(endpoint, proxyURL, requestAPI) {
       proxy.hash
     )
       throw Error("Invalid probe configuration");
+    const proxyOptions = {
+      server: proxy.origin,
+      ...(proxy.username
+        ? { username: decodeURIComponent(proxy.username) }
+        : {}),
+      ...(proxy.password
+        ? { password: decodeURIComponent(proxy.password) }
+        : {}),
+    };
+    stage = "client_setup";
     const api = requestAPI ?? (await import("@playwright/test")).request;
     context = await api.newContext({
-      proxy: {
-        server: proxy.origin,
-        ...(proxy.username
-          ? { username: decodeURIComponent(proxy.username) }
-          : {}),
-        ...(proxy.password
-          ? { password: decodeURIComponent(proxy.password) }
-          : {}),
-      },
+      proxy: proxyOptions,
       ignoreHTTPSErrors: false,
     });
+    stage = "request";
     const response = await context.get(endpoint, {
       timeout: 30000,
       maxRedirects: 0,
@@ -50,8 +112,13 @@ export async function probeRoxyProxy(endpoint, proxyURL, requestAPI) {
       cf_mitigated:
         headers["cf-mitigated"] === "challenge" ? "challenge" : null,
     };
-  } catch {
-    return { mode: "proxy", request_failed: true };
+  } catch (error) {
+    return {
+      mode: "proxy",
+      request_failed: true,
+      error_category: stage === "request" ? proxyErrorCategory(error) : stage,
+      elapsed_ms: Math.round(performance.now() - started),
+    };
   } finally {
     try {
       await context?.dispose();
