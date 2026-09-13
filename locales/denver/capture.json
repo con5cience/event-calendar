@@ -1,4 +1,22 @@
 {
+  "bluebird": {
+    "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/2/events.json"
+  },
+  "gothic": {
+    "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/37/events.json"
+  },
+  "mission": {
+    "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/89/events.json"
+  },
+  "ogden": {
+    "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/7/events.json"
+  },
+  "fiddlers-green": {
+    "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/44/events.json"
+  },
+  "hq": { "endpoint": "https://holdmyticket.com/ics/6457" },
+  "oriental": { "endpoint": "https://holdmyticket.com/ics/801" },
+  "federal": { "endpoint": "https://holdmyticket.com/ics_user/8693" },
   "lost-lake": {
     "origin": "https://lost-lake.com"
   },

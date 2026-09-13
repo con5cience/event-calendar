@@ -24,11 +24,31 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /calendar ./cmd/calenda
 
 FROM go-base AS ingestion-build
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /ingest ./cmd/ingest
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /package-snapshot ./cmd/package-snapshot
 
 FROM scratch AS ingestion
 COPY --from=ingestion-build /ingest /ingest
 USER 65532:65532
 ENTRYPOINT ["/ingest"]
+
+FROM node:24-bookworm-slim AS refresh
+WORKDIR /tools
+COPY package.json package-lock.json ./
+RUN npm ci && npx playwright install --with-deps chromium
+COPY scripts ./scripts
+COPY tests ./tests
+COPY --from=ingestion-build /ingest /usr/local/bin/ingest
+COPY --from=ingestion-build /package-snapshot /usr/local/bin/package-snapshot
+ENV CALENDAR_REPO=/repo
+ENTRYPOINT ["node", "/tools/scripts/refresh-locale.mjs"]
+
+FROM refresh AS refresh-test
+COPY internal /fixtures/internal
+COPY locales/denver/site.json /fixtures/locales/denver/site.json
+COPY locales/denver/assets /fixtures/locales/denver/assets
+COPY --from=backend /calendar /calendar
+COPY --from=frontend /build/dist /app/dist
+ENTRYPOINT ["node", "--test", "/tools/tests/refresh-integration.test.mjs"]
 
 FROM scratch AS runtime
 ARG LOCALE

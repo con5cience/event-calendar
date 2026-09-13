@@ -81,11 +81,82 @@ scripts run only when an operator invokes them. Scheduled jobs are not enabled.
 This workspace's main app was populated with one-time real imports on
 September 9, 2026: 248 events across Gothic, Mission, Bluebird, Ogden, and Fiddler's
 Green at [localhost:8090](http://localhost:8090). The data lives
-in ignored `.artifacts/denver/`, not in committed fixtures. The original `.artifacts/`
+in ignored `.artifacts/denver/`, not in committed fixtures. A validated copy is now
+available under `locales/denver/catalog/` for the tracked-snapshot workflow below.
+The original `.artifacts/`
 generation remains available as a migration backup. Reload the page to read it.
 It will not refresh automatically. See the [initial import record](docs/adr/0019-implementation-and-verification-plan.md#aeg-source-expansion--2026-09-09) and the source additions below.
 
 ## Run locally
+
+### Refresh a locale's tracked snapshot
+
+`locales/<id>/catalog/` contains the deployment snapshot: the catalog manifest and
+only its referenced source artifacts. Keep these exact bytes; the manifest checksums
+cover them, and `.prettierignore` excludes them. Raw captures, reports, savepoints,
+and recovery copies stay under ignored `.artifacts/refresh/<id>/run-*/`.
+
+Build the separate operator image (this does not fetch events):
+
+```sh
+docker build --target refresh -t event-calendar-refresh .
+```
+
+To initialize or explicitly replace Denver's tracked snapshot from a validated
+local store:
+
+```sh
+docker run --rm --mount type=bind,src="$PWD",dst=/repo event-calendar-refresh --snapshot denver /repo/.artifacts/denver
+```
+
+To refresh all configured sources, starting from that tracked snapshot:
+
+```sh
+docker run --rm --mount type=bind,src="$PWD",dst=/repo event-calendar-refresh denver
+```
+
+The equivalent host command is `node scripts/refresh-locale.mjs denver`, with
+`ingest` and `package-snapshot` on PATH (or `INGEST_BIN` and `SNAPSHOT_BIN` set to
+their executable paths), npm dependencies, and Playwright Chromium installed.
+The container supplies these dependencies. It runs only the explicitly requested
+operator action; Compose and application startup never refresh sources.
+
+Each source runs in an isolated process with a fifteen-minute process limit.
+Capture output goes to an explicit directory. Existing Go adapters apply the
+normal twelve-month window, retention, identity, rejection, and admission rules.
+Jobs run sequentially. Each gets a separate validated store copy; failed jobs
+cannot affect later jobs. The final validated snapshot replaces only the selected
+locale's tracked catalog. The prior snapshot remains in the run's `previous/`
+directory for recovery. No Git command or deployment runs.
+
+Exit codes: `0` means all jobs published without rejected records; `2` means a
+validated snapshot was exported with source failures or rejected records; `1`
+means the run failed. If every source fails, the tracked snapshot stays unchanged.
+The JSON report identifies individual failures and rejections. Successful refreshes
+currently produce new generation IDs/timestamps even when event data is unchanged;
+semantic no-op detection is not implemented.
+
+A per-locale `.refresh-lock/` prevents overlapping export/refresh commands. An
+interrupted process can leave this lock behind. Before removing an abandoned
+empty lock with `rmdir`, confirm no refresh for that locale is running. A process
+interrupted during snapshot replacement can leave the previous catalog under the
+reported run directory; restore that directory before another refresh. Do not use
+this replacement operation on a live application's mounted store.
+
+Verification:
+
+```sh
+npm run test:refresh
+docker build --target refresh-test -t event-calendar-refresh-test .
+docker run --rm event-calendar-refresh-test
+```
+
+The integration image uses local synthetic HTTP responses and the real Go
+publisher, snapshot validator, and calendar HTTP consumer. It also checks HMT
+HTML extraction against the Go parser. These checks do not prove live access
+from GitHub-hosted runners. Scheduling, Git publishing, and Railway automation
+remain separate work. `Dockerfile.railway` still consumes `.artifacts/<id>`;
+switching its input to the tracked catalog is the next build-integration step.
 
 ### Roxy / Afton capture and replay
 

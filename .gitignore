@@ -7,3 +7,4 @@ playwright-report/
 .captures/
 .builds/
 .DS_Store
+.refresh-lock/

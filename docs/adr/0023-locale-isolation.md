@@ -116,3 +116,58 @@ different domains, branding, data, assets, timezone, defaults and ICS namespace,
 and checks that rebuilding/restarting it does not change Denver's image or API
 data. Test containers are stopped; temporary contexts are retained for inspection.
 Run shared Go race/contract checks, capture tests and the existing browser suite.
+
+## Local refresh and tracked snapshots — September 13, 2026
+
+The operator refresh command is `node scripts/refresh-locale.mjs <locale>`, also
+available through the Dockerfile's `refresh` target. The `--snapshot <locale>
+<input-store>` mode seeds or replaces `locales/<locale>/catalog/` from an existing
+validated store. Both modes use the existing Go snapshot exporter and retain its
+manifest, source paths, checksums, and exact artifact bytes. Do not reformat these
+files. Only the referenced generation is kept in the tracked tree.
+
+The refresh coordinator uses the locale registry and capture profiles, with a
+code-owned adapter runner table. Capture subprocesses have explicit output paths
+and do not publish. Go remains responsible for normalization, admission rules,
+identity, retention, and publication. No aggregator or new venue is introduced.
+
+Sources execute sequentially against isolated savepoints. A source must confirm
+durable publication and pass snapshot validation before its output becomes the
+next job's input. Failed sources retain their prior data. Final export replaces
+only the selected locale's tracked snapshot; raw data, reports, and recovery
+copies remain ignored under `.artifacts/refresh/<locale>/`. A per-locale lock
+prevents competing refresh/export commands. This is not a live-store replacement
+protocol. Preserve the previous snapshot for recovery after an interrupted rename.
+
+Exit code 2 means partial publication with a usable validated snapshot; code 1
+means failure. All-source failure does not replace the tracked snapshot. Successful
+jobs can change generation metadata even when event data is identical; semantic
+no-op detection remains future work. No Git writes, deployment, or schedule is
+part of this command. Runtime and Railway build inputs are unchanged by this step.
+
+AEG capture preserves raw JSON for the existing strict decoder. HMT capture uses
+URL discovery only, not an alternate iCalendar parser; the existing Go parser
+still validates the full feed, Federal description handling, and event/detail
+agreement. HMT Event JSON-LD is extracted in a detached browser document without
+executing provider scripts. These operator capture paths do not establish access
+permission or automated-runner network compatibility. Those remain live-rollout
+checks before scheduling. See README for invocation, recovery, and tests.
+
+### Local verification
+
+| Evidence source                                                                                                         | Raw observation or test result                                                                                            | Supported finding                                                                                                                  | Material limit                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `npm run test:refresh`                                                                                                  | 12 tests passed                                                                                                           | Coordinator isolation, failure retention, runner imports, and subprocess timeout work with test inputs                             | Does not contact live venues                                                                                     |
+| `docker build --target refresh-test -t event-calendar-refresh-test .` and `docker run --rm event-calendar-refresh-test` | Build and both integration tests passed                                                                                   | Local HTTP capture reaches Go publication, snapshot export, and the running calendar API; HMT extraction agrees with its Go parser | Synthetic AEG/HMT inputs, not all live capture paths                                                             |
+| Snapshot export plus manifest/artifact byte comparison                                                                  | Exported Denver manifest and every referenced artifact match the existing local store; checksums match                    | Initial Git-ready snapshot preserves the existing data and identity bytes                                                          | No new venue data fetched                                                                                        |
+| Existing capture npm test commands and `npm run test:contracts`                                                         | Capture suites passed; contract handoff and 91 frontend tests passed; Go test image checks reused unchanged cached inputs | Existing parsing and consumer contracts remain valid                                                                               | Fixture verification only                                                                                        |
+| `npm run test:locales`                                                                                                  | Independent builds and four browser checks passed                                                                         | Existing two-locale deployment isolation remains intact                                                                            | Local containers, no Railway deployment                                                                          |
+| `CALENDAR_EMPTY_URL=http://127.0.0.1:8096 npm run test:e2e`                                                             | 148 passed, 66 skipped                                                                                                    | Default fixture browser suite passed after correcting the empty test instance                                                      | Opt-in source/locale tests and layout exclusions remain skipped in this invocation; locale checks ran separately |
+| `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm run build`, `git diff --check`                        | Passed                                                                                                                    | Formatting, static checks, and frontend build passed                                                                               | Not evidence of remote deployment                                                                                |
+
+The initial browser run used the populated port-8090 default for its empty-store
+checks. A replacement test container initially used `/tmp`, which contained Node
+cache files; the reader correctly rejected that nonempty directory without a
+catalog. A dedicated empty mount corrected the test setup, and the final suite
+passed. The temporary empty container was removed. No application data was
+deleted or replaced. No live refresh, Git commit/push, or deployment was performed.

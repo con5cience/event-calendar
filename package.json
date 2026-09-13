@@ -29,7 +29,8 @@
     "test:contracts": "docker build --target go-test -t event-calendar-contract-tests . && mkdir -p test-results/contracts && docker run --rm --mount type=bind,src=\"$PWD/test-results/contracts\",dst=/handoff -e CONTRACT_HANDOFF_DIR=/handoff event-calendar-contract-tests go test ./internal/artifact -run TestConsumerHandoff -count=1 && CONTRACT_HANDOFF_DIR=test-results/contracts vitest run",
     "test:capture-profiles": "node --import ./tests/setup-capture.mjs --test tests/capture-profile.test.mjs",
     "test:locales": "node tests/locales/run.mjs",
-    "test:locale-tools": "node --test tests/package-locale.test.mjs"
+    "test:locale-tools": "node --test tests/package-locale.test.mjs",
+    "test:refresh": "node --test tests/refresh-locale.test.mjs tests/feed-capture.test.mjs"
   },
   "dependencies": {
     "@fullcalendar/react": "7.1.0",

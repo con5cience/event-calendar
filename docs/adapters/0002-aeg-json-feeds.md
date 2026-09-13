@@ -5,11 +5,19 @@ Operational profiles now live in `locales/<id>/sources/` under
 `venue_id`, venue website and timezone replace the compiled Denver feed registry.
 Returned venue identities and timestamps must still match the selected profile.
 
-- Status: Five AEG venues supported and imported locally; scheduled fetching not implemented.
+- Status: Five AEG venues supported; explicit operator capture/refresh implemented; scheduling not enabled.
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
 ## Context
+
+September 13 update: `scripts/capture-source.mjs` fetches the selected locale's
+AEG endpoint and preserves the response bytes for `ingest replay-aeg`. The locale
+refresh coordinator uses this capture path without adding a scheduler or changing
+the decoder's completeness checks. Synthetic local-HTTP integration tests cover
+capture through publication and consumption. Automated-runner live access and
+the recurring-ingestion access review remain rollout checks. Historical pilot
+notes below describe the earlier local-only workflow.
 
 September 9 implementation update: the supported feed/venue bindings now include
 Bluebird `2`/`100811`, Ogden `7`/`101141`, and Fiddler's Green `44`/`100869`.

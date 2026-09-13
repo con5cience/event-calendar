@@ -6,11 +6,20 @@ Federal additionally sets `adapter_options.layout: federal` to retain its
 reviewed malformed-description and admission handling. Other calendars do not
 inherit that specialist behavior. Keep fixture configs separate from operational configs.
 
-- Status: Local snapshot adapter implemented; recurring retrieval remains proposed
+- Status: Snapshot adapter and explicit operator capture implemented; scheduled retrieval not enabled
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
 ## Context
+
+September 13 update: the common capture wrapper uses each locale's configured
+feed URL, discovers public HoldMyTicket event URLs, and extracts Event JSON-LD
+from detached HTML documents. It preserves the original feed, including Federal
+descriptions. URL discovery is not a second calendar parser: the existing Go
+adapter still validates the full calendar and detail agreement before publication.
+Missing details remain rejected observations, not silently removed records.
+The local refresh coordinator can run this path; no schedule or remote deployment
+is enabled. See ADR 0023 and README for commands and verification limits.
 
 Oriental and HQ publish HoldMyTicket calendar subscriptions using the same format.
 
