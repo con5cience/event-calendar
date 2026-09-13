@@ -14,6 +14,65 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assessRefresh, checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
+test("workflow streams and retains output, preserves status, and exports reports inside Docker", () => {
+  const yaml = readFileSync(
+    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
+    "utf8",
+  );
+  const step = yaml
+    .split("      - name: Refresh sources\n")[1]
+    .split("      - name: Build refreshed application\n")[0];
+  const shell = step
+    .split("        run: |\n")[1]
+    .split("\n")
+    .map((line) => line.slice(10))
+    .join("\n");
+  assert.match(shell, /tee dry-run-results\/refresh.log/);
+  assert.match(shell, /PIPESTATUS/);
+  assert.match(
+    shell,
+    /docker run.*--entrypoint node.*refresh-dry-run.mjs report/,
+  );
+  assert.match(shell, /stop-commands/);
+  for (const exitCode of [0, 1, 2, 137]) {
+    const root = mkdtempSync(join(tmpdir(), "refresh-shell-"));
+    mkdirSync(join(root, "dry-run-results"));
+    const result = spawnSync(
+      "bash",
+      [
+        "-e",
+        "-c",
+        `docker() { if [[ "$*" == *"--entrypoint node"* ]]; then printf 'report exported\\n'; return 0; fi; printf 'live stdout\\n'; printf 'live stderr\\n' >&2; return ${exitCode}; }\n${shell}`,
+      ],
+      {
+        cwd: root,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          LOCALE: "denver",
+          RUNNER_TEMP: root,
+          GITHUB_WORKSPACE: root,
+          GITHUB_STEP_SUMMARY: join(root, "summary.md"),
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /live stdout/);
+    assert.match(result.stdout, /live stderr/);
+    assert.equal(
+      readFileSync(join(root, "dry-run-results/refresh.log"), "utf8"),
+      "live stdout\nlive stderr\n",
+    );
+    assert.equal(
+      readFileSync(
+        join(root, "dry-run-results/refresh-exit-code.txt"),
+        "utf8",
+      ).trim(),
+      String(exitCode),
+    );
+  }
+});
+
 const report = (status, sources) => ({ locale: "denver", status, sources });
 const published = { source: "gothic", status: "published", rejected: [] };
 test("report CLI writes diagnostics, rejects failures, and preserves input", () => {

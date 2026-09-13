@@ -121,6 +121,12 @@ their executable paths), npm dependencies, and Playwright Chromium installed.
 The container supplies these dependencies. It runs only the explicitly requested
 operator action; Compose and application startup never refresh sources.
 
+The CLI streams child stdout/stderr to stderr while retaining child stdout for
+JSON parsing. Its own stdout remains one final JSON result. Timestamped progress
+identifies each source and capture/ingestion/validation stage. Quiet subprocesses
+emit periodic “still running” messages (30-second checks); these messages do not
+mean a source succeeded or extend the existing timeout.
+
 Each source runs in an isolated process with a fifteen-minute process limit.
 Capture output goes to an explicit directory. Existing Go adapters apply the
 normal twelve-month window, retention, identity, rejection, and admission rules.
@@ -186,6 +192,14 @@ The snapshot contains the manifest and referenced source files, not raw captures
 or backup generations. Diagnostics include the refresh log, JSON report, source
 summary, and HTTP-check sample when those stages complete. Treat reports as public
 repository diagnostics; no credentials are passed to the capture container.
+
+The refresh step streams its combined output through `tee` and keeps the same
+output in `refresh.log`. It preserves Docker's exit code, checks log-write
+failure separately, and disables GitHub workflow-command interpretation while
+streaming source output. The report helper runs inside the refresh container
+with read-only access to the capture tree and write access only to the diagnostics
+mount. It exports the JSON report and summary for the runner. Root-owned private
+run directories remain private; no recursive permission change is needed.
 
 Runs for one locale cannot overlap. The 180-minute job timeout is an operational
 cap, not a duration estimate. A timeout can leave only partial diagnostics and

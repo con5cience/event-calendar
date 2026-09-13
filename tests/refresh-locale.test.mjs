@@ -150,3 +150,124 @@ test("hung subprocess is terminated and reported as a timeout", async () => {
     /Process timeout/,
   );
 });
+
+test("subprocess output streams before exit while returned stdout stays parseable", async () => {
+  const gate = join(mkdtempSync(join(tmpdir(), "stream-gate-")), "continue");
+  let completed = false,
+    output = "",
+    diagnostics = "";
+  const progress = [];
+  const pending = execute(
+    process.execPath,
+    [
+      "-e",
+      'process.stdout.write(JSON.stringify({title:"Beyoncé"})); process.stderr.write("diagnostic\\n"); const gate=process.argv[1]; setTimeout(()=>{const timer=setInterval(()=>{if(require("fs").existsSync(gate)) clearInterval(timer);},10);},200);',
+      gate,
+    ],
+    {
+      label: "gothic capture",
+      timeout: 2000,
+      heartbeatMs: 40,
+      progress: (message) => progress.push(message),
+      onStdout: (chunk) => {
+        assert.equal(completed, false);
+        output += chunk;
+        if (diagnostics) writeFileSync(gate, "continue");
+      },
+      onStderr: (chunk) => {
+        assert.equal(completed, false);
+        diagnostics += chunk;
+        // The child cannot exit until the parent receives both streams.
+        if (output) writeFileSync(gate, "continue");
+      },
+    },
+  );
+  const raw = await pending;
+  completed = true;
+  assert.equal(output, raw);
+  assert.equal(JSON.parse(raw).title, "Beyoncé");
+  assert.equal(diagnostics, "diagnostic\n");
+  assert(progress.some((line) => line.includes("gothic capture: started")));
+  assert(progress.some((line) => line.includes("still running")));
+  assert(progress.some((line) => line.includes("completed")));
+  const count = progress.length;
+  await new Promise((done) => setTimeout(done, 80));
+  assert.equal(progress.length, count, "heartbeat stops after exit");
+});
+
+test("failed and timed-out subprocesses stream diagnostics and stop progress", async () => {
+  for (const code of [
+    'process.stderr.write("failed now\\n"); process.exitCode=7',
+    'process.stderr.write("waiting\\n"); setInterval(()=>{},100)',
+  ]) {
+    let diagnostics = "";
+    const progress = [];
+    await assert.rejects(
+      execute(process.execPath, ["-e", code], {
+        timeout: 150,
+        heartbeatMs: 30,
+        label: "test capture",
+        progress: (message) => progress.push(message),
+        onStderr: (chunk) => {
+          diagnostics += chunk;
+        },
+      }),
+      /exited 7|Process timeout/,
+    );
+    assert(diagnostics.length > 0);
+    assert(progress.some((line) => line.includes("failed")));
+    const count = progress.length;
+    await new Promise((done) => setTimeout(done, 70));
+    assert.equal(progress.length, count);
+  }
+});
+
+test("refresh reports source stages and retention without changing the result", async () => {
+  const f = fixture(),
+    messages = [];
+  const result = await refreshLocale("test-city", {
+    ...f,
+    progress: (message) => messages.push(message),
+    refresh: async ({ sourceID }) => {
+      if (sourceID === "two") throw Error("offline");
+      return { published: true, durable: true, rejected: [] };
+    },
+  });
+  assert.equal(result.status, "partial");
+  for (const expected of [
+    "test-city: refresh started",
+    "one: source started",
+    "one: published",
+    "two: source started",
+    "two: failed",
+    "test-city: refresh partial",
+  ])
+    assert(
+      messages.some((message) => message.includes(expected)),
+      expected,
+    );
+});
+
+test("streaming retains output limits and stops timers after spawn failure", async () => {
+  await assert.rejects(
+    execute(
+      process.execPath,
+      ["-e", 'process.stdout.write("x".repeat(2*1024*1024))'],
+      { onStdout: () => {} },
+    ),
+    /Process output limit exceeded/,
+  );
+  const messages = [];
+  await assert.rejects(
+    execute("/nonexistent-withadult-test-command", [], {
+      progress: (message) => messages.push(message),
+      heartbeatMs: 20,
+    }),
+    /ENOENT/,
+  );
+  await new Promise((done) => setTimeout(done, 40));
+  const count = messages.length;
+  await new Promise((done) => setTimeout(done, 60));
+  assert.equal(messages.length, count);
+  assert(!messages.some((message) => message.includes("still running")));
+});

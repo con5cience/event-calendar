@@ -253,3 +253,49 @@ Local verification for this step:
 The empty-exit-file CLI regression test first failed, then passed after explicit
 exit-code syntax validation. No tracked event data, local app data, Railway
 settings, secrets, GitHub settings, or schedules changed during this step.
+
+## Dry-run report access and streaming fix — September 13, 2026
+
+Run `34783653518` returned a partial refresh, then failed when the host-side
+report helper encountered `EACCES` in a root-owned `0700` run directory.
+The same Linux permission boundary was reproduced locally. The workflow now
+runs the existing report helper inside the refresh container and exports only
+the report and summary into the runner-readable diagnostics mount. The capture
+mount is read-only for this operation. Widening permissions on the raw capture
+tree was rejected because the runner does not need access to those files.
+Changing the ingestion UID was not selected because it would also change browser
+cache access and publication ownership beyond the required report boundary.
+
+The refresh subprocess wrapper now supports live stdout/stderr callbacks and
+stage progress. The CLI forwards child output to stderr, preserving its final
+JSON stdout and the existing captured JSON used by the Go ingestion consumer.
+Each subprocess reports start/completion and periodic quiet-state progress.
+Heartbeat timers stop on success, failure, spawn error, or timeout. Source
+failures still retain last-valid data and do not weaken publication validation.
+
+The workflow uses `tee` with explicit `PIPESTATUS` handling so log persistence
+does not conceal the refresh exit code. A log-write failure fails the step.
+While untrusted source output is streamed, workflow command processing is stopped
+with a random per-step token, following [GitHub's documented mechanism](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#stopping-and-starting-workflow-commands).
+The token is not passed into the capture container.
+
+Meow Wolf's identity mismatch and Roxy's HTTP/type failure from the first remote
+run remain separate investigations. This change does not retry the run, push to
+GitHub, deploy, enable a schedule, change source policy, or replace event data.
+
+Verification for the report-access and streaming fix:
+
+| Evidence / command                                                                                                                                                              | Result                                                   | Supported finding                                                                                                                                                                  | Limit                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `npm run test:refresh`                                                                                                                                                          | 16 tests passed                                          | Live output, stage messages, quiet heartbeats, output limits, timer cleanup, and retention rules work; a gated child cannot exit until both output streams are received            | Synthetic subprocesses and fixtures                          |
+| `npm run test:refresh-dry-run`                                                                                                                                                  | Five tests passed                                        | Exact workflow shell streams both channels to the console/log, preserves exit codes 0/1/2/137, and invokes the report helper inside Docker                                         | Shell test substitutes Docker; permissions tested separately |
+| `docker build --target refresh-test -t event-calendar-refresh-test .` and `docker run --rm event-calendar-refresh-test`                                                         | Three tests passed                                       | Linux UID 1001 reproduces the old EACCES, reads the exported report/summary, and still cannot read the private run; real capture/publication/HTTP flow preserves JSON and progress | Local Linux container, not GitHub                            |
+| `npm run test:contracts` and `docker run --rm event-calendar-contract-tests go test -race ./...`                                                                                | Contract handoff, 91 frontend tests, and Go suite passed | Existing artifact and consumer behavior remains intact                                                                                                                             | No live source calls                                         |
+| Capture and packaging npm commands listed in the preceding verification table                                                                                                   | All passed again                                         | Existing capture and locale-tool regressions pass                                                                                                                                  | Live source failures not addressed                           |
+| `actionlint:1.7.7` command listed above; `npm run format:check`; `npm run lint`; `npm run typecheck`; `npm run build`; explicit Prettier workflow/ADR check; `git diff --check` | Passed                                                   | Workflow syntax, static checks, and build pass                                                                                                                                     | Remote workflow execution remains pending                    |
+
+The three initial streaming/progress tests and the workflow regression test
+failed before implementation, then passed. The application UI and HTTP consumer
+were not changed; the earlier browser verification remains applicable and was
+not repeated. Documentation was inspected as Markdown source; no documentation
+render pipeline exists in this repository.

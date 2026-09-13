@@ -41,12 +41,22 @@ jobs:
       - name: Refresh sources
         id: refresh
         run: |
+          log_token=$(node --input-type=module -e 'import { randomUUID } from "node:crypto"; console.log(randomUUID());')
+          printf '::stop-commands::%s\n' "$log_token"
           set +e
-          docker run --rm --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" > dry-run-results/refresh.log 2>&1
-          refresh_status=$?
+          docker run --rm --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
+          pipeline_status=("${PIPESTATUS[@]}")
           set -e
-          printf '%s\n' "$refresh_status" > dry-run-results/refresh-exit-code.txt
-          node scripts/refresh-dry-run.mjs report "$LOCALE" "$RUNNER_TEMP/refresh-input" dry-run-results
+          printf '::%s::\n' "$log_token"
+          printf '%s\n' "${pipeline_status[0]}" > dry-run-results/refresh-exit-code.txt
+          if [ "${pipeline_status[1]}" -ne 0 ]; then
+            printf 'Unable to retain refresh log\n' >&2
+            exit 1
+          fi
+          docker run --rm --entrypoint node --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo,readonly" --mount "type=bind,src=$GITHUB_WORKSPACE/dry-run-results,dst=/diagnostics" withadult-refresh-dry-run /tools/scripts/refresh-dry-run.mjs report "$LOCALE" /repo /diagnostics
+          if [ -f dry-run-results/summary.md ]; then
+            cat dry-run-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Build refreshed application
         run: |
           docker run --rm --entrypoint node --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/checkout" withadult-refresh-dry-run --input-type=module -e 'import { cpSync } from "node:fs"; const id=process.argv[1]; cpSync(`/repo/locales/${id}/catalog`, `/checkout/locales/${id}/catalog`, { recursive:true });' "$LOCALE"

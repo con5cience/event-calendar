@@ -3,13 +3,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { once } from "node:events";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   mkdtempSync,
   mkdirSync,
   readFileSync,
   writeFileSync,
   cpSync,
+  chmodSync,
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -21,6 +22,70 @@ import { checkCalendar } from "../scripts/refresh-dry-run.mjs";
 const fixtureRoot = process.env.TEST_REPO || "/fixtures";
 const json = (path) => JSON.parse(readFileSync(path, "utf8"));
 const save = (path, value) => writeFileSync(path, JSON.stringify(value));
+
+test("container report export is readable by a runner without exposing raw captures", () => {
+  assert.equal(
+    process.getuid(),
+    0,
+    "Run this permission check inside refresh-test",
+  );
+  const root = mkdtempSync(join(tmpdir(), "report-permissions-"));
+  chmodSync(root, 0o755);
+  const site = join(root, "locales/test-city");
+  mkdirSync(site, { recursive: true });
+  save(join(site, "site.json"), { sources: { gothic: {} } });
+  const parent = join(root, ".artifacts/refresh/test-city");
+  mkdirSync(parent, { recursive: true });
+  const privateRun = mkdtempSync(join(parent, "run-"));
+  const report = {
+    locale: "test-city",
+    status: "success",
+    sources: [{ source: "gothic", status: "published", rejected: [] }],
+  };
+  save(join(privateRun, "report.json"), report);
+  const output = join(root, "diagnostics");
+  mkdirSync(output);
+  writeFileSync(join(output, "refresh-exit-code.txt"), "0\n");
+  const helper = new URL("../scripts/refresh-dry-run.mjs", import.meta.url)
+    .pathname;
+  const hostRead = spawnSync(
+    process.execPath,
+    [helper, "report", "test-city", root, output],
+    { uid: 1001, gid: 1001, encoding: "utf8" },
+  );
+  assert.equal(hostRead.status, 1);
+  assert.match(hostRead.stderr, /EACCES/);
+  const exported = spawnSync(
+    process.execPath,
+    [helper, "report", "test-city", root, output],
+    { encoding: "utf8" },
+  );
+  assert.equal(exported.status, 0, exported.stderr);
+  const runnerRead = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      'import {readFileSync} from "node:fs"; console.log(readFileSync(process.argv[1],"utf8")); console.log(readFileSync(process.argv[2],"utf8"));',
+      join(output, "report.json"),
+      join(output, "summary.md"),
+    ],
+    { uid: 1001, gid: 1001, encoding: "utf8" },
+  );
+  assert.equal(runnerRead.status, 0, runnerRead.stderr);
+  assert.match(runnerRead.stdout, /test-city/);
+  const privateRead = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      'require("fs").readFileSync(process.argv[1])',
+      join(privateRun, "report.json"),
+    ],
+    { uid: 1001, gid: 1001, encoding: "utf8" },
+  );
+  assert.notEqual(privateRead.status, 0);
+  assert.match(privateRead.stderr, /EACCES/);
+});
 test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consumer", async () => {
   const root = mkdtempSync(join(tmpdir(), "refresh-integration-"));
   const site = join(root, "locales/test-city");
@@ -117,12 +182,26 @@ test("CLI refresh uses real capture, Go reconciliation, export, and HTTP consume
     mission: { endpoint: `${base}/mission` },
   });
   let server;
+  let progress = "",
+    resultJSON = "";
   try {
     // Partial success is deliberately nonzero but exports the validated merged catalog.
     await assert.rejects(
-      execute(process.execPath, [script, "test-city"], { env }),
+      execute(process.execPath, [script, "test-city"], {
+        env,
+        onStderr: (chunk) => {
+          progress += chunk;
+        },
+        onStdout: (chunk) => {
+          resultJSON += chunk;
+        },
+      }),
       /exited 2/,
     );
+    assert.equal(JSON.parse(resultJSON).status, "partial");
+    assert.match(progress, /gothic capture: started/);
+    assert.match(progress, /gothic ingest: completed/);
+    assert.match(progress, /mission: failed; retaining last valid data/);
     const after = json(join(target, "catalog.json"));
     assert.equal(
       after.sources.find((source) => source.source_id === "mission").sha256,

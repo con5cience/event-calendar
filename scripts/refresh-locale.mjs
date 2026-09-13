@@ -64,6 +64,10 @@ export function runnerFor(adapter) {
 
 export function execute(bin, args, options = {}) {
   return new Promise((accept, reject) => {
+    const started = Date.now();
+    const label = options.label || bin;
+    const progress = (message) => options.progress?.(`${label}: ${message}`);
+    progress("started");
     const child = spawn(bin, args, {
       env: { ...process.env, ...options.env },
       detached: true,
@@ -72,6 +76,16 @@ export function execute(bin, args, options = {}) {
     let stdout = "",
       stderr = "",
       failure;
+    let lastOutput = started;
+    const heartbeatMs = options.heartbeatMs ?? 30000;
+    const heartbeat = options.progress
+      ? setInterval(() => {
+          if (Date.now() - lastOutput >= heartbeatMs)
+            progress(
+              `still running (${Math.floor((Date.now() - started) / 1000)}s elapsed)`,
+            );
+        }, heartbeatMs)
+      : undefined;
     const stop = (message) => {
       failure = Error(message);
       try {
@@ -84,21 +98,32 @@ export function execute(bin, args, options = {}) {
       () => stop(`Process timeout: ${bin}`),
       options.timeout ?? 15 * 60 * 1000,
     );
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
     child.stdout.on("data", (data) => {
+      lastOutput = Date.now();
       stdout += data;
       if (stdout.length > 1024 * 1024) stop("Process output limit exceeded");
+      else options.onStdout?.(data);
     });
     child.stderr.on("data", (data) => {
+      lastOutput = Date.now();
       stderr += data;
       if (stderr.length > 1024 * 1024)
         stop("Process error output limit exceeded");
+      else options.onStderr?.(data);
     });
     child.on("error", (error) => {
       clearTimeout(timer);
+      clearInterval(heartbeat);
       reject(error);
     });
     child.on("close", (status) => {
       clearTimeout(timer);
+      clearInterval(heartbeat);
+      progress(
+        `${failure || status !== 0 ? "failed" : "completed"} (${Math.floor((Date.now() - started) / 1000)}s elapsed)`,
+      );
       if (failure || status !== 0)
         reject(
           failure ?? Error(`${bin} exited ${status}: ${stderr || stdout}`),
@@ -107,35 +132,50 @@ export function execute(bin, args, options = {}) {
     });
   });
 }
-const packStore = (site, input, output) =>
-  execute(process.env.SNAPSHOT_BIN || "package-snapshot", [
-    "--site",
-    site,
-    input,
-    output,
-  ]);
+const packStore = (site, input, output, logging = {}) =>
+  execute(
+    process.env.SNAPSHOT_BIN || "package-snapshot",
+    ["--site", site, input, output],
+    {
+      ...logging,
+      label: `${logging.locale || "snapshot"} validate ${output.split("/").at(-1)}`,
+    },
+  );
 
-async function refreshSource({ site, sourceID, runner, store, directory }) {
+async function refreshSource({
+  site,
+  sourceID,
+  runner,
+  store,
+  directory,
+  logging,
+}) {
   const capture = join(directory, "capture");
   await execute(
     process.execPath,
     [join(codeRoot, "scripts/capture-source.mjs"), sourceID, capture],
     {
+      ...logging,
+      label: `${sourceID} capture`,
       env: { SITE_DIR: site, CAPTURE_SOURCE: sourceID },
     },
   );
   const report = JSON.parse(readFileSync(join(capture, "report.json"), "utf8"));
-  const raw = await execute(process.env.INGEST_BIN || "ingest", [
-    runner.command,
-    "--store",
-    store,
-    "--config",
-    join(site, "sources", `${sourceID}.yaml`),
-    "--snapshot",
-    join(capture, "snapshot.json"),
-    "--now",
-    report.captured_at,
-  ]);
+  const raw = await execute(
+    process.env.INGEST_BIN || "ingest",
+    [
+      runner.command,
+      "--store",
+      store,
+      "--config",
+      join(site, "sources", `${sourceID}.yaml`),
+      "--snapshot",
+      join(capture, "snapshot.json"),
+      "--now",
+      report.captured_at,
+    ],
+    { ...logging, label: `${sourceID} ingest` },
+  );
   writeFileSync(join(directory, "ingestion.json"), raw, { flag: "wx" });
   const result = JSON.parse(raw);
   if (!result.published || !result.durable || result.error)
@@ -174,7 +214,10 @@ function context(id, options) {
       target,
       lock,
       workspace,
-      pack: options.pack || packStore,
+      pack:
+        options.pack ||
+        ((site, input, output) =>
+          packStore(site, input, output, { ...options, locale: id })),
     };
   } catch (error) {
     rmdirSync(lock);
@@ -207,6 +250,8 @@ export async function snapshotLocale(id, input, options = {}) {
 }
 export async function refreshLocale(id, options = {}) {
   const ctx = context(id, options);
+  const progress = (message) => options.progress?.(message);
+  progress(`${id}: refresh started`);
   const report = {
     locale: id,
     status: "failed",
@@ -222,6 +267,7 @@ export async function refreshLocale(id, options = {}) {
     let store = join(ctx.workspace, "seed");
     await ctx.pack(ctx.site, ctx.target, store);
     for (const [sourceID, source] of sources) {
+      progress(`${sourceID}: source started`);
       const directory = join(ctx.workspace, sourceID);
       mkdirSync(directory);
       const candidate = join(directory, "store");
@@ -233,6 +279,7 @@ export async function refreshLocale(id, options = {}) {
           runner: runnerFor(source.adapter),
           store: candidate,
           directory,
+          logging: options,
         });
         if (!result.published || !result.durable || result.error)
           throw Error("Ingestion did not confirm durable publication");
@@ -245,7 +292,13 @@ export async function refreshLocale(id, options = {}) {
           status: "published",
           rejected: result.rejected ?? [],
         });
+        progress(
+          `${sourceID}: published; ${(result.rejected ?? []).length} rejected records`,
+        );
       } catch (error) {
+        progress(
+          `${sourceID}: failed; retaining last valid data: ${error.message}`,
+        );
         report.sources.push({
           source: sourceID,
           status: "failed",
@@ -263,8 +316,10 @@ export async function refreshLocale(id, options = {}) {
     )
       ? "partial"
       : "success";
+    progress(`${id}: refresh ${report.status}`);
     return report;
   } catch (error) {
+    progress(`${id}: refresh failed: ${error.message}`);
     report.error = String(error);
     throw Error(`${error.message}; report: ${report.report}`, { cause: error });
   } finally {
@@ -281,10 +336,17 @@ if (
 ) {
   try {
     const args = process.argv.slice(2);
+    // Only the final result belongs on stdout. Stream child output separately.
+    const logging = {
+      onStdout: (chunk) => process.stderr.write(chunk),
+      onStderr: (chunk) => process.stderr.write(chunk),
+      progress: (message) =>
+        process.stderr.write(`[${new Date().toISOString()}] ${message}\n`),
+    };
     let result;
     if (args.length === 3 && args[0] === "--snapshot")
-      result = await snapshotLocale(args[1], args[2]);
-    else if (args.length === 1) result = await refreshLocale(args[0]);
+      result = await snapshotLocale(args[1], args[2], logging);
+    else if (args.length === 1) result = await refreshLocale(args[0], logging);
     else
       throw Error(
         "Usage: node scripts/refresh-locale.mjs LOCALE | --snapshot LOCALE INPUT_STORE",
