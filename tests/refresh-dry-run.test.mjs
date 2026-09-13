@@ -14,6 +14,74 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assessRefresh, checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
+test("Roxy probe compares only user agent and excludes sensitive response data", async () => {
+  const { probeRoxy } = await import("../scripts/probe-roxy-user-agent.mjs");
+  const calls = [];
+  const output = await probeRoxy(
+    "https://aftontickets.com/api/get-events?key=fixture&page=1",
+    "Installed Chromium UA",
+    async (url, options) => {
+      calls.push({ url, options });
+      return new Response("private body", {
+        status: 202,
+        headers: {
+          "content-type": "text/html",
+          "x-amzn-waf-action": "challenge",
+          "set-cookie": "private cookie",
+        },
+      });
+    },
+  );
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].options.headers, undefined);
+  assert.deepEqual(calls[1].options.headers, {
+    "user-agent": "Installed Chromium UA",
+  });
+  assert(
+    calls.every(
+      (c) =>
+        c.options.redirect === "error" &&
+        c.options.signal instanceof AbortSignal,
+    ),
+  );
+  assert.deepEqual(
+    output.results.map((r) => r.status),
+    [202, 202],
+  );
+  assert.equal(output.results[0].challenge, "challenge");
+  assert(!JSON.stringify(output).includes("private"));
+  assert(!JSON.stringify(output).includes("key="));
+});
+test("Roxy probe reports request failure safely and still tries the second request", async () => {
+  const { probeRoxy } = await import("../scripts/probe-roxy-user-agent.mjs");
+  let calls = 0;
+  const output = await probeRoxy(
+    "https://aftontickets.com/api/get-events?page=1",
+    "UA",
+    async () => {
+      if (++calls === 1) throw Error("private proxy credentials");
+      return Response.json({});
+    },
+  );
+  assert.equal(output.results[0].request_failed, true);
+  assert.equal(output.results[1].status, 200);
+  assert(!JSON.stringify(output).includes("private"));
+  await assert.rejects(probeRoxy("https://other.example/", "UA"), /Unreviewed/);
+});
+test("Roxy workflow probe is opt-in and has read-only configuration", () => {
+  const yaml = readFileSync(
+    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
+    "utf8",
+  );
+  assert.match(yaml, /roxy_user_agent_probe:[\s\S]*default: false/);
+  assert.match(yaml, /if:.*inputs.roxy_user_agent_probe/);
+  assert.match(yaml, /dst=\/site,readonly/);
+  assert.match(
+    yaml,
+    /probe-roxy-user-agent.mjs > dry-run-results\/roxy-user-agent.json/,
+  );
+});
+
 test("workflow streams and retains output, preserves status, and exports reports inside Docker", () => {
   const yaml = readFileSync(
     new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),

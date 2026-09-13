@@ -20,6 +20,10 @@ on:
           - "3"
           - "4"
         default: "2"
+      roxy_user_agent_probe:
+        description: Compare anonymous Roxy requests with default and Chromium user agents
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -49,6 +53,12 @@ jobs:
           cp -R "locales/$LOCALE" "$RUNNER_TEMP/refresh-input/locales/$LOCALE"
       - name: Build refresh image
         run: docker build --target refresh -t withadult-refresh-dry-run .
+      - name: Probe Roxy user agent
+        if: ${{ inputs.roxy_user_agent_probe }}
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs > dry-run-results/roxy-user-agent.json
       - name: Refresh sources
         id: refresh
         run: |

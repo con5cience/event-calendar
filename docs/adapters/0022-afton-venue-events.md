@@ -69,6 +69,37 @@ and body read errors. The existing JSON acceptance and pagination rules are
 unchanged. A new CI run is still needed to observe these diagnostics on the
 actual failing response.
 
+### Optional user-agent comparison
+
+GitHub run `34787560798` returned `x-amzn-waf-action: challenge` with HTTP 202
+and an empty body. The challenge response is confirmed; its triggering rule is
+not known. A local comparison returned HTTP 200 JSON both with Node's default
+user agent and with the installed Chromium user agent. That does not establish
+the outcome from a GitHub runner.
+
+The manual dry run now offers an opt-in `roxy_user_agent_probe` (default false).
+`scripts/probe-roxy-user-agent.mjs` reuses the locale capture profile and reads
+Chromium's actual user agent from a blank page. It makes two sequential Node
+requests with redirect rejection and 30-second timeouts, changing only the user
+agent on the second request. No browser navigation, proxy, cookie replay, or
+challenge execution occurs. Ingestion is untouched.
+
+Only the user agent, modes, statuses, bounded content-type/challenge headers,
+and fixed failure flags enter `roxy-user-agent.json`. Bodies and exception text
+are not logged. Request failure does not prevent the second comparison. Setup
+failure is a failed diagnostic step but does not prevent the normal refresh.
+The two-minute workflow limit also bounds setup. The existing diagnostic upload
+retains the file; a completed probe is not evidence of successful ingestion.
+
+Local verification: the new tests first failed for the missing probe and opt-in
+input, then all eight dry-run tests passed. A loopback test required a rerun
+outside the filesystem/network sandbox (`listen EPERM`). Workflow lint, lint,
+formatting, and build/type checks passed. The rebuilt refresh-test image passed
+all four integration tests; the contract suite passed with 91 frontend tests.
+The actual probe CLI in that Linux container returned HTTP 200 JSON for both
+requests and emitted the installed Linux Chromium user agent. The GitHub response
+still requires a manual run with the input enabled. No catalog data was replaced.
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

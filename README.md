@@ -190,6 +190,16 @@ peak or a measurement of total runner memory. Short runs can produce no samples;
 poll errors (including container startup/removal races) are retained separately
 in `refresh-memory-errors.log` and do not change the refresh exit status.
 
+Enable the optional `roxy_user_agent_probe` input only for diagnosis. It compares
+two anonymous requests to Roxy's configured Afton listing: Node's default user
+agent and the installed Chromium user agent. It does not navigate the venue in
+a browser, execute a challenge, use a proxy, or change ingestion. The diagnostic
+artifact includes `roxy-user-agent.json` with the actual browser user agent,
+response statuses, content types, and challenge headers. Bodies, cookies, URLs,
+and exception text are omitted. The probe has a two-minute step limit; failure
+does not prevent the normal refresh. A successful probe step only means the
+comparison completed, not that Afton returned event JSON.
+
 The workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from
