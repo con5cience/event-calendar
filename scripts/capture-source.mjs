@@ -34,7 +34,11 @@ else if (runner.feed === "hmt") {
     new URL(`../tests/${runner.script}`, import.meta.url)
   );
   result = await module[runner.fn || "capture"](
-    ...(runner.keyed ? [sourceID] : []),
+    ...(sourceID === "roxy" && profile.adapter === "afton"
+      ? [(await import("./roxy-transport.mjs")).roxyFetcher(profile.endpoint)]
+      : runner.keyed
+        ? [sourceID]
+        : []),
   );
 }
 const snapshot =

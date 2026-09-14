@@ -126,7 +126,7 @@ test("proxy request errors have fixed categories without raw error text", async 
     assert(!JSON.stringify(result).includes("private"));
   }
 });
-test("proxy secret is scoped to the opt-in probe step", () => {
+test("proxy secret is scoped to the probe and Roxy-only refresh configuration", () => {
   const yaml = readFileSync(
     new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
     "utf8",
@@ -139,7 +139,14 @@ test("proxy secret is scoped to the opt-in probe step", () => {
   assert.match(step, /HTTP_PROXY: \$\{\{ secrets.HTTP_PROXY \}\}/);
   assert.match(step, /-e HTTP_PROXY /);
   assert.match(step, /--proxy > dry-run-results\/roxy-proxy.json/);
-  assert.equal(yaml.split("secrets.HTTP_PROXY").length, 2);
+  const refresh = yaml
+    .split("      - name: Refresh sources\n")[1]
+    .split("      - name: Build refreshed application\n")[0];
+  assert.match(refresh, /ROXY_PROXY_URL: \$\{\{ secrets.HTTP_PROXY \}\}/);
+  assert.match(refresh, /ROXY_PROXY_REQUIRED: "1"/);
+  assert.match(refresh, /-e ROXY_PROXY_URL -e ROXY_PROXY_REQUIRED/);
+  assert(!refresh.includes("-e HTTP_PROXY"));
+  assert.equal(yaml.split("secrets.HTTP_PROXY").length, 3);
 });
 
 test("browser probe observes scoped feed responses without exposing URLs or bodies", async () => {

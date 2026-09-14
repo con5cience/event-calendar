@@ -213,8 +213,9 @@ the user-agent comparison is independent and defaults to disabled.
 
 `roxy_proxy_probe` is another optional diagnostic (default false). It reads the
 repository Actions secret `HTTP_PROXY` as a full HTTP(S) proxy URL, including
-percent-encoded username/password if needed. Only that step receives the secret;
-normal refresh and other probes do not. It makes one request through Playwright's
+percent-encoded username/password if needed. This probe receives it as `HTTP_PROXY`;
+refresh receives it separately as the Roxy-specific setting below. Other probes
+do not receive it. It makes one request through Playwright's
 explicit proxy client with TLS verification enabled, no redirects or retries,
 and a 30-second timeout. It saves only normalized response headers/status or a
 fixed failure category and elapsed milliseconds in `roxy-proxy.json`. Categories
@@ -277,6 +278,38 @@ docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt
 
 The host test command is `npm run test:proxy-diagnostics` and requires curl plus
 permission to bind loopback fixture servers. The container supplies both clients.
+
+Roxy ingestion now supports proxied curl through `ROXY_PROXY_URL`. The refresh
+workflow maps the existing Actions `HTTP_PROXY` secret to that variable and sets
+`ROXY_PROXY_REQUIRED=1`: missing or invalid configuration fails Roxy and retains
+its last-valid data. It does not silently fall back to direct access. The refresh
+coordinator passes these variables only to Roxy's capture process; all other
+capture, ingestion, and packaging children have them removed. Curl also removes
+proxy-related environment variables and receives credentials through stdin.
+
+Local runs without `ROXY_PROXY_URL` keep the existing direct Node fetch behavior,
+unless `ROXY_PROXY_REQUIRED=1` is set. This selection applies to the scheduled
+capture entry point (`scripts/capture-source.mjs`), not the legacy standalone
+`tests/afton/capture.mjs` command. Both listing passes and native Afton detail pages
+use the selected transport. External ticket-provider pages are not fetched.
+
+The curl transport accepts only the configured Afton listing and canonical
+native event URLs. It keeps TLS validation enabled, rejects
+redirects, limits each request to 30 seconds across all attempts (15 seconds for each connection, capped by the remaining budget), and
+rejects bodies over one MiB or headers over 16 KiB. The combined receive buffer
+is bounded to these limits before parsing. It preserves body bytes for the
+existing JSON/HTML validators and omits cookies and arbitrary response headers.
+Raw curl errors and credentials are never printed. Validation, reconciliation,
+and publication still use the existing Go adapter and artifact contract.
+At most two retries are allowed for curl transport exits 7, 28, 35, 52, or 56,
+and only when curl reports no CONNECT response or an accepted tunnel. A fresh
+attempt discards all bytes from the failed attempt. Proxy rejection (including
+407), certificate verification failure, cancellation, invalid data, redirects,
+and size-limit failures do not retry. The 30-second deadline never resets.
+
+Run `npm run test:roxy-transport` for transport and secret-isolation tests; curl
+and loopback permission are required. `docker run --rm event-calendar-refresh-test`
+also runs these tests in the refresh image.
 
 The refresh dry-run workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new

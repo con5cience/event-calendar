@@ -33,6 +33,7 @@ ENTRYPOINT ["/ingest"]
 
 FROM node:24-bookworm-slim AS refresh
 WORKDIR /tools
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 COPY package.json package-lock.json ./
 RUN npm ci && npx playwright install --with-deps chromium
 COPY scripts ./scripts
@@ -48,7 +49,7 @@ COPY locales/denver/site.json /fixtures/locales/denver/site.json
 COPY locales/denver/assets /fixtures/locales/denver/assets
 COPY --from=backend /calendar /calendar
 COPY --from=frontend /build/dist /app/dist
-ENTRYPOINT ["node", "--test", "/tools/tests/refresh-integration.test.mjs"]
+ENTRYPOINT ["node", "--test", "/tools/tests/refresh-integration.test.mjs", "/tools/tests/roxy-transport.test.mjs"]
 
 FROM node:24-bookworm-slim AS proxy-diagnostics
 WORKDIR /tools

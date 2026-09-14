@@ -83,6 +83,9 @@ jobs:
           docker run --rm --entrypoint node -e HTTP_PROXY -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --proxy > dry-run-results/roxy-proxy.json
       - name: Refresh sources
         id: refresh
+        env:
+          ROXY_PROXY_URL: ${{ secrets.HTTP_PROXY }}
+          ROXY_PROXY_REQUIRED: "1"
         run: |
           log_token=$(node --input-type=module -e 'import { randomUUID } from "node:crypto"; console.log(randomUUID());')
           printf '::stop-commands::%s\n' "$log_token"
@@ -98,7 +101,7 @@ jobs:
           stop_monitor() { kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" 2>/dev/null || true; }
           trap stop_monitor EXIT
           set +e
-          docker run --rm --name withadult-refresh-capture -e CAPTURE_CONCURRENCY --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
+          docker run --rm --name withadult-refresh-capture -e CAPTURE_CONCURRENCY -e ROXY_PROXY_URL -e ROXY_PROXY_REQUIRED --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
           pipeline_status=("${PIPESTATUS[@]}")
           set -e
           stop_monitor

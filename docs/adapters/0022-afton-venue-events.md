@@ -251,6 +251,61 @@ Direct-mode verification on 2026-09-14:
 | Live local Linux AMD64 direct CLI     | Default UA: HTTP 200/JSON in 781 ms; browser-style UA: HTTP 200/JSON in 510 ms; neither response had a challenge indicator or CONNECT tunnel | Both direct variants work locally              | Single request per variant; GitHub result and event validity remain unverified |
 | Regression checks                     | 14 existing dry-run tests, 91 frontend contract tests and Go handoff passed; lint, formatting, build/type and workflow lint passed           | No regression observed in checked paths        | Unchanged Go checks reused the cached image layer                              |
 
+### Proxied ingestion transport
+
+The scheduled capture entry point selects curl for Roxy when `ROXY_PROXY_URL`
+is present; absent configuration preserves local direct Node fetch behavior.
+`ROXY_PROXY_REQUIRED=1` rejects missing configuration instead of falling back.
+The Actions refresh step maps its existing `HTTP_PROXY` secret to this dedicated
+variable. The coordinator removes both Roxy variables from inherited subprocess
+environments, then explicitly supplies them only to the Roxy capture. Go ingest,
+packaging, other source captures, and the application do not receive the secret.
+
+The transport reuses secret parsing and curl stdin escaping from the diagnostics
+through `scripts/proxy-config.mjs`. It does not import the diagnostic request mode.
+Curl preserves bounded body bytes and normalized content type for the existing
+Afton capture function. Both listing passes and canonical native detail URLs
+use this fetch-compatible function. External ticket destinations remain excluded.
+The existing one-year window, complete pagination, paired capture validation,
+record validation, rejection handling and last-valid retention are unchanged.
+
+Certificate validation remains enabled; redirects are rejected.
+The configured listing URL and exact native Afton event paths are the only
+accepted targets. Requests have a 30-second total deadline across all attempts,
+and each connection is limited to 15 seconds or the remaining budget, whichever
+is shorter. At most two retries are allowed for curl exits 7, 28, 35, 52, and 56,
+with CONNECT status 0 or 200. Authentication/proxy rejection, certificate
+verification failures, validation failures, cancellation, and size limits do not
+retry. Curl's numeric CONNECT status is separated from response bytes using its
+fixed four-byte write-out suffix; this prevents retrying an authentication
+rejection that curl otherwise reports as exit 56. Each retry starts with a fresh
+buffer. Abort signals stop curl. The combined buffer is bounded to one MiB plus 16 KiB (and the four-byte status suffix),
+then body and header limits are checked independently. Raw curl stderr is
+discarded, errors contain fixed text or numeric exit codes, and cookies and
+arbitrary response headers are not exposed to the adapter.
+
+The refresh image now includes curl. No source artifacts or application behavior
+are changed by enabling the transport alone. The dry-run workflow remains a
+validation workflow and does not commit, push, or deploy its refreshed snapshot.
+
+Ingestion verification on 2026-09-14 used
+`/private/tmp/withadult-roxy-curl.sCQh9e`. The first two no-retry captures failed
+with curl exits 35 and 28 and produced no snapshot. The operator then approved
+bounded retries. The next capture completed after retrying TLS failures.
+
+| Evidence                                                                           | Observation                                                                                                                                                                       | Supported finding                                                                             | Limit                                                                 |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `capture-retries/snapshot.json`                                                    | Three listing pages and 20 native detail pages in each pass; 25 upstream event records. Five representative records were inspected for ID, title, date, venue and detail presence | Full proxied capture completed                                                                | External event detail pages are intentionally not fetched             |
+| `ingest replay-afton` against temporary `store`                                    | `published: true`, `durable: true`, no rejected records                                                                                                                           | Existing Go validation accepted the complete capture                                          | Temporary publication only                                            |
+| `package-snapshot --site /site /work/store /work/export` and temporary application | Export passed; HTTP calendar identities matched the exported Roxy artifact; health, site, calendar, event page, event API and ICS returned 200                                    | Capture-to-application data path was observed                                                 | Local Linux container; GitHub refresh remains unverified              |
+| Tests                                                                              | Six transport tests, 13 refresh-container tests, 15 Afton capture tests, 19 refresh tests, 14 dry-run tests, nine diagnostic tests and 91 frontend contract tests passed          | Retry bounds, no-retry cases, redaction, isolation, capture and retention regressions checked | Go test layer reused unchanged cached results; handoff test ran again |
+| Lint, format, build/type, workflow lint and Git checks                             | Passed; tracked Denver catalog unchanged                                                                                                                                          | Code checks passed without replacing published snapshots                                      | No push or deployment implied                                         |
+
+The full local check used `scripts/capture-source.mjs roxy` with the dedicated
+proxy variables. It then replayed the snapshot with the captured timestamp,
+exported the candidate store, and served it through `/calendar` with the existing
+frontend assets. The temporary application did not receive proxy credentials.
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

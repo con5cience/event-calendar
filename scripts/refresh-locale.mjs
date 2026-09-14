@@ -68,8 +68,11 @@ export function execute(bin, args, options = {}) {
     const label = options.label || bin;
     const progress = (message) => options.progress?.(`${label}: ${message}`);
     progress("started");
+    const inherited = { ...process.env };
+    delete inherited.ROXY_PROXY_URL;
+    delete inherited.ROXY_PROXY_REQUIRED;
     const child = spawn(bin, args, {
-      env: { ...process.env, ...options.env },
+      env: { ...inherited, ...options.env },
       detached: true,
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -153,7 +156,16 @@ async function captureSource({ site, sourceID, directory, logging }) {
     {
       ...logging,
       label: `${sourceID} capture`,
-      env: { SITE_DIR: site, CAPTURE_SOURCE: sourceID },
+      env: {
+        SITE_DIR: site,
+        CAPTURE_SOURCE: sourceID,
+        ...(sourceID === "roxy"
+          ? {
+              ROXY_PROXY_URL: process.env.ROXY_PROXY_URL || "",
+              ROXY_PROXY_REQUIRED: process.env.ROXY_PROXY_REQUIRED || "",
+            }
+          : {}),
+      },
     },
   );
 }
