@@ -201,6 +201,17 @@ codes are not attributed to Afton. IPv4/IPv6 selection controls the connection
 to the proxy, not its egress. No automatic fallback or production proxy routing
 is introduced.
 
+The workflow also runs a separate `--direct` step before the proxy comparison.
+It sends two curl requests to Roxy, with default and fixed Chrome-style Linux
+user agents. No secret enters this step. Inherited proxy variables are removed;
+`--proxy "" --noproxy "*"` prevents proxy use even if an ambient configuration
+exists. The direct results go to `direct-curl.jsonl` and include normalized MIME
+type and fixed challenge indicators. Direct TLS connections do not need a
+CONNECT response to count as successful. Both requests retain the same timeouts,
+TLS checks, redirect/retry policy, and other curl settings. This compares user
+agents, not browser session or TLS fingerprint behavior. Normal Roxy ingestion
+still uses Node fetch; no ingestion transport change is included.
+
 A synthetic stalled CONNECT test showed curl can report zero TCP time despite
 having connected and sent CONNECT. The implementation therefore also parses
 fixed trace milestones in memory. Neither raw trace nor raw write-out JSON is
@@ -231,6 +242,14 @@ Local verification on 2026-09-14:
 | Live Linux AMD64 container, Node v24.21.0, curl 7.88.1           | Both targets returned HTTP 200 through Playwright and curl default/IPv4; curl CONNECT was 200 and TLS/request milestones were confirmed              | The proxy works locally through both clients in the diagnostic runtime | Does not establish GitHub connectivity or event validity                             |
 | Same live run                                                    | No IPv6 resolution; both forced IPv6 requests exited 7 without a tunnel                                                                              | Forced IPv6 did not work locally                                       | Default and IPv4 succeeded; not evidence that IPv6 caused GitHub's timeout           |
 | Repository checks                                                | 14 existing dry-run tests, 19 refresh tests, 91 frontend contract tests and Go handoff passed; lint, formatting, build/type and workflow lint passed | No regression observed in checked paths                                | Unchanged Go checks reused the cached image layer; new GitHub workflow remains unrun |
+
+Direct-mode verification on 2026-09-14:
+
+| Evidence                              | Observation                                                                                                                                  | Supported finding                              | Limit                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| Host and Linux AMD64 diagnostic tests | Nine tests passed in each; a synthetic destination received the direct connection while the configured proxy received none                   | Direct mode bypasses inherited proxy variables | Controlled local fixtures                                                      |
+| Live local Linux AMD64 direct CLI     | Default UA: HTTP 200/JSON in 781 ms; browser-style UA: HTTP 200/JSON in 510 ms; neither response had a challenge indicator or CONNECT tunnel | Both direct variants work locally              | Single request per variant; GitHub result and event validity remain unverified |
+| Regression checks                     | 14 existing dry-run tests, 91 frontend contract tests and Go handoff passed; lint, formatting, build/type and workflow lint passed           | No regression observed in checked paths        | Unchanged Go checks reused the cached image layer                              |
 
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup

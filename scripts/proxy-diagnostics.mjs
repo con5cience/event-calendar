@@ -50,7 +50,14 @@ export function traceMilestones(trace) {
   };
 }
 
-export function curlReport(exitCode, output, protocol, milestones = {}) {
+export function curlReport(
+  exitCode,
+  output,
+  protocol,
+  milestones = {},
+  trace = "",
+) {
+  const direct = protocol === null;
   let raw;
   try {
     raw = JSON.parse(output);
@@ -69,15 +76,21 @@ export function curlReport(exitCode, output, protocol, milestones = {}) {
     connect > 0;
   const tls = numeric(raw.time_appconnect);
   const tlsCompleted =
-    connect === 200 && (tls > 0 || milestones.request_sent === true);
+    (direct || connect === 200) &&
+    (tls > 0 || milestones.request_sent === true);
   let failure = null;
-  if (connect === 407) failure = "proxy_authentication";
+  if (direct && (connect || milestones.connect_sent))
+    failure = "unexpected_proxy";
+  else if (direct && exitCode === 6) failure = "destination_dns";
+  else if (direct && exitCode === 7) failure = "destination_tcp";
+  else if (connect === 407) failure = "proxy_authentication";
   else if (connect && connect !== 200) failure = "proxy_connect_rejected";
   else if (exitCode === 5) failure = "proxy_dns";
   else if (exitCode === 7) failure = "proxy_tcp";
-  else if (exitCode !== 0 || !code || connect !== 200) {
-    if (!tcpConnected) failure = "proxy_dns_or_tcp";
-    else if (connect !== 200)
+  else if (exitCode !== 0 || !code || (!direct && connect !== 200)) {
+    if (!tcpConnected)
+      failure = direct ? "destination_dns_or_tcp" : "proxy_dns_or_tcp";
+    else if (!direct && connect !== 200)
       failure =
         protocol === "https:" && !milestones.connect_sent
           ? "proxy_tls_or_connect"
@@ -88,6 +101,17 @@ export function curlReport(exitCode, output, protocol, milestones = {}) {
   return {
     exit_code: Number.isInteger(exitCode) ? exitCode : null,
     http_status: code || null,
+    content_type: ["application/json", "text/html"].includes(
+      raw.content_type?.split(";", 1)[0].trim().toLowerCase(),
+    )
+      ? raw.content_type.split(";", 1)[0].trim().toLowerCase()
+      : "other",
+    challenge: /^< x-amzn-waf-action:\s*challenge\r?$/im.test(trace)
+      ? "challenge"
+      : null,
+    cf_mitigated: /^< cf-mitigated:\s*challenge\r?$/im.test(trace)
+      ? "challenge"
+      : null,
     connect_status: connect || null,
     proxy_tunnel_confirmed: connect === 200,
     tcp_connected: tcpConnected,
@@ -129,16 +153,21 @@ function cleanEnvironment() {
 // goes through stdin, never argv, a temporary file, or a verbose log.
 const quote = (value) =>
   '"' + value.replaceAll("\\", "\\\\").replaceAll('"', '\\"') + '"';
-export async function curlProbe(
+export function curlCommand(
   endpoint,
   proxy,
   family = "default",
   timeoutSeconds = 30,
+  userAgent,
 ) {
   const config =
     [
-      `proxy = ${quote(proxy.server)}`,
-      `proxy-user = ${quote(proxy.username + ":" + proxy.password)}`,
+      ...(proxy
+        ? [
+            `proxy = ${quote(proxy.server)}`,
+            `proxy-user = ${quote(proxy.username + ":" + proxy.password)}`,
+          ]
+        : []),
       `url = ${quote(endpoint)}`,
     ].join("\n") + "\n";
   const args = [
@@ -148,7 +177,7 @@ export async function curlProbe(
     "--silent",
     "--verbose",
     "--noproxy",
-    "",
+    proxy ? "" : "*",
     "--proxy-basic",
     "--proto",
     "=https",
@@ -165,6 +194,25 @@ export async function curlProbe(
   ];
   if (family === "ipv4") args.push("--ipv4");
   if (family === "ipv6") args.push("--ipv6");
+  if (!proxy) args.push("--proxy", "");
+  if (userAgent) args.push("--user-agent", userAgent);
+  return { args, config };
+}
+
+export async function curlProbe(
+  endpoint,
+  proxy,
+  family = "default",
+  timeoutSeconds = 30,
+  userAgent,
+) {
+  const { args, config } = curlCommand(
+    endpoint,
+    proxy,
+    family,
+    timeoutSeconds,
+    userAgent,
+  );
   return new Promise((resolveResult) => {
     let output = "";
     let trace = "";
@@ -196,11 +244,53 @@ export async function curlProbe(
       resolveResult(
         unavailable
           ? { failure_stage: "curl_unavailable" }
-          : curlReport(code, output, proxy.protocol, traceMilestones(trace)),
+          : curlReport(
+              code,
+              output,
+              proxy?.protocol ?? null,
+              traceMilestones(trace),
+              trace,
+            ),
       );
     });
     child.stdin.end(config);
   });
+}
+
+// Browser-style UA only: no browser TLS fingerprint, cookies, or client hints.
+const browserUserAgent =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36";
+export async function runDirectDiagnostics(
+  endpoint,
+  emit = (row) => console.log(JSON.stringify(row)),
+) {
+  const target = new URL(endpoint);
+  if (
+    target.origin !== "https://aftontickets.com" ||
+    target.pathname !== "/api/get-events" ||
+    target.username ||
+    target.password
+  )
+    throw Error("Invalid target");
+  for (const [userAgentMode, userAgent] of [
+    ["default", undefined],
+    ["browser", browserUserAgent],
+  ]) {
+    const labels = {
+      client: "curl",
+      target: "roxy",
+      mode: "direct",
+      user_agent_mode: userAgentMode,
+    };
+    emit({ kind: "start", ...labels });
+    emit({
+      kind: "result",
+      ...labels,
+      ...(userAgent ? { user_agent: userAgent } : {}),
+      ...(await curlProbe(endpoint, null, "default", 30, userAgent)),
+    });
+  }
+  emit({ kind: "complete", mode: "direct" });
 }
 
 async function dnsProbe(hostname, family) {
@@ -308,7 +398,14 @@ if (
   for (const key of Object.keys(process.env))
     if (!(key in cleaned)) delete process.env[key];
   try {
-    await runDiagnostics(proxyURL, captureProfile("roxy").endpoint + "1");
+    if (
+      process.argv.length > 3 ||
+      (process.argv[2] && process.argv[2] !== "--direct")
+    )
+      throw Error("Invalid arguments");
+    const endpoint = captureProfile("roxy").endpoint + "1";
+    if (process.argv[2] === "--direct") await runDirectDiagnostics(endpoint);
+    else await runDiagnostics(proxyURL, endpoint);
   } catch {
     console.log(
       JSON.stringify({

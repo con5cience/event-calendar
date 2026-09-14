@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
+import { createServer as createTCPServer } from "node:net";
 import { once } from "node:events";
 import { execute } from "../scripts/refresh-locale.mjs";
 import {
@@ -9,7 +10,104 @@ import {
   curlProbe,
   proxyConfiguration,
   traceMilestones,
+  curlCommand,
 } from "../scripts/proxy-diagnostics.mjs";
+
+test("direct curl disables every proxy route and only the user agent differs", () => {
+  const plain = curlCommand("https://example.com/", null);
+  const browser = curlCommand(
+    "https://example.com/",
+    null,
+    "default",
+    30,
+    "fixture-browser",
+  );
+  assert.equal(plain.args[plain.args.indexOf("--proxy") + 1], "");
+  assert.equal(plain.args[plain.args.indexOf("--noproxy") + 1], "*");
+  assert(!plain.config.includes("proxy-user"));
+  assert.deepEqual(browser.args, [
+    ...plain.args,
+    "--user-agent",
+    "fixture-browser",
+  ]);
+  assert.equal(browser.config, plain.config);
+});
+
+test("direct reports accept HTTPS without CONNECT and normalize challenge headers", () => {
+  const result = curlReport(
+    0,
+    JSON.stringify({
+      http_code: 202,
+      time_connect: 0.1,
+      time_appconnect: 0.2,
+      content_type: "text/html; secret=value",
+    }),
+    null,
+    {},
+    "< x-amzn-waf-action: challenge\r\n< Set-Cookie: secret\r\n",
+  );
+  assert.equal(result.failure_stage, null);
+  assert.equal(result.content_type, "text/html");
+  assert.equal(result.challenge, "challenge");
+  assert.equal(result.proxy_tunnel_confirmed, false);
+  assert.equal(result.destination_tls_completed, true);
+  assert(!JSON.stringify(result).includes("secret"));
+  assert.equal(curlReport(6, "{}", null).failure_stage, "destination_dns");
+  assert.equal(curlReport(7, "{}", null).failure_stage, "destination_tcp");
+});
+
+test("direct curl reaches the destination despite inherited proxy variables", async () => {
+  let proxyRequests = 0,
+    destinationConnections = 0;
+  const sockets = new Set();
+  const destination = createTCPServer((socket) => {
+    destinationConnections++;
+    sockets.add(socket);
+    socket.on("close", () => sockets.delete(socket));
+  });
+  const proxy = createServer();
+  proxy.on("connect", (_request, socket) => {
+    proxyRequests++;
+    socket.end("HTTP/1.1 407 Proxy Authentication Required\r\n\r\n");
+  });
+  destination.listen(0, "127.0.0.1");
+  proxy.listen(0, "127.0.0.1");
+  await Promise.all([once(destination, "listening"), once(proxy, "listening")]);
+  const keys = [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+  ];
+  const previous = keys.map((key) => process.env[key]);
+  try {
+    for (const key of keys)
+      process.env[key] =
+        `http://fixture-user:fixture-password@127.0.0.1:${proxy.address().port}`;
+    const result = await curlProbe(
+      `https://127.0.0.1:${destination.address().port}/`,
+      null,
+      "default",
+      1,
+    );
+    assert.equal(result.failure_stage, "destination_tls");
+    assert.equal(destinationConnections, 1);
+    assert.equal(proxyRequests, 0);
+    assert.equal(result.connect_sent, false);
+  } finally {
+    keys.forEach((key, i) => {
+      if (previous[i] === undefined) delete process.env[key];
+      else process.env[key] = previous[i];
+    });
+    for (const socket of sockets) socket.destroy();
+    await Promise.all([
+      new Promise((resolve) => destination.close(resolve)),
+      new Promise((resolve) => proxy.close(resolve)),
+    ]);
+  }
+});
 
 test("proxy configuration rejects malformed values and separates credentials", () => {
   const config = proxyConfiguration("http://fixture-user:p%40ss@localhost:823");
@@ -156,6 +254,12 @@ test("standalone workflow does not refresh, deploy, or expose the proxy in argum
   assert(!workflow.includes("refresh-locale.mjs"));
   assert(!workflow.includes("railway"));
   assert.match(workflow, /if: always\(\)/);
+  const directStep = workflow
+    .split("      - name: Diagnose direct curl\n")[1]
+    .split("      - name: Diagnose proxy\n")[0];
+  assert.match(directStep, /--direct/);
+  assert(!directStep.includes("HTTP_PROXY"));
+  assert(!directStep.includes("secrets."));
 });
 
 test("CLI streams both clients and families and does not leak proxy credentials", async () => {

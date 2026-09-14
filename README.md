@@ -233,7 +233,15 @@ The diagnostic image runs local fixture tests before receiving the secret.
 Results stream into the step log and the seven-day `proxy-diagnostics-<run>-<attempt>`
 artifact. A green step means diagnostics completed, not that all requests worked.
 
-The comparison makes eight sequential, bounded requests: Playwright plus curl
+The workflow first runs two direct Roxy requests: curl's default user agent, then
+a fixed Chrome-style Linux user agent. This step receives no secret, removes
+inherited proxy variables, and passes `--proxy "" --noproxy "*"` explicitly.
+It stores `direct-curl.jsonl` beside the proxy report. Only the user agent differs
+between the two direct requests; curl does not acquire browser cookies, client
+hints, or a browser TLS fingerprint. Results include normalized content type and
+WAF challenge indicators. HTTP 200/JSON is not proof of a valid event capture.
+
+The proxy comparison makes eight sequential, bounded requests: Playwright plus curl
 (default, IPv4, IPv6) for each of `https://example.com/` and Roxy's configured
 Afton feed. Curl's family selection applies to the proxy connection, not the
 provider's outbound connection. An IPv6-only failure does not imply that the
@@ -263,6 +271,7 @@ printing it, then run the same Linux AMD64 container:
 ```sh
 docker build --platform linux/amd64 --target proxy-diagnostics -t withadult-proxy-diagnostics .
 docker run --rm --platform linux/amd64 --entrypoint node withadult-proxy-diagnostics --test tests/proxy-diagnostics.test.mjs
+docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt no-new-privileges:true withadult-proxy-diagnostics --direct
 docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt no-new-privileges:true -e HTTP_PROXY withadult-proxy-diagnostics
 ```
 

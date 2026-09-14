@@ -22,6 +22,12 @@ jobs:
         run: docker build --platform linux/amd64 --target proxy-diagnostics -t withadult-proxy-diagnostics .
       - name: Test diagnostic reporting
         run: docker run --rm --entrypoint node withadult-proxy-diagnostics --test tests/proxy-diagnostics.test.mjs
+      - name: Diagnose direct curl
+        timeout-minutes: 2
+        run: |
+          mkdir -p proxy-results
+          set -o pipefail
+          docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges:true withadult-proxy-diagnostics --direct | tee proxy-results/direct-curl.jsonl
       - name: Diagnose proxy
         timeout-minutes: 6
         env:
