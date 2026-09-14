@@ -24,6 +24,8 @@ Evidence states follow ADR 0001. Dates in the observation column are examples re
 
 Dazzle is integrated through its [VenuePilot profile](../adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026), with 171 published events and the reviewed 11 PM admission condition.
 
+Seventh Circle is integrated through its [HTML profile](../adapters/0012-html-event-listings.md#seventh-circle-implementation--september-14-2026), with six published events and the approved annual-fee condition.
+
 Implementation update, September 9: Gothic, Mission, Bluebird, Ogden, and
 Fiddler's Green now have tested AEG snapshot support and one-time live data in the
 local app. The historical inventory below remains research evidence, not current

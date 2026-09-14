@@ -1,0 +1,20 @@
+schema_version: 1
+source: { id: seventh-circle, adapter: html-seventh-circle }
+state: established
+venue:
+  key: seventh-circle
+  name: Seventh Circle Music Collective
+  timezone: America/Denver
+  website: https://www.7thcirclemusiccollective.org
+  admission_policy:
+    text: All ages
+    category: All ages
+    url: https://www.7thcirclemusiccollective.org/home/about
+admission_rules:
+  All ages:
+    url: https://www.7thcirclemusiccollective.org/home/about
+    reviewed_on: "2026-09-14"
+    ranges:
+      - min_age: 0
+        max_age: 17
+        condition: $5 annual fee; show donations encouraged

@@ -461,6 +461,27 @@ The September 12 local import added 50 events through January 23, 2027: 24 All
 Ages, 14 18+, 11 21+, and one with unknown admission. One event is cancelled.
 The catalog now contains 22 dedicated venue sources. Earlier imports are unchanged.
 
+### Seventh Circle capture and replay
+
+Seventh Circle uses a paired public HTML listing/detail capture, not its
+login-gated Google Calendar export:
+
+```sh
+SITE_DIR=locales/denver CAPTURE_SOURCE=seventh-circle node tests/seventh-circle/capture.mjs
+```
+
+Replay the reported snapshot with `replay-seventh-circle --store /data --config /config/seventh-circle.yaml --snapshot /capture/snapshot.json --now <captured_at>`.
+Mount the capture and `locales/denver/sources` read-only and use the established
+source config with its prior artifact. Only explicitly new staging stores use a
+config copy with `state: new`. Validate staging before guarded publication.
+
+The source's All Ages rule displays `$5 annual fee; show donations encouraged`.
+Only explicit, matching door labels produce door times. Unlabeled clocks, ticket
+URLs and price fields are not inferred. Unknown empty layouts and pagination fail
+safely. Missing details are rejected observations, preserving prior valid records.
+Tests: `npm run test:seventh-circle`, the Docker Go suite, and
+`SEVENTH_CIRCLE_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/seventh-circle.spec.ts`.
+
 ### Levitt capture and replay
 
 Dazzle uses the same capture with its own profile:

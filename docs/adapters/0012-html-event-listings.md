@@ -1,6 +1,6 @@
 # ADR 0012: HTML event listings
 
-- Status: Ophelia's, Black Buzzard and Herb's implemented; 19hz remains proposed
+- Status: Ophelia's, Black Buzzard, Herb's and Seventh Circle implemented; 19hz remains proposed
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
@@ -20,6 +20,88 @@ Resolve relative links and decode text entities. Never execute source scripts.
 Preserve raw date text in operator evidence alongside normalized dates. Venue,
 date and title are required; show time is optional under the product contract.
 Distinguish an empty calendar from a selector or schema failure.
+
+## Seventh Circle discovery and admission review — September 14, 2026
+
+The implementation update below supersedes this discovery-only status. Use an explicit
+HTML parser profile for the [supplied listing](https://www.7thcirclemusiccollective.org/posts/).
+Ordinary HTTP returns event cards without running scripts. No standalone event
+API was verified; this is not a finding that no API exists.
+
+| Evidence source | Raw observation | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Direct listing HTML, six inspected cards | Post IDs 2457, 2450, 2465, 2459, 2460 and 2467 include titles, month/day, clocks and relative detail links | Server-rendered listings provide event discovery and candidate stable identities | Cards do not print a year; do not infer it from today's date or flyer filenames |
+| [Post 2457](https://www.7thcirclemusiccollective.org/posts/2457) | New Moon, Caps Lock, Wood Nymph; September 18, 2026 at 7 PM | Detail HTML supplies an explicit full date | Only this detail was checked; the clock's doors/show meaning remains unverified |
+| Listing navigation | A `/posts/past` link is present | Past listings are separate from the upcoming page | Forward pagination, empty states and full available coverage remain unverified |
+| [Official About page](https://www.7thcirclemusiccollective.org/home/about) | Welcomes all ages at every show; annual membership required | Reviewed venue default can support All Ages eligibility | Preserve membership conditions and explicit event overrides; no extra guardian requirement was stated |
+
+The six cards list New Moon / Caps Lock / Wood Nymph; Wytch / Funscreen / Axe
+Bunny / Lost Companion; Gopher Guts / Hostile Effect / New Moon / Woodnymph;
+HIRS Collective / Fatalist / Cacophony / Bonsai; Barry Osborne / Laura Goldhamer /
+Sam Armstrong-Zickefoose; and Pseudocrush / Radio Fry / Auxitone / Hostile Effect.
+One title includes `6pm doors!`, so title cleanup and time extraction need explicit
+tests. Preserve actual lineup text and do not silently classify every clock as doors.
+
+Before implementation, verify all detail dates, event identity, Denver timezone,
+venue scope, cancellations, missing links, enumeration and empty/failure behavior.
+Review robots, terms and reuse conditions. A cached web-reader result showed older
+listings than the direct HTTP response; use captured upstream responses as evidence,
+not search-cache coverage. Do not fetch image flyers as a substitute for full dates
+unless a separate reviewed fallback is needed.
+
+Use the existing venue admission policy and event override structure, with the
+official policy link and membership condition. Verify age-14 eligibility through
+the running app. Reuse bounded HTTP and DOM parsing conventions, but not another
+venue's selectors or age rules. Require paired capture, parser, reconciliation,
+locale and publication checks. Do not infer a ticket URL or ingest prices; the
+venue event link is sufficient when no purchase link is available.
+
+## Seventh Circle implementation — September 14, 2026
+
+`tests/seventh-circle/capture.mjs` uses the existing bounded HTTP transport and
+locale capture profile. Each pass reads the public listing, policy and linked
+post details. Requests reject redirects, use a 30-second timeout and enforce the
+existing 1 MiB HTML limit; a pass is capped at 2 MiB and the snapshot at 4 MiB.
+Post discovery never follows arbitrary external links. A detail failure remains
+an explicit empty observation; a listing or policy request failure aborts capture.
+The empty-page layout is unverified, so zero discovered posts fails safely.
+
+`internal/seventhcircle` uses the established inert DOM traversal convention,
+with source-specific selectors rather than a universal HTML parser. It compares
+both passes' normalized observations. Scoped card IDs, relative detail links,
+detail coverage, title equality, full dates, weekdays, month/day and printed clocks
+must agree. Duplicate IDs, unrecognized pagination and unknown empty layouts fail
+the whole refresh. Identified invalid/missing details are rejected through the
+existing reconciler rather than treated as successful absence.
+
+The policy page must retain the reviewed All Ages and annual-fee wording. This
+checks those policy statements, not every possible edit to unrelated page text.
+The configured All Ages rule covers ages 0–17 with the user-approved condition
+`$5 annual fee; show donations encouraged`. The fee is the venue's annual membership
+fee, not a per-show ticket price or required show donation. No guardian requirement
+is invented. Explicit restricted title text becomes an unclassified event policy
+without adult clearance; cancellation titles retain Cancelled status and no
+clearance. Configured event overrides keep their existing precedence.
+
+Only an explicit trailing doors label that agrees with the printed clock produces
+`doors_at`; its text is removed from the title. Denver-local DST-invalid or
+ambiguous door clocks reject. Other clocks remain unpublished. Public post links
+remain available; the login-gated export is not fetched by capture. No ticket URL,
+price, artist classification, or flyer OCR is inferred.
+
+| Evidence source | Raw observation / result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Captured listing and all six details, September 14 | Full dates September 18–October 29, 2026; post IDs and lineups agree | Six upcoming events are available | No future pagination observed; not twelve populated months |
+| Two-pass replay at `2026-09-14T22:01:54.688Z` | Six events, no rejections | Current public pages normalize successfully | Unknown empty layout remains a failed refresh |
+| Post 2450 | Title explicitly says 6pm doors and printed clock is 6 PM | Confirmed doors retained as 18:00 America/Denver | Other five unlabeled clocks intentionally omitted |
+| About page and robots | All Ages at every show, annual membership fee; robots has comments only | Reviewed policy supports the configured filter | No claim of redistribution permission |
+| Google Calendar link inspected without following redirect | HTTP 302 to `/users/sign_in` | Export is not a public ingestion endpoint | No login attempted |
+
+The locale registry, source configuration, capture settings and refresh runner
+now include `html-seventh-circle` / `replay-seventh-circle`. The operational source
+is established and has a tracked snapshot. Publication adds only this source;
+existing references stay unchanged. Tests and local verification are recorded in
+[ADR 0019](../adr/0019-implementation-and-verification-plan.md#seventh-circle-integration--september-14-2026).
 
 ## Herb's implementation and admission review — September 12, 2026
 

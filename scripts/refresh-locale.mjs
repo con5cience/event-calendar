@@ -40,6 +40,10 @@ const runners = {
   },
   "html-buzzard": { command: "replay-buzzard", script: "buzzard/capture.mjs" },
   "html-herbs": { command: "replay-herbs", script: "herbs/capture.mjs" },
+  "html-seventh-circle": {
+    command: "replay-seventh-circle",
+    script: "seventh-circle/capture.mjs",
+  },
   "html-ophelias": {
     command: "replay-ophelias",
     script: "ophelias/capture.mjs",

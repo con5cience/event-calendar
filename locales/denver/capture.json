@@ -43,6 +43,11 @@
     "endpoint": "https://content.livenationapi.com/v1/venues/KovZpZAE6eJA/events",
     "page": "https://www.fillmoredenver.com/shows"
   },
+  "seventh-circle": {
+    "page": "https://www.7thcirclemusiccollective.org/posts/",
+    "policy": "https://www.7thcirclemusiccollective.org/home/about",
+    "timezone": "America/Denver"
+  },
   "dazzle": {
     "endpoint": "https://www.venuepilot.co/graphql",
     "account_id": 15,

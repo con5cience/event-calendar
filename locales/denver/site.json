@@ -47,6 +47,7 @@
     "Paramount Theatre": "#9F792D",
     "Red Rocks Amphitheatre": "#DD7027",
     "The Roxy Theatre": "#71828E",
+    "Seventh Circle Music Collective": "#85A6CF",
     "Summit": "#7379BD"
   },
   "sources": {
@@ -153,6 +154,10 @@
     "roxy": {
       "adapter": "afton",
       "venue_key": "roxy"
+    },
+    "seventh-circle": {
+      "adapter": "html-seventh-circle",
+      "venue_key": "seventh-circle"
     },
     "summit": {
       "adapter": "livenation-venue-events",

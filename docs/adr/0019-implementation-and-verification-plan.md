@@ -3114,3 +3114,42 @@ The corrected full run passed 164 tests with 64 optional skips using
 `CALENDAR_EMPTY_URL=http://127.0.0.1:8096 DAZZLE_BASE_URL=http://127.0.0.1:8090 LEVITT_BASE_URL=http://127.0.0.1:8090 npm run test:e2e`.
 The temporary empty container was stopped after verification. The populated app
 remains running on port 8090. No commit or push was performed.
+## Seventh Circle integration — September 14, 2026
+
+Approved scope: source-specific public HTML capture/replay, reviewed All Ages
+policy with `$5 annual fee; show donations encouraged`, confirmed doors only,
+locale configuration, tests, local publication and tracked snapshot. Nocturne
+remains research-only. No external deployment, commit or push was performed.
+
+| Evidence source | Raw observation / result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Capture and Go tests before implementation | Missing capture module and decoder; browser test found zero published records | Tests first demonstrated the missing feature | Synthetic fixtures exercise unobserved failures |
+| `npm run test:seventh-circle` | Three capture tests passed | Paired discovery, bounds and failure handling verified | Live capture separately checked |
+| `docker build --target go-test -t event-calendar-contract-tests .` | gofmt, go vet and full race-enabled Go suite passed | Parser, reconciliation and existing Go tests pass | Go is not installed on host |
+| Live paired capture and replay | All six raw and normalized records inspected; six published, zero rejected | Listing/detail mapping works for the current source | Unknown empty layout and future pagination fail safely |
+| `npm run test:refresh`, `npm run test:refresh-dry-run`, `npm run test:deploy`, `npm run test:capture-profiles` | Passed | New runner fits refresh configuration; workflow regressions pass | Test servers needed sandbox escalation; no real deployment invoked |
+| `docker build --target refresh-test -t event-calendar-refresh-tests .` and `docker run --rm event-calendar-refresh-tests` | Build passed; 13 tests passed | Container refresh workflow remains functional | Synthetic network fixtures |
+| `npm run test:locales` | Independent builds and four browser checks passed | Locale packaging and runtime isolation preserved | Local Docker only |
+| Contract handoff and `CONTRACT_HANDOFF_DIR=test-results/contracts npm test` | Go handoff and 91 consumer tests passed | Producer/consumer validation completed | Standard `npm run test:contracts` twice failed at Docker's nested bind mount; same handoff used repository-root mount instead |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`, `git diff --check`; Compose app build | Passed | Static checks and runtime image build verified | ADRs reviewed as Markdown source; no renderer exists |
+| Seventh Circle desktop/phone browser test and API | Both tests passed; all six API records inspected | Approved fee text, age-14 filtering, event link and ICS work | Five unlabeled clocks deliberately omitted; one confirmed door time retained |
+
+Capture: `event-calendar-seventh-circle-7LClxu`, captured at
+`2026-09-14T22:01:54.688Z`. Staging and backup catalog files remain at
+`/private/tmp/seventh-circle-stage.ELC4Bs`.
+Local generation: `g-b8ed1ccded41be7b5c34d3c20887b256`.
+Tracked generation: `g-561c6147162f887a6f7ef9b060cbae66`.
+Both publications reported durable success through the generation-guarded
+publisher. All prior local and tracked source references were unchanged. The
+established source config requires this prior artifact on subsequent refreshes.
+
+The contract workaround ran the existing Go `TestConsumerHandoff` in the same
+image with `/Users/will/Documents/g/event-calendar` mounted at `/repo` and
+`CONTRACT_HANDOFF_DIR=/repo/test-results/contracts`, then ran the existing npm
+consumer tests against those generated files. No contract check was removed.
+
+The full browser run passed 166 tests with 64 optional skips using
+`CALENDAR_EMPTY_URL=http://127.0.0.1:8096 SEVENTH_CIRCLE_BASE_URL=http://127.0.0.1:8090 DAZZLE_BASE_URL=http://127.0.0.1:8090 LEVITT_BASE_URL=http://127.0.0.1:8090 npm run test:e2e`.
+The temporary empty-calendar container was stopped; the populated app remains
+running at port 8090. Browser skill fallback used repository Playwright because
+the required Node REPL execution tool was unavailable.

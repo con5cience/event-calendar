@@ -14,6 +14,7 @@ import (
 	"event-calendar/internal/ophelias"
 	"event-calendar/internal/plot"
 	"event-calendar/internal/rhp"
+	"event-calendar/internal/seventhcircle"
 	"event-calendar/internal/store"
 	"event-calendar/internal/venuepilot"
 	"flag"
@@ -24,6 +25,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-seventh-circle" {
+		return replaySnapshot(args[1:], out, errout, "replay-seventh-circle", seventhcircle.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-afton" {
 		return replaySnapshot(args[1:], out, errout, "replay-afton", afton.Decode)
 	}
