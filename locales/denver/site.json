@@ -26,6 +26,7 @@
     "The Black Buzzard": "#B8C0CC",
     "Bluebird Theater": "#90D8FF",
     "Cervantes": "#F4DD55",
+    "Dazzle @ The Arts Complex": "#CF525E",
     "The Federal Theatre": "#899633",
     "Fiddler's Green Amphitheatre": "#228F60",
     "Fillmore Auditorium": "#D9B6FF",
@@ -68,6 +69,10 @@
     "cervantes": {
       "adapter": "rhp-calendar",
       "venue_key": "cervantes"
+    },
+    "dazzle": {
+      "adapter": "venuepilot",
+      "venue_key": "dazzle"
     },
     "federal": {
       "adapter": "holdmyticket-ical",

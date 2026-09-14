@@ -38,7 +38,13 @@ func Decode(cfg artifact.SourceConfig, b []byte, now time.Time) (artifact.Refres
 		return artifact.Refresh{}, err
 	}
 	base, baseErr := url.Parse(cfg.AdapterOptions["event_base"])
-	if cfg.Source.Adapter != "venuepilot" || cfg.Venue.Key != cfg.Source.ID || baseErr != nil || base.Scheme != "https" || base.Host == "" || base.User != nil || len(cfg.AdapterOptions) != 1 {
+	layout := cfg.AdapterOptions["layout"]
+	options := len(cfg.AdapterOptions) == 1 && layout == ""
+	if layout == "dazzle" {
+		p := cfg.Venue.AdmissionPolicy
+		options = len(cfg.AdapterOptions) == 2 && len(cfg.AdmissionRules) == 0 && p != nil && p.URL != "" && p.WithAdult == nil
+	}
+	if cfg.Source.Adapter != "venuepilot" || cfg.Venue.Key != cfg.Source.ID || baseErr != nil || base.Scheme != "https" || base.Host == "" || base.User != nil || !options {
 		return fail("unsupported configuration")
 	}
 	if now.IsZero() || len(b) > artifact.MaxDocumentBytes || !utf8.Valid(b) {
@@ -122,12 +128,19 @@ func normalize(raw []byte, loc *time.Location, cfg artifact.SourceConfig) (artif
 	}
 	switch strings.ToUpper(strings.TrimSpace(e.Status)) {
 	case "FREE RSVP", "FREE RSVP/UPGRADE", "TICKETS":
+	case "NO COVER":
+		if cfg.AdapterOptions["layout"] != "dazzle" {
+			return d, fmt.Errorf("unreviewed event status")
+		}
 	case "CANCELLED", "CANCELED":
 		d.Status = "Cancelled"
 	default:
 		return d, fmt.Errorf("unreviewed event status")
 	}
 	d.Title = clean(e.Name)
+	if cfg.AdapterOptions["layout"] == "dazzle" && d.Title == "Dazzle Membership" {
+		return d, fmt.Errorf("membership product, not a performance")
+	}
 	d.Date = e.Date
 	day, err := time.ParseInLocation("2006-01-02", e.Date, loc)
 	if err != nil || day.Format("2006-01-02") != e.Date {
@@ -150,7 +163,7 @@ func normalize(raw []byte, loc *time.Location, cfg artifact.SourceConfig) (artif
 		}
 		value := e.Date + " " + pair.raw
 		at, err := time.ParseInLocation("2006-01-02 15:04:05", value, loc)
-		if err != nil || at.Format("2006-01-02 15:04:05") != value {
+		if err != nil || at.Format("2006-01-02 15:04:05") != value || at.Add(time.Hour).Format("2006-01-02 15:04:05") == value || at.Add(-time.Hour).Format("2006-01-02 15:04:05") == value {
 			return d, fmt.Errorf("invalid local time")
 		}
 		*pair.dst = at.Format(time.RFC3339)
@@ -186,5 +199,12 @@ func normalize(raw []byte, loc *time.Location, cfg artifact.SourceConfig) (artif
 		policy.Text = category
 	}
 	d.AdmissionPolicy = policy
+	if cfg.AdapterOptions["layout"] == "dazzle" && policy.Category == "All ages" {
+		policy.Text = "All ages until 11 PM"
+		// Doors alone do not establish that the performance starts before curfew.
+		if d.Status == "Scheduled" && e.StartTime != "" && e.StartTime < "23:00:00" {
+			policy.WithAdult = &artifact.AdultAdmission{URL: cfg.Venue.AdmissionPolicy.URL, ReviewedOn: "2026-09-14", Ranges: []artifact.AdmissionRange{{MinAge: 0, MaxAge: 17, Condition: "Under 21 must leave by 11 PM"}}}
+		}
+	}
 	return d, nil
 }

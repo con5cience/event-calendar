@@ -20,6 +20,10 @@ Evidence states follow ADR 0001. Dates in the observation column are examples re
 
 ## Source inventory and inspected evidence
 
+### September 14, 2026 integrations
+
+Dazzle is integrated through its [VenuePilot profile](../adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026), with 171 published events and the reviewed 11 PM admission condition.
+
 Implementation update, September 9: Gothic, Mission, Bluebird, Ogden, and
 Fiddler's Green now have tested AEG snapshot support and one-time live data in the
 local app. The historical inventory below remains research evidence, not current

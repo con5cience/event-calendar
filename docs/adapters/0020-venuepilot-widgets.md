@@ -6,11 +6,75 @@ route and trailing separator. Venue name and timezone are configured. Capture
 requires `SITE_DIR`; `CAPTURE_SOURCE` selects a different configured source.
 Its GraphQL endpoint, account ID and timezone come from `capture.json`.
 
-- Status: Implemented — Levitt capture, replay, and admission configuration
+- Status: Implemented — Levitt and Dazzle capture, replay, and admission configuration
 - Date: 2026-09-10
 - Related: [Source evaluation](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
-## Context
+## Dazzle discovery and admission review — September 14, 2026
+
+The implementation update below supersedes this discovery-only status. Its
+[supplied calendar](https://www.dazzledenver.com/live-music/#/calendar) embeds
+VenuePilot with `accountIds: [15]`, server `https://www.venuepilot.co/` and hash
+routing. Prefer the existing VenuePilot contract over scraping rendered cards;
+hosting the page on WordPress does not make its event source a WordPress API.
+
+| Evidence source | Raw observation | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Direct unauthenticated POST to `https://www.venuepilot.co/graphql` using the existing `paginatedEvents` query, account 15, September 14, 2026–September 14, 2027, page 1, limit 5 | HTTP 200; DJO, The Blowing Loud Jam Sessions, The Matt Horanzy/Mike Abbott Double Guitar Band, Miles & Trane 100, and Mike Stern have IDs, dates, separate clocks, ticket URLs and venue `Dazzle @ The Arts Complex` | Existing query shape retrieves representative Dazzle records | Only the first page was inspected; pagination totals are not verified coverage |
+| Same five records | Four have `minimumAge: 0`; Blowing Loud has `minimumAge: 21` with a 21:00 start | Event restrictions differ even before the venue cutoff | Confirm zero semantics against event details before mapping; null is not zero |
+| [Dazzle FAQ](https://www.dazzledenver.com/faq/) | Generally all ages until 11 PM; 21+ afterward; ticketing uses VenuePilot | Venue policy has a time condition, not a blanket guardian waiver | Event-specific restrictions win; a start before 11 PM does not promise admission for the whole performance |
+
+Before integration, validate paired complete pagination, scoped venue aliases,
+event hash links, ticket links, statuses and multiple separately ticketed sets.
+Review robots, terms and reuse conditions. Preserve source clocks as Denver-local
+only after checking their meaning against event details. Do not infer doors from
+the FAQ's usual seating schedule.
+
+Use the existing admission policy and override structure. Preserve the 11 PM
+limit in any applicable condition, and never waive an explicit restricted event
+because an adult accompanies a minor. Verify handling of missing clocks and
+late-night performances before enabling With Adult eligibility. Capture/replay,
+locale configuration, publication and browser tests must cover the new profile.
+No price fields are selected or published.
+
+## Dazzle implementation — September 14, 2026
+
+`locales/denver/capture.json` selects account 15 through the unchanged paired
+VenuePilot capture. The source config uses `layout: dazzle` and the verified
+`https://www.dazzledenver.com/live-music/#/events/` prefix. The venue name matches
+the API's `Dazzle @ The Arts Complex`; other locations reject. No new schema,
+transport, browser requirement for capture, or scheduler is introduced.
+
+The profile adds NO COVER as Scheduled, preserves missing ticket links, and rejects
+the exact `Dazzle Membership` product as a non-performance. Numeric zero maps to
+All Ages, confirmed on DJO's public ticket page and venue modal. Null remains
+unknown unless existing explicit description extraction establishes a restriction.
+The children's matinee with null age remains unknown despite its title.
+
+The profile requires no category-wide admission rules, so those rules cannot
+silently undo the cutoff. Only scheduled All Ages events with an explicit show
+clock before 23:00 receive ranges 0–17 and `Under 21 must leave by 11 PM`, linked
+to the FAQ reviewed September 14. Doors alone, missing show clocks, cancellations,
+unknown ages, and 21+ events receive no clearance. No parent requirement is
+invented. The condition limits attendance, not the event's duration. Configured
+event policy overrides still win. The existing local-clock validation also rejects
+ambiguous DST folds; malformed clocks already reject. No prices are published.
+
+| Evidence source | Raw observation / result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Paired capture at `2026-09-14T21:36:29.255Z`; five raw records inspected before aggregation | Both passes agreed on 172 records | Complete enumeration of the current API response | Not twelve populated months or a promise of future feed stability |
+| Staging replay and five normalized records inspected | 171 events; membership product 165220 rejected; 155 eligible, 15 restricted, one unknown | Reviewed rules map current data without inferred child eligibility | One explicit product rejection is expected on refresh |
+| Local API and desktop/phone tests | Same 171 records; five API records inspected; Dazzle and Levitt tests pass | Published data reaches filtering, detail links, optional tickets and ICS | Local Docker runtime, not deployed Railway |
+| Official DJO deep link opened in browser | Modal shows All Ages, doors 5:30 PM and show 6:30 PM | Event route and sampled clocks match upstream presentation | One live deep-link sample |
+| Dazzle and VenuePilot robots files | Dazzle has an empty wildcard Disallow; VenuePilot has wildcard Allow and Disallow directives plus content signals | Access guidance was inspected and its ambiguity disclosed before approval | Public access and robots guidance do not establish reuse permission |
+
+The local publication and tracked snapshot add only Dazzle; previous source
+references remain unchanged. Operational config is now established. New-source
+tests use explicit synthetic inputs and new-source state. The normal locale
+refresh runner already selects VenuePilot by adapter and needs no workflow edit.
+See ADR 0019 for checks and local recovery evidence.
+
+## Levitt background
 
 Levitt's calendar is hosted on Squarespace, but its raw page embeds a VenuePilot
 event widget. Hosting technology alone does not determine the event-data adapter.

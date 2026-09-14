@@ -43,6 +43,11 @@
     "endpoint": "https://content.livenationapi.com/v1/venues/KovZpZAE6eJA/events",
     "page": "https://www.fillmoredenver.com/shows"
   },
+  "dazzle": {
+    "endpoint": "https://www.venuepilot.co/graphql",
+    "account_id": 15,
+    "timezone": "America/Denver"
+  },
   "levitt": {
     "endpoint": "https://www.venuepilot.co/graphql",
     "account_id": 1105,

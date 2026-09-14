@@ -1,0 +1,16 @@
+schema_version: 1
+adapter_options:
+  event_base: "https://www.dazzledenver.com/live-music/#/events/"
+  layout: dazzle
+source: { id: dazzle, adapter: venuepilot }
+state: established
+venue:
+  key: dazzle
+  name: Dazzle @ The Arts Complex
+  timezone: America/Denver
+  website: https://www.dazzledenver.com
+  address: 1080 14th Street, Denver, CO 80202
+  phone: 303.839.5100
+  admission_policy:
+    text: All ages until 11 PM; event restrictions apply
+    url: https://www.dazzledenver.com/faq/

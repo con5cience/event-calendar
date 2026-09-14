@@ -3077,3 +3077,40 @@ Temporary workflow containers/networks and the empty test container were removed
 the empty container had no persistent mounts. README, product ADR, and artifact ADR
 were updated and their Markdown source inspected. No documentation renderer exists.
 No commit was created.
+## Dazzle integration verification — September 14, 2026
+
+Added the explicit Dazzle VenuePilot profile, locale configuration, distinct accent,
+synthetic Go tests, browser checks and a tracked source snapshot. See
+[the adapter record](../adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026).
+Nocturne and Seventh Circle remain research-only. No remote deployment was run.
+
+| Evidence source | Raw observation / result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| New Go tests before implementation | Unsupported Dazzle configuration; later membership-specific test accepted a product | Tests reproduced missing behavior before each production change | Synthetic clocks, cancellations and invalid records |
+| `docker build --target go-test -t event-calendar-contract-tests .` | gofmt, go vet and full race-enabled Go suite passed | Adapter and existing Go behavior verified | Go absent on host; checks ran in Docker |
+| `npm run test:venuepilot`, `npm run test:capture-profiles`, `npm run test:refresh`, `npm run test:locale-tools` | All passed | Capture selection, pagination and refresh coordination remain compatible | Network failures are synthetic in these tests |
+| `npm run test:contracts` | Go handoff and all 91 consumer tests passed | Artifact producer/consumer boundary verified | No schema change |
+| `npm run test:locales` | Independent images and four browser checks passed | Locale isolation preserved | Local containers, not remote Railway |
+| `npm run build`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `git diff --check` | Passed | Build and configured static checks pass | Markdown ADRs inspected as source; no documentation renderer |
+| Dazzle and Levitt browser specs with both base URLs set to port 8090 | Four tests passed on desktop and phone | Age-14 filter, policy text/link, event/ticket links and ICS work | Other source-specific checks require separate opt-in URLs |
+
+Captured at `2026-09-14T21:36:29.255Z`; staged at
+`/private/tmp/dazzle-stage.ayklZ5`. The staging directory retains the original
+local `catalog-before.json` for recovery; previous immutable source files remain.
+Local publication generation is `g-f705ab50b82d12276ab4fa923a09790c`.
+Tracked snapshot generation is `g-1f407d8da5f407e52a7159939e7b1f50`.
+Both publications used the generation-guarded publisher and reported durable success.
+Five raw, five normalized and five API records were inspected. All earlier local
+and tracked source references were unchanged. Only Dazzle was added.
+
+The initial full browser run had 162 passing tests, 64 optional skips and two
+empty-startup failures: `CALENDAR_EMPTY_URL` was unset and defaulted to the populated
+port 8090. Reverification uses a separate empty instance on port 8096. A focused
+browser assertion also needed the existing `.admission-clearance` scope because
+both policy rows can contain a link with the same accessible name. Neither failure
+required an application change.
+
+The corrected full run passed 164 tests with 64 optional skips using
+`CALENDAR_EMPTY_URL=http://127.0.0.1:8096 DAZZLE_BASE_URL=http://127.0.0.1:8090 LEVITT_BASE_URL=http://127.0.0.1:8090 npm run test:e2e`.
+The temporary empty container was stopped after verification. The populated app
+remains running on port 8090. No commit or push was performed.

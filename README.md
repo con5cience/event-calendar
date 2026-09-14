@@ -463,6 +463,22 @@ The catalog now contains 22 dedicated venue sources. Earlier imports are unchang
 
 ### Levitt capture and replay
 
+Dazzle uses the same capture with its own profile:
+
+```sh
+SITE_DIR=locales/denver CAPTURE_SOURCE=dazzle node tests/venuepilot/capture.mjs
+```
+
+Replay with `locales/denver/sources/dazzle.yaml` and the reported capture clock.
+The operational configuration is established and requires its prior snapshot.
+For an explicitly empty staging store only, use a copy with `state: new`.
+The `layout: dazzle` profile supports NO COVER listings without inventing ticket
+links, rejects the membership product, and applies the reviewed 11 PM cutoff only
+to scheduled, explicitly All Ages shows with a known start before that time.
+The With Adult condition is `Under 21 must leave by 11 PM`. Restricted and unknown
+events get no exception. `DAZZLE_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/dazzle.spec.ts`
+verifies the local publication. See the [Dazzle implementation record](docs/adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026).
+
 Levitt uses the [VenuePilot GraphQL adapter](docs/adapters/0020-venuepilot-widgets.md).
 Run `node tests/venuepilot/capture.mjs` to capture and recheck the public calendar.
 No credentials or browser session are required. The request covers today through
