@@ -226,7 +226,50 @@ context is disposed after the request. A missing/invalid secret or transport
 failure produces `request_failed: true`; a completed diagnostic step is not proof
 that the feed worked. The GitHub secret cannot be read back for local validation.
 
-The workflow uses read-only repository permissions and no Railway secret. It
+For connection-stage investigation, use the standalone **Roxy proxy diagnostics**
+workflow (`proxy-diagnostics.yml`) on `main`. It uses the same `HTTP_PROXY` secret
+but does not refresh sources, build the calendar, publish snapshots, or deploy.
+The diagnostic image runs local fixture tests before receiving the secret.
+Results stream into the step log and the seven-day `proxy-diagnostics-<run>-<attempt>`
+artifact. A green step means diagnostics completed, not that all requests worked.
+
+The comparison makes eight sequential, bounded requests: Playwright plus curl
+(default, IPv4, IPv6) for each of `https://example.com/` and Roxy's configured
+Afton feed. Curl's family selection applies to the proxy connection, not the
+provider's outbound connection. An IPv6-only failure does not imply that the
+default connection failed. DNS observations are separate requests and are not
+proof of what a later connection resolved.
+
+The report records proxy scheme, credential presence, client/runtime versions,
+DNS availability, CONNECT status, confirmed TCP/TLS/request milestones, HTTP
+status, fixed failure stages, and cumulative timings. Zero timing values do not
+prove that a stage was never reached. A `407` identifies proxy authentication
+rejection; another non-200 CONNECT response identifies a proxy tunnel rejection.
+Timeout stages identify the first unconfirmed step, not a provider's internal
+root cause. For HTTPS proxies, `proxy_tls_or_connect` stays ambiguous unless
+the trace confirms CONNECT was sent. HTTP success alone does not validate events.
+
+Curl configuration and credentials pass through stdin, not command arguments or
+files. Its raw trace and write-out JSON stay bounded in memory; only allowlisted
+booleans, numbers, and fixed strings leave the script. Raw messages, addresses,
+headers, cookies, URLs, and bodies are not logged. Proxy bypass is disabled, TLS
+verification stays enabled, and there are no redirects or retries. Each request
+has a 30-second total limit; curl has a 15-second connection limit. The probe step
+has a six-minute safety limit, not a duration estimate.
+
+To compare locally, set `HTTP_PROXY` to the same full URL in your shell without
+printing it, then run the same Linux AMD64 container:
+
+```sh
+docker build --platform linux/amd64 --target proxy-diagnostics -t withadult-proxy-diagnostics .
+docker run --rm --platform linux/amd64 --entrypoint node withadult-proxy-diagnostics --test tests/proxy-diagnostics.test.mjs
+docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt no-new-privileges:true -e HTTP_PROXY withadult-proxy-diagnostics
+```
+
+The host test command is `npm run test:proxy-diagnostics` and requires curl plus
+permission to bind loopback fixture servers. The container supplies both clients.
+
+The refresh dry-run workflow uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from
 an empty catalog: the tracked snapshot supplies identity and last-valid records.

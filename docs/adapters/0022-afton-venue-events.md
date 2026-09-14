@@ -183,6 +183,55 @@ test observed a real refused local proxy connection categorized as `connection`;
 other request categories were tested with synthetic exceptions. No real provider
 connection was made. Normal ingestion and HTTP-response reporting are unchanged.
 
+### Standalone connection-stage diagnostics
+
+The **Roxy proxy diagnostics** workflow is independent of ingestion. It uses the
+existing Actions `HTTP_PROXY` secret, only on its diagnostic step. The
+`proxy-diagnostics` Docker target provides Playwright's API request client and
+curl without installing a browser or building Go/application binaries. Local and
+Actions comparisons explicitly select Linux AMD64. See the [operating commands](../../README.md)
+for the same local container invocation and report interpretation.
+
+Each target (neutral HTTPS and the configured Afton listing) receives one
+Playwright request and three curl requests (default, IPv4, IPv6), sequentially.
+DNS results, proxy CONNECT codes, TCP/TLS/request milestones, safe failure stages,
+and cumulative timings distinguish client and destination behavior. Proxy
+authentication rejection is reported for CONNECT 407. Other rejected CONNECT
+codes are not attributed to Afton. IPv4/IPv6 selection controls the connection
+to the proxy, not its egress. No automatic fallback or production proxy routing
+is introduced.
+
+A synthetic stalled CONNECT test showed curl can report zero TCP time despite
+having connected and sent CONNECT. The implementation therefore also parses
+fixed trace milestones in memory. Neither raw trace nor raw write-out JSON is
+persisted: both can contain sensitive data. Curl receives its escaped configuration
+over stdin with the default curl config disabled. Proxy environment overrides,
+bypass settings, debug settings, and custom TLS overrides are removed from child
+environments. TLS checks stay enabled. Response bodies are discarded.
+
+Each curl request is bounded to 30 seconds total, 15 seconds for connection,
+and bounded diagnostic buffers. Advertised response lengths above one MiB are
+rejected; this curl version does not guarantee a byte cap for unknown-length
+responses, which are discarded and remain time-bounded. Playwright retains its
+existing 30-second limit. Results stream before subsequent requests start. The
+workflow always attempts to upload available reports, including partial output.
+The workflow does not publish, deploy, or replace event artifacts.
+
+Reports identify the first unconfirmed stage, not necessarily an internal
+provider root cause. Separate DNS results and requests may use different proxy
+addresses or egress sessions. A successful HTTP response is not validation of
+the event payload. A local success does not establish GitHub reachability, and
+the stored GitHub secret cannot be read back to confirm equality with local input.
+
+Local verification on 2026-09-14:
+
+| Evidence                                                         | Observation                                                                                                                                          | Supported finding                                                      | Limit                                                                                |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run test:proxy-diagnostics` and Linux AMD64 container tests | Six tests passed in each environment, including real CONNECT rejection, tunnel/TLS stalls, refusal, CLI streaming and redaction                      | Diagnostic paths work against controlled fixtures                      | Not every possible provider response is covered                                      |
+| Live Linux AMD64 container, Node v24.21.0, curl 7.88.1           | Both targets returned HTTP 200 through Playwright and curl default/IPv4; curl CONNECT was 200 and TLS/request milestones were confirmed              | The proxy works locally through both clients in the diagnostic runtime | Does not establish GitHub connectivity or event validity                             |
+| Same live run                                                    | No IPv6 resolution; both forced IPv6 requests exited 7 without a tunnel                                                                              | Forced IPv6 did not work locally                                       | Default and IPv4 succeeded; not evidence that IPv6 caused GitHub's timeout           |
+| Repository checks                                                | 14 existing dry-run tests, 19 refresh tests, 91 frontend contract tests and Go handoff passed; lint, formatting, build/type and workflow lint passed | No regression observed in checked paths                                | Unchanged Go checks reused the cached image layer; new GitHub workflow remains unrun |
+
 Listing output retains only reviewed fields and omits prices. Detail HTML is
 compacted with the established RHP helper; JSON-LD and visible admission markup
 remain intact. The helper now correctly strips executable scripts at the start of

@@ -50,6 +50,19 @@ COPY --from=backend /calendar /calendar
 COPY --from=frontend /build/dist /app/dist
 ENTRYPOINT ["node", "--test", "/tools/tests/refresh-integration.test.mjs"]
 
+FROM node:24-bookworm-slim AS proxy-diagnostics
+WORKDIR /tools
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY scripts ./scripts
+COPY tests ./tests
+COPY .github/workflows/proxy-diagnostics.yml ./.github/workflows/proxy-diagnostics.yml
+COPY locales/denver/site.json locales/denver/capture.json /site/
+ENV SITE_DIR=/site
+USER node
+ENTRYPOINT ["node", "/tools/scripts/proxy-diagnostics.mjs"]
+
 FROM scratch AS runtime
 ARG LOCALE
 COPY --from=backend /calendar /calendar
