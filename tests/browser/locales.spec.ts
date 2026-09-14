@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("isolated locale controls branding, timezone, palette and default view", async ({
@@ -12,9 +13,13 @@ test("isolated locale controls branding, timezone, palette and default view", as
     "withAdult(coastal): Coastal test refresh.",
   );
   await expect(
-    page.getByRole("button", { name: "Month", exact: true }),
+    page.getByRole("button", {
+      name: "Month",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   // Auckland is already Sunday September 13; Denver is still September 12.
   await expect(page.getByTestId("range")).toContainText("13");
   const data = await (await request.get(base + "/api/calendar")).json();

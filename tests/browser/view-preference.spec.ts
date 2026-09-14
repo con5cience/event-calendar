@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("invalid or unavailable storage falls back to Week without preventing changes", async ({
@@ -8,7 +9,11 @@ test("invalid or unavailable storage falls back to Week without preventing chang
   );
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", {
@@ -19,15 +24,27 @@ test("invalid or unavailable storage falls back to Week without preventing chang
   });
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await expect(
-    page.getByRole("button", { name: "Month", exact: true }),
+    page.getByRole("button", {
+      name: "Month",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -41,7 +58,7 @@ test("direct event links do not replace a saved Month preference", async ({
     (item: { public_path?: string }) => item.public_path,
   );
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await page.goto(event.public_path);
   await expect(
     page.getByRole("button", { name: "Close event details" }),
@@ -52,11 +69,19 @@ test("direct event links do not replace a saved Month preference", async ({
     await page.evaluate(() => localStorage.getItem("event-calendar.view.v1")),
   ).toBe("month");
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Month", exact: true }),
+    page.getByRole("button", {
+      name: "Month",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -65,13 +90,17 @@ test("Week is the default and explicit view selections survive reload", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
   for (const name of ["Month", "Day", "Week"]) {
-    await page.getByRole("button", { name, exact: true }).click();
+    await selectCalendarView(page, name);
     await page.reload();
     await expect(
-      page.getByRole("button", { name, exact: true }),
+      page.getByRole("button", { name, exact: true, includeHidden: true }),
     ).toHaveAttribute("aria-pressed", "true");
   }
 });
@@ -131,7 +160,7 @@ test("search icon appears only when empty and unfocused", async ({
   await expect(search).toBeFocused();
   await expect(icon).toBeHidden();
   await search.fill("mission");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await expect(icon).toBeHidden();
   await page.reload();
   await expect(search).toHaveValue("mission");
@@ -149,7 +178,7 @@ test("Event Close button uses a centered symbol and retain accessible labels", a
   page,
 }, info) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Day", exact: true }).click();
+  await selectCalendarView(page, "Day");
   await page.locator(".event-card:visible").first().click();
   const modalClose = page.getByRole("button", { name: "Close event details" });
   await expect(modalClose).toHaveCSS("display", "grid");

@@ -136,6 +136,22 @@ function Calendar({ data }: { data: CalendarData }) {
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const viewPickerRef = useRef<HTMLDivElement>(null);
+  const [viewMenuOpen, setViewMenuOpen] = useState(false);
+  useEffect(() => {
+    setViewMenuOpen(false);
+  }, [mobile]);
+  useEffect(() => {
+    if (!viewMenuOpen) return;
+    const outside = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        !viewPickerRef.current?.contains(event.target)
+      )
+        setViewMenuOpen(false);
+    };
+    document.addEventListener("click", outside);
+    return () => document.removeEventListener("click", outside);
+  }, [viewMenuOpen]);
   const returnFocus = useRef<HTMLElement | null>(null);
   const actualView = viewName(view, mobile);
   const fitGrid = view !== "day" && !mobile;
@@ -262,8 +278,13 @@ function Calendar({ data }: { data: CalendarData }) {
               →
             </button>
           </div>
-          <h2 data-testid="range" aria-live="polite">
-            {title}
+          <h2 data-testid="range" aria-live="polite" aria-label={title}>
+            {mobile &&
+            !title
+              .match(/\b\d{4}\b/g)
+              ?.some((year) => year !== today.slice(0, 4))
+              ? title.replace(/,?\s*\b\d{4}\b/g, "")
+              : title}
           </h2>
           <div className="toolbar-filters">
             <FilterDropdown
@@ -360,19 +381,54 @@ function Calendar({ data }: { data: CalendarData }) {
               ref={viewPickerRef}
               className="view-picker"
               aria-label="Calendar view"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget))
+                  setViewMenuOpen(false);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && viewMenuOpen) {
+                  event.preventDefault();
+                  setViewMenuOpen(false);
+                  viewPickerRef.current
+                    ?.querySelector<HTMLButtonElement>(".view-trigger")
+                    ?.focus();
+                }
+              }}
             >
-              {(["day", "week", "month"] as View[]).map((option) => (
+              {mobile && (
                 <button
-                  key={option}
-                  aria-pressed={view === option}
-                  onClick={() => {
-                    setDayExpanded(false);
-                    selectView(option);
-                  }}
+                  className="view-trigger filter-trigger"
+                  aria-label="Choose calendar view"
+                  aria-expanded={viewMenuOpen}
+                  aria-controls="calendar-view-options"
+                  onClick={() => setViewMenuOpen((open) => !open)}
                 >
-                  {option[0].toUpperCase() + option.slice(1)}
+                  {view[0].toUpperCase() + view.slice(1)}
                 </button>
-              ))}
+              )}
+              <div
+                id="calendar-view-options"
+                className="view-options"
+                hidden={mobile && !viewMenuOpen}
+              >
+                {(["day", "week", "month"] as View[]).map((option) => (
+                  <button
+                    key={option}
+                    aria-pressed={view === option}
+                    onClick={() => {
+                      setDayExpanded(false);
+                      selectView(option);
+                      setViewMenuOpen(false);
+                      if (mobile)
+                        viewPickerRef.current
+                          ?.querySelector<HTMLButtonElement>(".view-trigger")
+                          ?.focus();
+                    }}
+                  >
+                    {option[0].toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -541,7 +597,9 @@ function Calendar({ data }: { data: CalendarData }) {
           if (returnFocus.current?.isConnected) returnFocus.current.focus();
           else
             viewPickerRef.current
-              ?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')
+              ?.querySelector<HTMLButtonElement>(
+                mobile ? ".view-trigger" : '[aria-pressed="true"]',
+              )
               ?.focus();
         }}
       >

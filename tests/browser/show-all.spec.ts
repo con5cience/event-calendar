@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("Show All is horizontally centered and still opens the full day", async ({
@@ -11,7 +12,7 @@ test("Show All is horizontally centered and still opens the full day", async ({
       width: info.project.name === "desktop" ? 1440 : 390,
       height,
     });
-    await page.getByRole("button", { name: "Month", exact: true }).click();
+    await selectCalendarView(page, "Month");
     const more = page.getByRole("button", { name: /^Show All/ }).first();
     await expect(more).toBeVisible();
     await expect(more).toHaveCSS("background-color", "rgb(41, 34, 56)");

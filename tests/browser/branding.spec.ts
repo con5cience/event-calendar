@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("favicon serves the approved transparent purple artwork", async ({
@@ -48,7 +49,11 @@ test("uniform brand header frames the calendar without a footer", async ({
   await expect(page.getByRole("contentinfo")).toHaveCount(0);
   await expect(header).toHaveText("withAdult(denver): Bring your people.");
   for (const selector of [".brand-name", ".brand-city", ".brand-tagline"]) {
-    await expect(header.locator(selector)).toHaveCSS("font-size", "20px");
+    expect(
+      await header
+        .locator(selector)
+        .evaluate((el) => getComputedStyle(el).fontSize),
+    ).toBe(await header.evaluate((el) => getComputedStyle(el).fontSize));
     await expect(header.locator(selector)).toHaveCSS("font-weight", "700");
     expect(
       await header
@@ -71,12 +76,10 @@ test("uniform brand header frames the calendar without a footer", async ({
   await expect(header.locator(".brand-tagline")).toHaveText(
     ": Bring your people.",
   );
-  if (info.project.name === "phone")
-    await expect(header.locator(".brand-tagline")).toBeHidden();
-  else await expect(header.locator(".brand-tagline")).toBeVisible();
+  await expect(header.locator(".brand-tagline")).toBeVisible();
   expect((await header.boundingBox())!.height).toBe(36);
   for (const view of ["Week", "Month", "Day"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     await expect(async () => {
       const calendar = await page.getByTestId("calendar").boundingBox();
       const main = await page.getByRole("main").boundingBox();
@@ -85,7 +88,7 @@ test("uniform brand header frames the calendar without a footer", async ({
       );
     }).toPass();
   }
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page.screenshot({
     path: `test-results/branding-${info.project.name}.png`,
     fullPage: true,

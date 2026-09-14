@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 for (const [venue, category] of [
@@ -38,9 +39,9 @@ for (const [venue, category] of [
     });
     await page.getByRole("button", { name: "Close event details" }).click();
     await expect(page).toHaveURL(/\/$/);
-    await page.getByRole("button", { name: "Day", exact: true }).click();
+    await selectCalendarView(page, "Day");
     // Direct URLs open the event week. Use search to locate it within that week.
-    await page.getByRole("button", { name: "Week", exact: true }).click();
+    await selectCalendarView(page, "Week");
     await page
       .getByRole("searchbox", { name: "Search events" })
       .fill(event.title);

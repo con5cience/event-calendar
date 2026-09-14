@@ -17,7 +17,12 @@ test("toolbar has no drawer or reset and ignores retired age selections", async 
   );
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name:
+        test.info().project.name === "phone" ? "Choose calendar view" : "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Filters", exact: true }),

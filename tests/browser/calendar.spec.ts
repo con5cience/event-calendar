@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -8,13 +9,20 @@ test("explicit month selection survives reload on both layouts", async ({
   page,
 }, info) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   const view = info.project.name === "phone" ? "listMonth" : "dayGridMonth";
   await expect(page.getByTestId("calendar")).toHaveAttribute("data-view", view);
   await expect(
-    page.getByRole("button", { name: "Month", exact: true }),
+    page.getByRole("button", {
+      name: "Month",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByTestId("range")).toHaveText("September 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "September 2026",
+  );
   await expect
     .poll(() => page.locator('[data-event-date="2026-09-08"]:visible').count())
     .toBeGreaterThan(0);
@@ -66,8 +74,11 @@ test("month shows only its dates and uses the required week rows", async ({
     await route.fulfill({ json: data });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
-  await expect(page.getByTestId("range")).toHaveText("September 2026");
+  await selectCalendarView(page, "Month");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "September 2026",
+  );
   await expect(page.getByTestId("event-2026-09-30")).toBeVisible();
   for (const date of ["2026-08-31", "2026-10-01", "2026-10-05"]) {
     await expect(page.getByTestId("event-" + date)).toHaveCount(0);
@@ -79,12 +90,18 @@ test("month shows only its dates and uses the required week rows", async ({
     ).toHaveCount(0);
   }
   await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(page.getByTestId("range")).toHaveText("October 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "October 2026",
+  );
   await expect(page.getByTestId("event-2026-10-01")).toBeVisible();
   await expect(page.getByTestId("event-2026-09-30")).toHaveCount(0);
   await page.getByRole("button", { name: "Previous", exact: true }).click();
   await page.getByRole("button", { name: "Previous", exact: true }).click();
-  await expect(page.getByTestId("range")).toHaveText("August 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "August 2026",
+  );
   await expect(page.getByTestId("event-2026-08-31")).toBeVisible();
   if (info.project.name === "desktop") {
     await expect(page.getByRole("row", { name: /^Week / })).toHaveCount(6);
@@ -96,13 +113,13 @@ test("records a small-fixture performance baseline", async ({ page }, info) => {
   for (let sample = 1; sample <= 5; sample++) {
     const started = performance.now();
     await page.goto("/");
-    await page.getByRole("button", { name: "Week", exact: true }).click();
+    await selectCalendarView(page, "Week");
     await expect(
       page.locator('[data-event-date="2026-09-08"]:visible'),
     ).toHaveCount(info.project.name === "phone" ? 10 : 14);
     const readyMs = performance.now() - started;
     const navigationStarted = performance.now();
-    await page.getByRole("button", { name: "Month", exact: true }).click();
+    await selectCalendarView(page, "Month");
     await expect
       .poll(() =>
         page.locator('[data-event-date="2026-09-08"]:visible').count(),
@@ -204,10 +221,10 @@ test("configured day limit can expand without hiding events permanently", async 
     });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const cards = page.locator('[data-event-date="2026-09-08"]:visible');
   await expect(cards).toHaveCount(info.project.name === "phone" ? 4 : 14);
-  await page.getByRole("button", { name: "Day", exact: true }).click();
+  await selectCalendarView(page, "Day");
   await expect(cards).toHaveCount(3);
   await page
     .getByText(/Show All/)
@@ -227,7 +244,7 @@ test("sparse event details, touch, focus containment, and resize", async ({
   page,
 }, info) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const event = page
     .getByTestId("event-gothic-000000000001")
     .filter({ visible: true });
@@ -261,7 +278,11 @@ test("sparse event details, touch, focus containment, and resize", async ({
   await dialog.getByRole("button", { name: "Close event details" }).click();
   await expect(dialog).not.toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: info.project.name === "desktop" ? "Choose calendar view" : "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toBeFocused();
   await expect(page.getByTestId("range")).toContainText("Sep 6");
 });
@@ -269,7 +290,7 @@ test("sparse event details, touch, focus containment, and resize", async ({
 test("desktop date header opens the selected day", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page
     .locator("[data-calendar-day-header]")
     .filter({ hasText: "Tue 8" })
@@ -303,14 +324,17 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const calendar = page.getByTestId("calendar");
   await expect(calendar).toHaveAttribute(
     "data-view",
     mobile ? "listWeek" : "dayGridWeek",
   );
   await expect(page.getByTestId("range")).toContainText("Sep 6");
-  await expect(page.getByTestId("range")).toContainText("12, 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    /12, 2026/,
+  );
   await expect(
     page.getByTestId("event-gothic-000000000001").filter({ visible: true }),
   ).toBeVisible();
@@ -381,7 +405,7 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
   await expect(event).toBeFocused();
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await expect.poll(() => cards.count()).toBeGreaterThan(0);
   expect(await cards.count()).toBeLessThanOrEqual(mobile ? 5 : 14);
   await page
@@ -389,7 +413,7 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
     .first()
     .click();
   await expect(cards).toHaveCount(14);
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page.getByRole("button", { name: "Previous", exact: true }).click();
   await expect(page.getByTestId("range")).toContainText("Aug 30");
   await page.getByRole("button", { name: "Next", exact: true }).click();
@@ -404,7 +428,7 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
 
 test("responsive view changes preserve the selected week", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(page.getByTestId("calendar")).toHaveAttribute(
     "data-view",
@@ -449,7 +473,7 @@ test("catalog metadata reaches the rendered calendar", async ({
     ),
   ).toBe(false);
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page
     .getByTestId("event-mission-000000000003")
     .filter({ visible: true })

@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("venue accents agree across cards, picker and details and survive filtering", async ({
@@ -13,7 +14,7 @@ test("venue accents agree across cards, picker and details and survive filtering
   });
   await page.getByRole("button", { name: "Close event details" }).click();
   for (const view of ["Day", "Week", "Month"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     await expect(
       page.getByTestId("event-mission-000000000003").filter({ visible: true }),
     ).toHaveCSS("border-left-color", "rgb(86, 240, 229)");

@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -15,7 +16,7 @@ test("proportional gutters and desktop grids follow the window", async ({
   ]) {
     await page.setViewportSize(size);
     for (const view of ["Month", "Week"]) {
-      await page.getByRole("button", { name: view, exact: true }).click();
+      await selectCalendarView(page, view);
       const calendar = page.getByTestId("calendar");
       await expect
         .poll(async () => Math.round((await calendar.boundingBox())!.x))
@@ -62,11 +63,14 @@ test("short and narrow windows preserve reachable controls and state", async ({
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(size.width);
   }
-  await page.getByRole("button", { name: "Week", exact: true }).click();
-  await expect(page.getByTestId("range")).toHaveText("Sep 6 – 12, 2026");
-  const range = await page.getByTestId("range").textContent();
+  await selectCalendarView(page, "Week");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "Sep 6 – 12, 2026",
+  );
+  const range = await page.getByTestId("range").getAttribute("aria-label");
   await page.setViewportSize({ width: 1024, height: 768 });
-  await expect(page.getByTestId("range")).toHaveText(range!);
+  await expect(page.getByTestId("range")).toHaveAttribute("aria-label", range!);
   await expect(page.getByTestId("calendar")).toHaveAttribute(
     "data-view",
     "dayGridWeek",
@@ -89,9 +93,12 @@ test("short month can scroll instead of compressing its grid", async ({
 }) => {
   await page.setViewportSize({ width: 844, height: 390 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await page.getByRole("button", { name: "Previous", exact: true }).click();
-  await expect(page.getByTestId("range")).toHaveText("August 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "August 2026",
+  );
   await expect
     .poll(
       async () => (await page.getByTestId("calendar").boundingBox())!.height,
@@ -139,7 +146,7 @@ test("200 percent text and zoom-equivalent reflow keep controls usable", async (
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBe(640);
-    await page.getByRole("button", { name: "Day", exact: true }).click();
-    await page.getByRole("button", { name: "Month", exact: true }).click();
+    await selectCalendarView(page, "Day");
+    await selectCalendarView(page, "Month");
   }
 });

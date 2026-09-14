@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("desktop Week marks today without changing other dates or navigation", async ({
@@ -6,7 +7,7 @@ test("desktop Week marks today without changing other dates or navigation", asyn
   await page.clock.setFixedTime(new Date("2026-09-09T18:00:00Z"));
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const today = page.getByRole("columnheader", {
     name: "September 9, 2026",
     exact: true,
@@ -35,7 +36,7 @@ test("desktop Week marks today without changing other dates or navigation", asyn
   await expect(page.locator(".week-today-label, .week-today-cell")).toHaveCount(
     0,
   );
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.locator(".week-today-label, .week-today-cell")).toHaveCount(
     0,

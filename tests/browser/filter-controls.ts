@@ -18,6 +18,6 @@ export async function openEventDay(page: Page, date: string, mobile: boolean) {
     .getByRole("link", { name: /^Go to/ })
     .click();
   await expect(
-    page.getByRole("button", { name: "Day", exact: true }),
+    page.getByRole("button", { name: "Day", exact: true, includeHidden: true }),
   ).toHaveAttribute("aria-pressed", "true");
 }

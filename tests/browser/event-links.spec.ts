@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -148,7 +149,7 @@ test("background dismissal preserves inside interaction, focus, and calendar con
   page,
 }, info) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   const card = page
     .getByTestId("event-gothic-000000000001")
     .filter({ visible: true });
@@ -172,14 +173,21 @@ test("background dismissal preserves inside interaction, focus, and calendar con
   await expect(dialog).not.toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await expect(card).toBeFocused();
-  await expect(page.getByTestId("range")).toHaveText("September 2026");
+  await expect(page.getByTestId("range")).toHaveAttribute(
+    "aria-label",
+    "September 2026",
+  );
   await page.goto(early);
   await expect(dialog).toBeVisible();
   await page.mouse.click(outside.x, outside.y);
   await expect(dialog).not.toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await expect(
-    page.getByRole("button", { name: "Week", exact: true }),
+    page.getByRole("button", {
+      name: info.project.name === "phone" ? "Choose calendar view" : "Week",
+      exact: true,
+      includeHidden: true,
+    }),
   ).toBeFocused();
   await expect(page.getByTestId("range")).toContainText("Sep 6");
 });
@@ -201,7 +209,7 @@ test("card links support Back, Forward, close, reload, and Copy Event Link", asy
   const card = page
     .getByTestId("event-mission-000000000003")
     .filter({ visible: true });
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await card.click();
   await expect(page).toHaveURL(new RegExp(early + "$"));
   const eventUrl = await page

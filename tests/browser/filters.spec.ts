@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -109,7 +110,7 @@ test("retired age and cost selections cannot hide events", async ({ page }) => {
   await expect(
     page.getByTestId("event-gothic-000000000001").filter({ visible: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page
     .getByTestId("event-mission-000000000003")
     .filter({ visible: true })
@@ -133,7 +134,7 @@ test("show-only metadata is labeled Show and artist breaks time and venue ties",
     await route.fulfill({ response, json: data });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Day", exact: true }).click();
+  await selectCalendarView(page, "Day");
   await expect(
     page.getByTestId("event-mission-000000000006").filter({ visible: true }),
   ).toBeVisible();
@@ -175,7 +176,7 @@ test("venue and search filters combine, preserve navigation, and survive reload"
   await page.goto("/");
   const search = page.getByRole("searchbox", { name: "Search events" });
   await expect(search).toBeVisible();
-  const range = await page.getByTestId("range").textContent();
+  const range = await page.getByTestId("range").getAttribute("aria-label");
   await page
     .getByRole("button", { name: "Venues: All venues", exact: true })
     .click();
@@ -194,7 +195,7 @@ test("venue and search filters combine, preserve navigation, and survive reload"
     page.getByTestId("event-mission-000000000003").filter({ visible: true }),
   ).toBeVisible();
   await expect(page.locator(".event-card:visible")).toHaveCount(1);
-  await expect(page.getByTestId("range")).toHaveText(range!);
+  await expect(page.getByTestId("range")).toHaveAttribute("aria-label", range!);
   await expect(page).toHaveURL("/");
   await page.reload();
   await expect(search).toHaveValue("EARLY mission");
@@ -239,7 +240,7 @@ test("venue and search filters combine, preserve navigation, and survive reload"
     page.getByTestId("event-gothic-000000000001").filter({ visible: true }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await expect(
     page.getByTestId("event-mission-000000000003").filter({ visible: true }),
   ).toBeVisible();
@@ -321,7 +322,7 @@ test("past events remain visible while search includes later weeks without navig
 }) => {
   await page.clock.setFixedTime(new Date("2026-09-10T01:00:00Z")); // September 9 Denver.
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   const past = page
     .getByTestId("event-gothic-000000000001")
     .filter({ visible: true });
@@ -330,9 +331,9 @@ test("past events remain visible while search includes later weeks without navig
     page.getByRole("checkbox", { name: "Include past events" }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Previous", exact: true }).click();
-  const range = await page.getByTestId("range").textContent();
+  const range = await page.getByTestId("range").getAttribute("aria-label");
   await page.getByRole("searchbox", { name: "Search events" }).fill("gothic");
-  await expect(page.getByTestId("range")).toHaveText(range!);
+  await expect(page.getByTestId("range")).toHaveAttribute("aria-label", range!);
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(
     page.getByTestId("event-gothic-000000000015").filter({ visible: true }),

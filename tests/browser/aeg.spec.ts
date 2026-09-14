@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -20,7 +21,7 @@ test("cancelled cards use only red strikethrough and popup status stays bold red
     .getByTestId("event-gothic-000000000001")
     .filter({ visible: true });
   for (const view of ["Week", "Month", "Day"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     await expect(card).toHaveText(
       view === "Day" ? "Untimed Alpha @ Gothic Theatre" : "Untimed Alpha",
     );
@@ -70,9 +71,9 @@ test("scheduled cards omit raw status and off-site text while details use short 
   const card = page
     .getByTestId("event-mission-000000000003")
     .filter({ visible: true });
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   for (const view of ["Week", "Month", "Day"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     await expect(card).toHaveText(
       view === "Day" ? "Early doors @ Mission Ballroom" : "Early doors",
     );
@@ -108,7 +109,7 @@ test("AEG replay artifact reaches the calendar", async ({ page }) => {
     "Requires the isolated AEG replay container workflow",
   );
   await page.goto(process.env.AEG_BASE_URL!);
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const cards = page
     .getByRole("button")
     .filter({ hasText: "Fixture Ensemble" });

@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("desktop cards fit text height while phone cards keep touch size", async ({
@@ -16,7 +17,7 @@ test("desktop cards fit text height while phone cards keep touch size", async ({
   });
   await page.goto("/");
   for (const view of ["Month", "Week", "Day"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     const card = page
       .getByTestId("event-gothic-000000000001")
       .filter({ visible: true });

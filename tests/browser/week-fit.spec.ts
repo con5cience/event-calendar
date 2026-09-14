@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("desktop Week shows more than ten when they fit and only offers Show All for overflow", async ({
@@ -6,7 +7,7 @@ test("desktop Week shows more than ten when they fit and only offers Show All fo
   await page.clock.setFixedTime(new Date("2026-09-09T01:00:00Z"));
   await page.setViewportSize({ width: 1440, height: 1200 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   const day = page.getByRole("gridcell", {
     name: "September 8, 2026",
     exact: true,
@@ -29,7 +30,7 @@ test("desktop Week shows more than ten when they fit and only offers Show All fo
   await expect(
     page.locator('[data-event-date="2026-09-08"]:visible'),
   ).toHaveCount(14);
-  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await selectCalendarView(page, "Week");
   await page.setViewportSize({ width: 1440, height: 1200 });
   await expect(cards).toHaveCount(14);
   await expect(more).toHaveCount(0);

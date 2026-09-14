@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("day shows venue while month and week truncate without losing accessible text", async ({
@@ -18,7 +19,7 @@ test("day shows venue while month and week truncate without losing accessible te
   });
   await page.goto("/");
   for (const view of ["Month", "Week", "Day"]) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     const card = page
       .getByTestId("event-gothic-000000000001")
       .filter({ visible: true });

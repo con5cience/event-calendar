@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("desktop overflow leaves less than one unused event row", async ({
@@ -17,7 +18,7 @@ test("desktop overflow leaves less than one unused event row", async ({
     ["Week", 420],
     ["Week", 500],
   ] as const) {
-    await page.getByRole("button", { name: view, exact: true }).click();
+    await selectCalendarView(page, view);
     await expect(page.getByTestId("calendar")).toHaveAttribute(
       "data-view",
       `dayGrid${view}`,

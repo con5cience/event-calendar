@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 test("desktop month fits five and six weeks after viewport resize", async ({
@@ -20,7 +21,7 @@ test("desktop month fits five and six weeks after viewport resize", async ({
     await route.fulfill({ json: data });
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 1280, height: 800 },
@@ -33,7 +34,10 @@ test("desktop month fits five and six weeks after viewport resize", async ({
       ["September", 5],
       ["August", 6],
     ] as const) {
-      await expect(page.getByTestId("range")).toHaveText(`${month} 2026`);
+      await expect(page.getByTestId("range")).toHaveAttribute(
+        "aria-label",
+        `${month} 2026`,
+      );
       await expect(page.getByRole("row", { name: /^Week / })).toHaveCount(
         weeks,
       );
@@ -63,7 +67,7 @@ test("desktop month fits five and six weeks after viewport resize", async ({
         await expect(
           page.locator('[data-event-date="2026-08-31"]:visible'),
         ).toHaveCount(14);
-        await page.getByRole("button", { name: "Month", exact: true }).click();
+        await selectCalendarView(page, "Month");
       }
       await page
         .getByRole("button", {
@@ -87,7 +91,7 @@ test("desktop month fits five and six weeks after viewport resize", async ({
     await expect(
       page.locator('[data-event-date="2026-09-08"]:visible'),
     ).toHaveCount(14);
-    await page.getByRole("button", { name: "Month", exact: true }).click();
+    await selectCalendarView(page, "Month");
   }
   await page.screenshot({
     path: "test-results/desktop-month-fit.png",
@@ -99,7 +103,7 @@ test("desktop Month omits Show All when every event fits", async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-09-09T01:00:00Z"));
   await page.setViewportSize({ width: 1440, height: 4000 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   const day = page.getByRole("gridcell", {
     name: "September 8, 2026",
     exact: true,
@@ -118,7 +122,7 @@ test("desktop Month omits Show All when every event fits", async ({ page }) => {
   await expect(
     page.locator('[data-event-date="2026-09-08"]:visible'),
   ).toHaveCount(14);
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await page.setViewportSize({ width: 1440, height: 4000 });
   await expect(cards).toHaveCount(14);
   await expect(more).toHaveCount(0);

@@ -972,9 +972,9 @@ needed. Reload the page to request refreshed data. There is no background pollin
 
 The brand is `withAdult(denver)` for the intended `denver.withadult.com` site.
 A 36px header reads `withAdult(denver): Bring your people.` in the existing system
-font, uniformly 20px and weight 700. It uses the original purple for `withAdult()`
-and light gray for the city, colon, and tagline. The colon and tagline are hidden
-below 768px. There is no footer or header border. The gap below the header is
+font, 20px on desktop and weight 700. It uses the original purple for `withAdult()`
+and light gray for the city, colon, and tagline. Below 768px the entire brand line
+remains visible with a shared responsive font size. There is no footer or header border. The gap below the header is
 halved: `clamp(6px, 1dvh, 12px)` on desktop and 6px on phones. Keep the existing
 proportional gutters. Calendar sizing reserves only the header's 36px,
 with scrolling on short screens. The browser title uses the same branding string.
@@ -985,16 +985,23 @@ Explicit view choices (including date drill-in) persist in `event-calendar.view.
 in local storage. Reload restores that view; invalid or unavailable storage falls
 back to Week. Direct event URLs open the event's Week with the detail panel visible
 without replacing the saved view.
-Search sits to the left of Day/Week/Month on desktop and wraps below on phones.
+Search sits to the left of Day/Week/Month on desktop and last on phones.
+Phones use a view dropdown beside date navigation and Today. Below 360px,
+Today and the view dropdown move to a second row to retain usable targets.
+Current-year dates omit the year visually on phones; the accessible label retains
+the full date. Venue and With Adult share a stable row; enabling With Adult reveals
+Age below that checkbox without moving the venue picker. Custom dropdown triggers
+toggle open/closed on repeat activation, with outside-click and Escape dismissal.
+The native age select retains the platform's standard dismissal behavior.
 The empty field has no visible placeholder text; its accessible name remains
 Search events. On a single toolbar row, the venue and With Adult controls form
 one group centered between the date range and search, including the age picker
-when enabled. Narrow layouts retain wrapping.
+when enabled. This desktop alignment does not apply to the mobile grid.
 A right-aligned Font Awesome magnifying glass appears only when search is empty
 and unfocused. The decorative icon does not intercept clicks; the input retains
 its accessible Search events label. The venue dropdown and With Adult checkbox
 sit between the date range and search. With Adult reveals the adjacent child's
-age picker; they stay together when controls wrap. The event modal Close button
+age picker on desktop and an age row below on mobile. The event modal Close button
 uses a centered 44px target.
 FullCalendar owns date layout, navigation, and event placement. Desktop uses DayGrid;
 phones use List views. A presentation-only Show All row caps mobile dates without

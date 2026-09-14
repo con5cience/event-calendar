@@ -1,3 +1,4 @@
+import { selectCalendarView } from "./view-controls";
 import { expect, test } from "@playwright/test";
 
 function contrast(a: string, b: string) {
@@ -20,13 +21,17 @@ test("music-finder palette covers calendar, modal, and filters with readable tex
 }, info) => {
   await page.clock.setFixedTime(new Date("2026-09-09T01:00:00Z"));
   await page.goto("/");
-  await page.getByRole("button", { name: "Month", exact: true }).click();
+  await selectCalendarView(page, "Month");
   await expect(page.locator("html")).toHaveCSS(
     "background-color",
     "rgb(13, 13, 13)",
   );
   await expect(page.locator("html")).toHaveCSS("color", "rgb(224, 224, 224)");
-  const selected = page.getByRole("button", { name: "Month", exact: true });
+  const selected = page.getByRole("button", {
+    name: "Month",
+    exact: true,
+    includeHidden: true,
+  });
   await expect(selected).toHaveCSS("background-color", "rgb(108, 92, 231)");
   await expect(selected).toHaveCSS("color", "rgb(255, 255, 255)");
   if (info.project.name === "desktop") {
