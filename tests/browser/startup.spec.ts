@@ -63,13 +63,59 @@ test("slow JavaScript and site configuration never flash the fallback list", asy
   }
 });
 
-for (const failure of ["site", "module"] as const) {
+test("blocked optional analytics never reveals the fallback during startup", async ({
+  page,
+}) => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/api/site", async (route) => {
+    await gate;
+    await route.continue();
+  });
+  await page.route(/\/$/, async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      body: (await response.text()).replace(
+        "</body>",
+        '<script defer src="https://static.cloudflareinsights.com/beacon.min.js"></script></body>',
+      ),
+    });
+  });
+  const blocked = page.waitForEvent(
+    "requestfailed",
+    (request) =>
+      request.url() === "https://static.cloudflareinsights.com/beacon.min.js",
+  );
+  try {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await blocked;
+    await expect(page.locator("#boot-status")).toBeVisible();
+    await expect(page.locator(".server-fallback")).toBeHidden();
+    release();
+    await expect(page.getByTestId("calendar")).toBeVisible();
+    await expect(page.locator(".server-fallback")).toHaveCount(0);
+  } finally {
+    release();
+  }
+});
+
+for (const failure of ["site", "module", "runtime"] as const) {
   test(`startup ${failure} failure restores the readable fallback`, async ({
     page,
   }) => {
     if (failure === "site")
       await page.route("**/api/site", (route) =>
         route.fulfill({ status: 503, body: "Unavailable" }),
+      );
+    else if (failure === "runtime")
+      await page.route(/\/assets\/index-[^/]+\.js$/, (route) =>
+        route.fulfill({
+          contentType: "text/javascript",
+          body: 'throw new Error("Application startup failed");',
+        }),
       );
     else
       await page.route(/\/assets\/index-[^/]+\.js$/, (route) => route.abort());

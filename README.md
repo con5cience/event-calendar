@@ -67,7 +67,10 @@ each date. With JavaScript enabled, a small same-origin startup script shows a
 dark loading shell before the app bundle starts, so the fallback list does not
 flash. The sorted fallback remains visible without JavaScript and returns if
 startup fails or stalls for 15 seconds. SEO metadata and event links stay in the
-initial HTML; the content-security policy is unchanged.
+HTML. Only same-origin module entry scripts' load/runtime errors trigger
+immediate fallback; blocked optional scripts such as injected analytics do not.
+The Content Security Policy remains unchanged. Configuration failures still
+signal fallback explicitly, and unknown startup failures retain the bounded wait.
 
 The app is a React/FullCalendar interface served by Go, with local JSON input.
 Its charcoal-and-purple palette matches music-finder: near-black background,

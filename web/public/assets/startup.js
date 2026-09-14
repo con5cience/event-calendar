@@ -10,9 +10,17 @@
     window.removeEventListener("calendar-startup-failed", finish);
   }
   function onError(event) {
+    const entries = [
+      ...document.querySelectorAll('script[type="module"][src]'),
+    ].filter((script) => new URL(script.src).origin === location.origin);
+    // Optional injected scripts (including blocked analytics) do not determine
+    // whether the calendar can start. The timeout still covers unknown failures.
     if (
-      event instanceof ErrorEvent ||
-      event.target instanceof HTMLScriptElement
+      entries.some(
+        (entry) =>
+          event.target === entry ||
+          (event instanceof ErrorEvent && event.filename === entry.src),
+      )
     )
       finish();
   }
