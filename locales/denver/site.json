@@ -41,6 +41,7 @@
     "Marquis": "#F1F1EC",
     "Meow Wolf Denver": "#E335D1",
     "Mission Ballroom": "#56F0E5",
+    "Nocturne": "#E6A2A6",
     "Ogden Theatre": "#B78059",
     "Ophelia's Electric Soapbox": "#247F7B",
     "The Oriental Theater": "#D0B7D0",
@@ -134,6 +135,10 @@
     "ogden": {
       "adapter": "aeg-json",
       "venue_key": "ogden"
+    },
+    "nocturne": {
+      "adapter": "nocturne-ical",
+      "venue_key": "nocturne"
     },
     "ophelias": {
       "adapter": "html-ophelias",

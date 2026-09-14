@@ -16,6 +16,10 @@ import { validateLocaleID } from "./package-locale.mjs";
 
 const codeRoot = fileURLToPath(new URL("../", import.meta.url));
 const runners = {
+  "nocturne-ical": {
+    command: "replay-nocturne",
+    script: "nocturne/capture.mjs",
+  },
   "aeg-json": { command: "replay-aeg", feed: "aeg" },
   "holdmyticket-ical": { command: "replay-hmt", feed: "hmt" },
   "rhp-calendar": {

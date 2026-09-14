@@ -11,6 +11,7 @@ import (
 	"event-calendar/internal/kse"
 	"event-calendar/internal/livenation"
 	"event-calendar/internal/meowwolf"
+	"event-calendar/internal/nocturne"
 	"event-calendar/internal/ophelias"
 	"event-calendar/internal/plot"
 	"event-calendar/internal/rhp"
@@ -25,6 +26,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-nocturne" {
+		return replaySnapshot(args[1:], out, errout, "replay-nocturne", nocturne.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-seventh-circle" {
 		return replaySnapshot(args[1:], out, errout, "replay-seventh-circle", seventhcircle.Decode)
 	}

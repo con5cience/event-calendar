@@ -461,6 +461,23 @@ The September 12 local import added 50 events through January 23, 2027: 24 All
 Ages, 14 18+, 11 21+, and one with unknown admission. One event is cancelled.
 The catalog now contains 22 dedicated venue sources. Earlier imports are unchanged.
 
+### Nocturne capture and replay
+
+Nocturne captures monthly public iCalendar feeds and its admission FAQ twice:
+
+```sh
+SITE_DIR=locales/denver CAPTURE_SOURCE=nocturne node tests/nocturne/capture.mjs
+```
+
+Replay with `replay-nocturne --store /data --config /config/nocturne.yaml --snapshot /capture/snapshot.json --now <captured_at>` using the ingestion container and the Meow Wolf mount pattern above.
+The established source requires its prior artifact. Capture does not publish by
+itself. The existing locale refresh workflow runs both stages.
+Sets with separate reservations are separate events. With Adult ages 10–17
+require a parent/guardian, table reservation and venue confirmation. Prices are
+not ingested. Test with `npm run test:nocturne`, the Docker Go suite, and
+`NOCTURNE_BASE_URL=http://127.0.0.1:8090 npm run test:e2e -- tests/browser/nocturne.spec.ts`.
+See [the adapter ADR](docs/adapters/0006-icalendar-feeds.md#nocturne-implementation--september-14-2026).
+
 ### Seventh Circle capture and replay
 
 Seventh Circle uses a paired public HTML listing/detail capture, not its

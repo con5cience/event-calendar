@@ -1,4 +1,4 @@
-# ADR 0006: HoldMyTicket iCalendar feeds
+# ADR 0006: iCalendar feeds with provider-specific profiles
 
 Operational profiles now follow [ADR 0023](../adr/0023-locale-isolation.md).
 `adapter_options.feed_id`, venue name and timezone select the calendar.
@@ -10,7 +10,89 @@ inherit that specialist behavior. Keep fixture configs separate from operational
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
-## Context
+## Nocturne discovery and admission review — September 14, 2026
+
+Research only; Nocturne is not implemented or published. The
+[official music calendar](https://nocturnejazz.com/music) links to
+`https://nocturnejazz.com/music?format=ical`. A direct HTTP fetch returned calendar
+text. A browser-reader parsing failure did not mean the upstream feed failed.
+Prefer this structured feed with source-specific enrichment over calendar-grid
+scraping, subject to enumeration verification.
+
+| Evidence source | Raw observation | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| First five unfolded VEVENT records | Eirik Haugbro Chordless Trio, Gabriel Mervine Quartet, Adam Revell Quartet, Peter Sommer Quintet and David Mesquitic Quintet have UIDs, summaries, URLs and `DTSTART;TZID=America/Denver` | Structured event retrieval is available | These September 2–6 samples do not establish future-month coverage or UID uniqueness across occurrences |
+| Eirik record | Calendar span is 18:00–22:00; description specifies a single 18:30–20:00 set | Calendar bounds are not automatically performance times | Do not publish the calendar start as confirmed doors or show time without further evidence |
+| [Nocturne FAQ](https://nocturnejazz.com/faq/) | Normally 21+; may accommodate children 10+ with a parent/guardian and table reservation; under 10 not admitted | Conditional admission needs explicit venue-specific handling | Accommodation is discretionary, not guaranteed; an older friend or bar reservation does not satisfy the stated exception |
+| Same FAQ | Attending both sets requires reservations for both | Separately reserved sets need separate events under the product contract | Extract actual event-specific sets rather than infer the FAQ's usual schedule |
+
+Reuse standards-aware iCalendar parsing where its contract fits, but create an
+explicit Nocturne profile. Do not apply HoldMyTicket numeric-ID rules, floating
+clock assumptions, detail selectors or Federal's DESCRIPTION repair. Nocturne
+descriptions may be needed for set times and reservation links; parse as untrusted
+data, never executable HTML.
+
+Before implementation, verify calendar navigation and range parameters, complete
+enumeration within the requested 12 months, UID/occurrence identity, recurrence,
+cancellations and successful-empty behavior. Validate each set's time and stable
+identity, event URLs, reservation links and venue attribution. Exclude explicit
+closure notices rather than treating them as performances. Review robots, terms
+and reuse conditions. No price data is to be published.
+
+Record the reviewed policy through the existing policy/override structure, with
+parent/guardian, table reservation and venue confirmation conditions visible.
+Do not mark discretionary admission as guaranteed. Verify the proposed age-10–17
+filter behavior and condition wording before enabling it; ages 0–9 receive no
+exception. Add parser, reconciliation, locale and running-app verification before
+publication. This discovery does not change the HoldMyTicket implementation.
+
+## Nocturne implementation — September 14, 2026
+
+The research section above records discovery. `internal/nocturne`,
+`replay-nocturne`, and `tests/nocturne/capture.mjs` now implement the approved
+profile. HoldMyTicket parsing and application ICS exports are unchanged.
+
+Capture the public `music?format=ical&date=YYYY-MM-01` feed for every month
+intersecting today through today plus one year. Capture a second pass and the
+public FAQ; normalization must agree before publication. Require complete
+calendar envelopes, every requested month, Denver timezone, scoped event URLs,
+unique provider-ID/date occurrences and no event recurrence. Calendar timezone
+components are not event recurrence. Valid empty months are accepted; HTTP,
+encoding, size, missing-month and changed-capture failures prevent publication.
+
+Use provider URL ID, occurrence date and set number as identity. UID alone is
+not occurrence-unique. Parse explicit numbered/worded sets, first/second seating,
+special single sets, and the observed Sunday Summer Show format. Single numbered
+sets require an explicit no-second-set statement. Normalize reviewed evening
+clocks to Denver show times; do not invent doors from calendar opening hours.
+Unrecognized schedules reject both possible set identities to retain last-valid
+records. Successful absence unlists prior events through the existing reconciler.
+Exclude exact `Holiday Closure` and `Closed for a Private Event` notices.
+
+Admission remains 21+ with the approved conditional exception for ages 10–17:
+`Parent/guardian and table reservation required; confirm admission with venue.`
+Cancelled events have no exception. Configured event overrides win. Capture
+checks the reviewed FAQ clauses, not every possible policy edit; operators must
+review substantive changes. This is not guaranteed admission or permission for
+an older friend to substitute for a parent/guardian.
+
+Retain only published HTTPS Nocturne dinner-and-show Tock reservation links whose
+date matches the occurrence. Preserve their query parameters; do not invent a
+set-specific checkout URL. Image-button title attributes identify the reservation
+type. Wrong-date or ambiguous links are omitted. Event links remain available.
+No prices, description HTML, bar-only booking links or inferred performers are
+published. Source-specific HTML parsing is inert.
+
+| Evidence source | Observation | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Paired September 14 capture; ten initial feed records and eight normalized records inspected | Dates, titles, set clocks and venue-scoped URLs agree; 57 future sets normalize with no rejection | Current published schedules are supported | Later months are empty, not proof of a year of scheduled shows |
+| Reservation links in captured descriptions | 49 sets retain matching-date links; eight omit them | Published links pass date/type checks | Booking availability and checkout are not tested |
+| Public robots.txt | `User-agent: *`, empty `Disallow:` | No listed crawler exclusion for these public paths | Does not grant redistribution rights; no blanket terms authorization claimed |
+
+See ADR 0019 for publication and runtime verification. The source is registered
+in Denver's existing refresh workflow; no remote deployment was performed.
+
+## HoldMyTicket operational context
 
 September 13 update: the common capture wrapper uses each locale's configured
 feed URL, discovers public HoldMyTicket event URLs, and extracts Event JSON-LD

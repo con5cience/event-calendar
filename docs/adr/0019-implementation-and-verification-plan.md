@@ -3153,3 +3153,41 @@ The full browser run passed 166 tests with 64 optional skips using
 The temporary empty-calendar container was stopped; the populated app remains
 running at port 8090. Browser skill fallback used repository Playwright because
 the required Node REPL execution tool was unavailable.
+
+## Nocturne implementation and local publication — September 14, 2026
+
+Approved scope: paired monthly iCalendar capture, Nocturne-specific set parsing,
+the conditional age-10–17 parent/guardian policy, Denver configuration, tests,
+documentation and local/tracked publication. No commit, push or remote deployment.
+
+| Evidence source | Raw observation / result | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| Test-first Go/capture/browser checks | Missing decoder/capture failures; browser found zero Nocturne events before publication | Missing feature reproduced before implementation/publication | Initial Chromium sandbox failure required escalation |
+| `npm run test:nocturne`; same capture tests in refresh container | Three tests passed in both environments | Paired month enumeration, failed requests and challenge rejection verified | Mock transport; live capture verified separately |
+| `docker build --target go-test -t event-calendar-contract-tests .` | Formatting, vet and full race-enabled Go suite passed | Set mapping, cancellation, closure, uncertain schedules, overrides and reconciliation verified | No live checkout performed |
+| Paired public capture and staged replay | Ten initial raw records and eight normalized records inspected; 57 sets, zero rejected; 49 matching-date reservation links | Current September/October schedules normalize | Eight sets omit nonmatching or unavailable reservation links; event links retained |
+| `npm run test:contracts` | Go handoff and all 91 consumer tests passed | Serialization/consumer contract preserved | Local Docker and Node |
+| `npm run test:refresh`, `npm run test:refresh-dry-run`, `npm run test:deploy`, `npm run test:capture-profiles` | 19, 6, 6 and 2 tests passed | Source registration and workflow regressions pass | No GitHub or Railway run |
+| `docker build --target refresh-test -t event-calendar-refresh-tests .`; `docker run --rm event-calendar-refresh-tests` | Build and 13 tests passed | Existing container refresh flow remains functional | Synthetic integration transport |
+| `npm run test:locales`; Compose app build/restart | Independent images and four browser checks passed | Locale packaging and running Denver configuration verified | Docker access needed sandbox escalation |
+| Nocturne desktop/mobile test and local API | Two focused tests passed; API returned 57 records; five API rows inspected | Separate sets, modal policy, external event link, ICS, ages 10/14/17 included and age 9 excluded | Discretionary admission is not a guarantee |
+| Full browser suite | 168 passed, 64 optional skips | Existing UI and new publication checks pass | Other source-specific opt-in suites were not enabled |
+| `npm run lint`, `npm run typecheck`, `npm run format:check`, `git diff --check` | Passed | Static checks pass | Markdown inspected as source; no document renderer configured |
+
+Full browser command:
+`CALENDAR_EMPTY_URL=http://127.0.0.1:8096 NOCTURNE_BASE_URL=http://127.0.0.1:8090 SEVENTH_CIRCLE_BASE_URL=http://127.0.0.1:8090 DAZZLE_BASE_URL=http://127.0.0.1:8090 LEVITT_BASE_URL=http://127.0.0.1:8090 npm run test:e2e`.
+The browser skill required a Node REPL execution tool unavailable in this session;
+repository Playwright provided the fallback.
+
+Capture directory: `event-calendar-nocturne-6HZ78G`, timestamp
+`2026-09-14T22:20:37.391Z`. Final staging and catalog backups:
+`/private/tmp/nocturne-publish.J00A2u`. Initial replay identified additional Sunday
+formats and image-button ticket labels; regression tests now cover them. A retry
+against a populated staging store with `state: new` correctly refused overwrite;
+final validation used a fresh store.
+
+Local generation `g-d57607c1bf92fefa8e30b77474eb015e`; tracked generation
+`g-c28917fcc57a79600705c6d5d11a8648`. Both publications reported durable success.
+Each previous source reference was compared and remained unchanged. Source config
+is now established, requiring its prior artifact. Prior immutable artifacts and
+backup catalogs remain available for recovery.

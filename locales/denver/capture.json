@@ -1,4 +1,9 @@
 {
+  "nocturne": {
+    "endpoint": "https://nocturnejazz.com/music?format=ical",
+    "policy": "https://nocturnejazz.com/faq",
+    "timezone": "America/Denver"
+  },
   "bluebird": {
     "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/2/events.json"
   },

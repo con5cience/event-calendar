@@ -20,11 +20,47 @@ Evidence states follow ADR 0001. Dates in the observation column are examples re
 
 ## Source inventory and inspected evidence
 
-### September 14, 2026 integrations
+### September 14, 2026 additions — research only
 
-Dazzle is integrated through its [VenuePilot profile](../adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026), with 171 published events and the reviewed 11 PM admission condition.
+September 14 implementation update: Dazzle now has a tested VenuePilot profile,
+171 locally published events, and a tracked snapshot for future refreshes. Its
+membership product was rejected; 155 events carry the reviewed 11 PM condition,
+15 are 21+, and one is age-unknown. See the
+[implementation record](../adapters/0020-venuepilot-widgets.md#dazzle-implementation--september-14-2026).
+Seventh Circle is also implemented: six locally published events carry the
+approved `$5 annual fee; show donations encouraged` condition. Its HTML profile
+retains one confirmed door time and omits five unlabeled clocks. It has a tracked
+snapshot and uses the existing refresh workflow. See the
+[implementation record](../adapters/0012-html-event-listings.md#seventh-circle-implementation--september-14-2026).
+Nocturne is implemented with 57 locally published sets, the approved conditional
+age-10–17 admission rule, and a tracked snapshot. See its
+[implementation record](../adapters/0006-icalendar-feeds.md#nocturne-implementation--september-14-2026).
+No remote deployment was run.
 
-Seventh Circle is integrated through its [HTML profile](../adapters/0012-html-event-listings.md#seventh-circle-implementation--september-14-2026), with six published events and the approved annual-fee condition.
+At discovery, these dedicated venue candidates were not configured, captured by the refresh
+workflow, or published yet. The September 12 completion statement below applies
+to the earlier inventory, not these additions. Integration order is Dazzle,
+Seventh Circle, then Nocturne. Aggregators remain outside this work.
+
+| Original source / evidence | Raw observation | Assignment / supported finding | Material limit |
+| --- | --- | --- | --- |
+| [Dazzle](https://www.dazzledenver.com/live-music/#/calendar), embedded widget and direct GraphQL request | Account 15; five returned records contain numeric IDs, dates, doors/show clocks, minimum ages and ticket URLs | Verified retrieval; [VenuePilot profile](../adapters/0020-venuepilot-widgets.md#dazzle-discovery-and-admission-review--september-14-2026) | Pagination, coverage, full mapping and access review remain unverified |
+| [Nocturne](https://nocturnejazz.com/music), linked iCalendar feed | Five inspected records contain UIDs, Denver-local dates and event URLs; descriptions specify sets | Verified retrieval; [separate Nocturne iCalendar profile](../adapters/0006-icalendar-feeds.md#nocturne-discovery-and-admission-review--september-14-2026), not the HoldMyTicket adapter unchanged | Future-month enumeration, identity and separate-set mapping remain unverified |
+| [Seventh Circle Music Collective](https://www.7thcirclemusiccollective.org/posts/), listing and detail HTML | Six visible cards have post IDs, titles, month/day and clocks; inspected detail supplies the year | Verified retrieval; [source-specific HTML profile](../adapters/0012-html-event-listings.md#seventh-circle-discovery-and-admission-review--september-14-2026) | Enumeration, full-date extraction across records and access review remain unverified; no standalone API verified |
+
+Admission review is required before publication, not a later enrichment task.
+Dazzle has a late-night cutoff and event-specific restrictions. Nocturne's
+parent/guardian exception is discretionary and requires a table reservation.
+Seventh Circle explicitly welcomes all ages at every show and requires membership.
+The linked adapter sections preserve policy evidence and unresolved conditions.
+None of these findings grants blanket adult clearance or permission to reuse data.
+
+Implementation must verify available listings within the next 12 months, stable
+identity, separate ticketed performances, cancellation, empty/failure behavior,
+last-valid retention, overrides and the age-14 filter through the running app.
+Do not infer twelve populated months from a successful request. Use existing
+locale isolation, capture/replay/publication and 90-day retention contracts.
+No price ingestion, UI change, or scheduler change is part of this addition.
 
 Implementation update, September 9: Gothic, Mission, Bluebird, Ogden, and
 Fiddler's Green now have tested AEG snapshot support and one-time live data in the

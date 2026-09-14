@@ -1,0 +1,14 @@
+schema_version: 1
+source: { id: nocturne, adapter: nocturne-ical }
+state: established
+venue:
+  key: nocturne
+  name: Nocturne
+  timezone: America/Denver
+  website: https://nocturnejazz.com
+  address: 1330 27th Street, Denver, CO 80205
+  phone: 303-295-3333
+  admission_policy:
+    text: 21+
+    category: 21+
+    url: https://nocturnejazz.com/faq
