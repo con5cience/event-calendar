@@ -9,7 +9,7 @@ test("isolated locale controls branding, timezone, palette and default view", as
   test.skip(!base, "Requires the explicit two-locale isolation workflow");
   await page.clock.setFixedTime(new Date("2026-09-12T14:00:00Z"));
   await page.goto(base!);
-  await expect(page.locator(".page-header")).toHaveText(
+  await expect(page.locator(".header-brand")).toHaveText(
     "withAdult(coastal): Coastal test refresh.",
   );
   await expect(
@@ -44,7 +44,7 @@ test("Denver remains independent of the synthetic locale", async ({
   const base = process.env.LOCALE_DENVER_URL;
   test.skip(!base, "Requires the explicit two-locale isolation workflow");
   await page.goto(base!);
-  await expect(page.locator(".page-header")).toHaveText(
+  await expect(page.locator(".header-brand")).toHaveText(
     "withAdult(denver): Bring your people.",
   );
   expect((await (await request.get(base + "/api/site")).json()).timezone).toBe(

@@ -87,6 +87,37 @@ a:hover {
   color: var(--accent);
   white-space: nowrap;
 }
+.header-brand {
+  display: flex;
+  white-space: nowrap;
+}
+.header-contact {
+  margin-left: auto;
+  padding-left: 4px;
+  flex-shrink: 0;
+  display: flex;
+}
+.header-contact .inline-action-tooltip {
+  width: 32px;
+  height: 32px;
+}
+.contact-link {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+  border-radius: 4px;
+}
+.contact-link:hover {
+  background: var(--surface-hover);
+}
+.header-contact .action-tooltip {
+  top: 100%;
+  bottom: auto;
+  padding: 4px 0 0;
+  z-index: 20;
+}
 .brand-city,
 .brand-tagline {
   color: var(--text);

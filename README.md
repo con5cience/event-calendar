@@ -980,6 +980,10 @@ proportional gutters. Calendar sizing reserves only the header's 36px,
 with scrolling on short screens. The browser title uses the same branding string.
 This does not configure
 DNS, TLS, or deployment for the domain.
+The header's right edge has a Font Awesome envelope link to
+`mailto:contact@withadult.com` on desktop and mobile. Its accessible name and
+hover/focus tooltip are both `Contact Us`. The link opens the configured email
+handler; the app does not send email.
 First-time visits open Week on desktop and phone, with today's existing highlight.
 Explicit view choices (including date drill-in) persist in `event-calendar.view.v1`
 in local storage. Reload restores that view; invalid or unavailable storage falls

@@ -63,10 +63,23 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="page-header">
-        <span className="brand-name">
-          withAdult(<span className="brand-city">{site.city}</span>)
+        <span className="header-brand">
+          <span className="brand-name">
+            withAdult(<span className="brand-city">{site.city}</span>)
+          </span>
+          <span className="brand-tagline">: {site.tagline}</span>
         </span>
-        <span className="brand-tagline">: {site.tagline}</span>
+        <span className="header-contact">
+          <ActionTooltip inline label="Contact Us">
+            <a
+              href="mailto:contact@withadult.com"
+              aria-label="Contact Us"
+              className="contact-link"
+            >
+              <ActionIcon name="envelope" />
+            </a>
+          </ActionTooltip>
+        </span>
       </header>
       <main>
         {error ? (

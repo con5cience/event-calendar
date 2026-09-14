@@ -47,7 +47,9 @@ test("uniform brand header frames the calendar without a footer", async ({
     info.project.name === "phone" ? "6px" : "10px",
   );
   await expect(page.getByRole("contentinfo")).toHaveCount(0);
-  await expect(header).toHaveText("withAdult(denver): Bring your people.");
+  await expect(header.locator(".header-brand")).toHaveText(
+    "withAdult(denver): Bring your people.",
+  );
   for (const selector of [".brand-name", ".brand-city", ".brand-tagline"]) {
     expect(
       await header
