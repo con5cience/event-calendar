@@ -158,7 +158,31 @@ export async function capture(fetcher = fetch, now = new Date()) {
       if (e.event_type !== "real_world") continue;
       const url = "https://aftontickets.com/event/buyticket/" + identity(e);
       if (e.buy_ticket_url !== url) throw Error("Unreviewed detail URL");
-      details[e.event_id] = compactHTML(await readHTML(url, fetcher));
+      const diagnostic = `pass=${pass} event_id=${e.event_id}`;
+      try {
+        const html = await readHTML(url, async (target, options) => {
+          const response = await fetcher(target, options);
+          console.error(`roxy detail: ${diagnostic} status=${response.status}`);
+          if (
+            response.status !== 200 ||
+            response.headers.get("x-amzn-waf-action") === "challenge" ||
+            response.headers.get("cf-mitigated") === "challenge"
+          ) {
+            await response.body?.cancel();
+            throw Error(`Invalid Roxy detail: ${diagnostic}`);
+          }
+          return response;
+        });
+        const compacted = compactHTML(html);
+        console.error(
+          `roxy detail: ${diagnostic} body_bytes=${Buffer.byteLength(html)} compacted_bytes=${Buffer.byteLength(compacted)}`,
+        );
+        if (!compacted.trim()) throw Error(`Empty Roxy detail: ${diagnostic}`);
+        details[e.event_id] = compacted;
+      } catch (error) {
+        console.error(`roxy detail: ${diagnostic} failed`);
+        throw error;
+      }
     }
     return { pages, details };
   };

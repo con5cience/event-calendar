@@ -2,13 +2,131 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { once } from "node:events";
+import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   createRoxyFetcher,
   decodeCurlResponse,
   roxyFetcher,
   withTransportRetries,
+  checkDetailResponse,
 } from "../scripts/roxy-transport.mjs";
 import { execute } from "../scripts/refresh-locale.mjs";
+
+test("proxied fetch retries decoded native detail challenges, but not listings", async () => {
+  const root = mkdtempSync(join(tmpdir(), "roxy-curl-fixture-"));
+  const countFile = join(root, "count");
+  writeFileSync(countFile, "0");
+  writeFileSync(
+    join(root, "curl"),
+    `#!${process.execPath}\nconst fs = require('node:fs');\nfs.readFileSync(0);\nconst path = ${JSON.stringify(countFile)};\nconst count = Number(fs.readFileSync(path, 'utf8'));\nfs.writeFileSync(path, String(count + 1));\nprocess.stdout.write(count === 0 ? 'HTTP/1.1 202 Accepted\\r\\nContent-Type: text/html\\r\\nx-amzn-waf-action: challenge\\r\\n\\r\\n\\n200' : 'HTTP/1.1 200 OK\\r\\nContent-Type: text/html\\r\\n\\r\\n<html>valid</html>\\n200');\n`,
+    { mode: 0o755 },
+  );
+  const previous = process.env.PATH;
+  process.env.PATH = `${root}:${previous}`;
+  try {
+    const endpoint =
+      "https://aftontickets.com/api/get-events?key=fixture&page=";
+    const get = createRoxyFetcher(
+      endpoint,
+      "http://user:password@proxy.example:823",
+    );
+    assert.equal(
+      await (
+        await get("https://aftontickets.com/event/buyticket/3px8g401j1")
+      ).text(),
+      "<html>valid</html>",
+    );
+    assert.equal(readFileSync(countFile, "utf8"), "2");
+    writeFileSync(countFile, "0");
+    assert.equal((await get(endpoint + "1")).status, 202);
+    assert.equal(readFileSync(countFile, "utf8"), "1");
+  } finally {
+    process.env.PATH = previous;
+  }
+});
+
+test("detail challenges share the transport retry count and deadline", async () => {
+  let calls = 0,
+    time = 0;
+  const budgets = [];
+  const result = await withTransportRetries(
+    async (remaining) => {
+      budgets.push(remaining);
+      time += 4000;
+      if (++calls === 1)
+        throw Object.assign(Error("TLS"), {
+          curlExitCode: 35,
+          proxyConnectStatus: 200,
+        });
+      if (calls === 2)
+        return checkDetailResponse(
+          new Response("", {
+            status: 202,
+            headers: {
+              "content-type": "text/html",
+              "x-amzn-waf-action": "challenge",
+            },
+          }),
+          "3px8g401j1",
+        );
+      return "ok";
+    },
+    undefined,
+    () => time,
+  );
+  assert.equal(result, "ok");
+  assert.deepEqual(budgets, [30000, 26000, 22000]);
+  calls = 0;
+  await assert.rejects(
+    withTransportRetries(async () => {
+      calls++;
+      return checkDetailResponse(
+        new Response("", {
+          status: 202,
+          headers: {
+            "content-type": "text/html",
+            "x-amzn-waf-action": "challenge",
+          },
+        }),
+        "3px8g401j1",
+      );
+    }),
+    /challenge/,
+  );
+  assert.equal(calls, 3);
+});
+
+test("only the observed HTTP 202 HTML challenge retries; other invalid details fail closed", async () => {
+  for (const [status, body, headers] of [
+    [200, "", { "content-type": "text/html" }],
+    [202, "", { "content-type": "text/html" }],
+    [
+      403,
+      "blocked",
+      { "content-type": "text/html", "x-amzn-waf-action": "challenge" },
+    ],
+    [200, "body", { "content-type": "text/html", "cf-mitigated": "challenge" }],
+  ]) {
+    let calls = 0;
+    await assert.rejects(
+      withTransportRetries(async () => {
+        calls++;
+        return checkDetailResponse(
+          new Response(body, { status, headers }),
+          "3px8g401j1",
+        );
+      }),
+    );
+    assert.equal(calls, 1);
+  }
+  const response = new Response("<html>valid</html>", {
+    headers: { "content-type": "text/html" },
+  });
+  assert.equal(await checkDetailResponse(response, "3px8g401j1"), response);
+  assert.equal(await response.text(), "<html>valid</html>");
+});
 
 test("transport retries are capped and share one 30-second deadline", async () => {
   let time = 0,
@@ -59,6 +177,18 @@ test("transport retries are capped and share one 30-second deadline", async () =
     ),
   );
   assert.equal(calls, 1);
+  time = 0;
+  await assert.rejects(
+    withTransportRetries(
+      async () => {
+        time = 30001;
+        return "late response";
+      },
+      undefined,
+      () => time,
+    ),
+    /timeout/,
+  );
 });
 
 test("authentication, validation, certificate failures and cancellation do not retry", async () => {

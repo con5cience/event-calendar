@@ -8,6 +8,31 @@ import {
 const bodyLimit = 1024 * 1024;
 const headerLimit = 16384;
 
+// Called only after a confirmed proxy tunnel and bounded curl response decoding.
+export async function checkDetailResponse(response, id) {
+  const bytes = await response.clone().arrayBuffer();
+  const type = response.headers.get("content-type");
+  const awsChallenge =
+    response.headers.get("x-amzn-waf-action") === "challenge";
+  const challenged =
+    awsChallenge || response.headers.get("cf-mitigated") === "challenge";
+  console.error(
+    `roxy detail response: event_id=${id} status=${response.status} body_bytes=${bytes.byteLength} challenge=${challenged}`,
+  );
+  if (response.status === 202 && type === "text/html" && awsChallenge)
+    throw Object.assign(Error("Roxy detail HTTP 202 challenge"), {
+      detailChallenge: true,
+    });
+  if (
+    response.status !== 200 ||
+    type !== "text/html" ||
+    challenged ||
+    bytes.byteLength === 0
+  )
+    throw Error("Invalid Roxy detail response");
+  return response;
+}
+
 export async function withTransportRetries(
   attempt,
   signal,
@@ -19,18 +44,24 @@ export async function withTransportRetries(
     const remaining = deadline - clock();
     if (remaining <= 0) throw Error("curl request timeout");
     try {
-      return await attempt(remaining);
+      const response = await attempt(remaining);
+      if (signal?.aborted) throw Error("curl request aborted");
+      if (clock() >= deadline) throw Error("curl request timeout");
+      return response;
     } catch (error) {
       if (
         signal?.aborted ||
         count === 2 ||
         clock() >= deadline ||
-        ![7, 28, 35, 52, 56].includes(error.curlExitCode) ||
-        ![0, 200].includes(error.proxyConnectStatus)
+        !(
+          error.detailChallenge === true ||
+          ([7, 28, 35, 52, 56].includes(error.curlExitCode) &&
+            [0, 200].includes(error.proxyConnectStatus))
+        )
       )
         throw error;
       console.error(
-        `roxy transport: retry ${count + 1}/2 after curl exit ${error.curlExitCode}`,
+        `roxy transport: retry ${count + 1}/2 after ${error.detailChallenge ? "detail HTTP 202 challenge" : `curl exit ${error.curlExitCode}`}`,
       );
     }
   }
@@ -202,7 +233,11 @@ export function createRoxyFetcher(endpoint, proxyURL) {
             }
           });
           child.stdin.end(config);
-        }),
+        }).then((response) =>
+          url.includes("/event/buyticket/")
+            ? checkDetailResponse(response, url.split("/").at(-1))
+            : response,
+        ),
       options.signal,
     );
   };

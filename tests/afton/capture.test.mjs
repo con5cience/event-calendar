@@ -197,3 +197,30 @@ test("native details are bounded and only exact Afton event URLs are fetched", a
     /URL/,
   );
 });
+
+test("capture rejects empty, stripped-empty, and challenged native details", async () => {
+  const e = {
+    ...event(1),
+    event_type: "real_world",
+    event_id: "3px8g401j1",
+    buy_ticket_url: "https://aftontickets.com/event/buyticket/3px8g401j1",
+  };
+  for (const [status, body, extra] of [
+    [200, "", {}],
+    [200, "<script>challenge()</script>", {}],
+    [202, "", {}],
+    [200, "<html>challenge</html>", { "x-amzn-waf-action": "challenge" }],
+  ]) {
+    await assert.rejects(
+      capture(async (url) =>
+        url === e.buy_ticket_url
+          ? new Response(body, {
+              status,
+              headers: { "content-type": "text/html", ...extra },
+            })
+          : Response.json({ ...page(1, 1), data: [e] }),
+      ),
+      /detail/,
+    );
+  }
+});

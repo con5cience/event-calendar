@@ -253,6 +253,55 @@ Direct-mode verification on 2026-09-14:
 
 ### Proxied ingestion transport
 
+#### Detail challenge handling — September 14, 2026
+
+Run `34882844450` completed Roxy capture but Go rejected it with
+`afton: missing detail`. The CI artifact does not preserve the raw capture or
+identify the affected detail. Local investigation reproduced an empty HTTP 202
+HTML response with `x-amzn-waf-action: challenge` for event `z59r70nyjq`; two
+subsequent requests returned HTTP 200 with nonempty HTML and JSON-LD. This
+reproduces the failure mechanism, not the identity of the failed CI event.
+
+The shared HTML reader accepts all successful HTTP statuses, including 202, and
+the prior Roxy capture saved empty compacted HTML. The Go decoder correctly
+rejects such a detail. Keep the shared reader and Go contracts unchanged; add
+Roxy-specific checks rather than alter every HTML adapter or weaken deployment.
+
+After curl confirms the proxy tunnel and validates response bounds, a native
+detail's HTTP 202 HTML response with the AWS challenge header may retry within
+the existing two-retry, 30-second total budget. TLS failures and challenges share
+that budget. This exception does not apply to listing responses, other HTTP
+statuses, missing challenge headers, empty HTTP 200, certificate failures, proxy
+authentication, redirects, cancellation, or size-limit failures.
+
+Capture requires HTTP 200 without challenge headers and nonempty compacted HTML.
+It reports event ID, pass, HTTP status, and raw/compacted byte counts; transport
+reports each detail response's status, byte count, and challenge indicator. No
+raw HTML or credentials are logged. Exhaustion fails capture and leaves the
+last-valid source in place. The all-source deployment gate is unchanged.
+
+Regression tests cover the reproduced empty/challenged responses, a mixed TLS
+and challenge sequence, the shared attempt/deadline limits, preserved valid body
+bytes, and rejection without retry for other response failures.
+
+Verification used `/private/tmp/withadult-roxy-detail-check.Qofnqa`. The first
+live attempt timed out on the listing before reaching details. A fresh capture
+completed both passes; five raw records were inspected for identity, title, date,
+and native detail presence. External records intentionally have no native detail.
+That successful run did not reproduce a challenge; challenge recovery was tested
+through a controlled curl subprocess in the host and Linux container tests.
+
+| Evidence | Observation | Finding | Limit |
+| --- | --- | --- | --- |
+| `npm run test:afton`, `npm run test:roxy-transport` | 16 capture and 9 transport tests passed | Empty/challenged details fail early; bounded retries preserve valid response bytes | Fixture inputs |
+| Rebuilt refresh-test container | 16 tests passed | Curl subprocess response decoding, challenge retry, capture/publication and retention checks pass in Linux | Challenge sequence is controlled |
+| Live capture and `ingest replay-afton` into temporary store | Capture completed; `published: true`, `durable: true`, `rejected: []` | Existing Go validation accepts the captured records | Local proxy route, not GitHub |
+| Temporary export and running app | Roxy event identities match the artifact; health, site, calendar, event page/API and ICS checks passed; five API records inspected | Captured data reaches the HTTP consumer | Repository catalog and deployed app unchanged |
+
+Formatting, lint, frontend build/type checks, shared RHP capture tests, refresh
+tests, dry-run tests, and contract checks also passed. The Go source and schemas
+were unchanged. GitHub confirmation requires a fresh run from the new commit.
+
 The scheduled capture entry point selects curl for Roxy when `ROXY_PROXY_URL`
 is present; absent configuration preserves local direct Node fetch behavior.
 `ROXY_PROXY_REQUIRED=1` rejects missing configuration instead of falling back.

@@ -309,6 +309,16 @@ attempt discards all bytes from the failed attempt. Proxy rejection (including
 407), certificate verification failure, cancellation, invalid data, redirects,
 and size-limit failures do not retry. The 30-second deadline never resets.
 
+For native Roxy detail pages, the observed HTTP 202 HTML response carrying
+`x-amzn-waf-action: challenge` is also eligible for those same two retries.
+Transport errors and detail challenges share one attempt count and deadline;
+there is no nested retry loop. Other HTTP failures and empty HTTP 200 responses
+do not retry. Capture requires HTTP 200, no challenge header, and nonempty
+compacted HTML before saving a detail. Listing behavior is unchanged.
+Safe detail diagnostics report event ID, capture pass, status, and byte counts,
+not response bodies or credentials. Exhausted retries still fail the source and
+retain its last-valid data; the all-source deployment gate is unchanged.
+
 Run `npm run test:roxy-transport` for transport and secret-isolation tests; curl
 and loopback permission are required. `docker run --rm event-calendar-refresh-test`
 also runs these tests in the refresh image.
