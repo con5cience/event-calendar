@@ -33,7 +33,6 @@
     "test:refresh": "node --test tests/refresh-locale.test.mjs tests/feed-capture.test.mjs",
     "test:refresh-dry-run": "node --test tests/refresh-dry-run.test.mjs",
     "test:deploy": "node --test tests/deploy-locale.test.mjs tests/publish-snapshot.test.mjs",
-    "test:proxy-diagnostics": "node --test tests/proxy-diagnostics.test.mjs",
     "test:roxy-transport": "node --test tests/roxy-transport.test.mjs"
   },
   "dependencies": {

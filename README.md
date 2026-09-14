@@ -185,106 +185,12 @@ branch, select **Actions → Locale refresh and deploy → Run workflow → denv
 Leave `deploy` unchecked for a read-only dry run.
 No remote run is implied by local verification.
 
-The manual run also accepts `capture_concurrency` (1–4, default 2). Select 3 for
-the next comparison run; this does not change the application or local default.
-The workflow passes the selection into the refresh container and saves it as
-`capture-concurrency.txt`. `refresh-memory.jsonl` contains timestamped Docker
-stats samples for that container, including memory usage/limit, CPU and PIDs.
-Sampling waits five seconds between polls. These are sampled values, not a true
-peak or a measurement of total runner memory. Short runs can produce no samples;
-poll errors (including container startup/removal races) are retained separately
-in `refresh-memory-errors.log` and do not change the refresh exit status.
+The manual run accepts `capture_concurrency` (1–4, default 2) and retains the
+selected value in `capture-concurrency.txt`. Temporary Roxy probe inputs,
+the standalone diagnostics workflow, and memory sampling have been retired.
+Refresh logs, reports, snapshot artifacts, and deployment checks remain enabled.
 
-Enable the optional `roxy_user_agent_probe` input only for diagnosis. It compares
-two anonymous requests to Roxy's configured Afton listing: Node's default user
-agent and the installed Chromium user agent. It does not navigate the venue in
-a browser, execute a challenge, use a proxy, or change ingestion. The diagnostic
-artifact includes `roxy-user-agent.json` with the actual browser user agent,
-response statuses, content types, and challenge headers. Bodies, cookies, URLs,
-and exception text are omitted. The probe has a two-minute step limit; failure
-does not prevent the normal refresh. A successful probe step only means the
-comparison completed, not that Afton returned event JSON.
-
-The separate opt-in `roxy_browser_probe` opens Roxy's configured public calendar
-in a fresh Chromium session. It allows up to 30 seconds for navigation, then
-observes for 15 seconds without clicking or scrolling. `roxy-browser.json`
-records page status, scoped feed responses/failures, document responses, and
-frame origins. Bodies, cookies, and query strings are omitted. JSON response
-status is transport evidence only, not proof of valid events or rendered cards.
-Normal page scripts can run, but the probe does not interact with challenges,
-reuse sessions, or use a proxy. It has the same two-minute step limit and does
-not change ingestion. Enable only this probe when testing actual browser access;
-the user-agent comparison is independent and defaults to disabled.
-
-`roxy_proxy_probe` is another optional diagnostic (default false). It reads the
-repository Actions secret `HTTP_PROXY` as a full HTTP(S) proxy URL, including
-percent-encoded username/password if needed. This probe receives it as `HTTP_PROXY`;
-refresh receives it separately as the Roxy-specific setting below. Other probes
-do not receive it. It makes one request through Playwright's
-explicit proxy client with TLS verification enabled, no redirects or retries,
-and a 30-second timeout. It saves only normalized response headers/status or a
-fixed failure category and elapsed milliseconds in `roxy-proxy.json`. Categories
-are `configuration`, `client_setup`, `timeout`, `dns`, `connection`, `tls`, or
-`unknown`. They describe the failure type, not which network hop failed.
-No event body is published or saved.
-The proxy URL, credentials, and exception text are never logged. The client
-context is disposed after the request. A missing/invalid secret or transport
-failure produces `request_failed: true`; a completed diagnostic step is not proof
-that the feed worked. The GitHub secret cannot be read back for local validation.
-
-For connection-stage investigation, use the standalone **Roxy proxy diagnostics**
-workflow (`proxy-diagnostics.yml`) on `main`. It uses the same `HTTP_PROXY` secret
-but does not refresh sources, build the calendar, publish snapshots, or deploy.
-The diagnostic image runs local fixture tests before receiving the secret.
-Results stream into the step log and the seven-day `proxy-diagnostics-<run>-<attempt>`
-artifact. A green step means diagnostics completed, not that all requests worked.
-
-The workflow first runs two direct Roxy requests: curl's default user agent, then
-a fixed Chrome-style Linux user agent. This step receives no secret, removes
-inherited proxy variables, and passes `--proxy "" --noproxy "*"` explicitly.
-It stores `direct-curl.jsonl` beside the proxy report. Only the user agent differs
-between the two direct requests; curl does not acquire browser cookies, client
-hints, or a browser TLS fingerprint. Results include normalized content type and
-WAF challenge indicators. HTTP 200/JSON is not proof of a valid event capture.
-
-The proxy comparison makes eight sequential, bounded requests: Playwright plus curl
-(default, IPv4, IPv6) for each of `https://example.com/` and Roxy's configured
-Afton feed. Curl's family selection applies to the proxy connection, not the
-provider's outbound connection. An IPv6-only failure does not imply that the
-default connection failed. DNS observations are separate requests and are not
-proof of what a later connection resolved.
-
-The report records proxy scheme, credential presence, client/runtime versions,
-DNS availability, CONNECT status, confirmed TCP/TLS/request milestones, HTTP
-status, fixed failure stages, and cumulative timings. Zero timing values do not
-prove that a stage was never reached. A `407` identifies proxy authentication
-rejection; another non-200 CONNECT response identifies a proxy tunnel rejection.
-Timeout stages identify the first unconfirmed step, not a provider's internal
-root cause. For HTTPS proxies, `proxy_tls_or_connect` stays ambiguous unless
-the trace confirms CONNECT was sent. HTTP success alone does not validate events.
-
-Curl configuration and credentials pass through stdin, not command arguments or
-files. Its raw trace and write-out JSON stay bounded in memory; only allowlisted
-booleans, numbers, and fixed strings leave the script. Raw messages, addresses,
-headers, cookies, URLs, and bodies are not logged. Proxy bypass is disabled, TLS
-verification stays enabled, and there are no redirects or retries. Each request
-has a 30-second total limit; curl has a 15-second connection limit. The probe step
-has a six-minute safety limit, not a duration estimate.
-
-To compare locally, set `HTTP_PROXY` to the same full URL in your shell without
-printing it, then run the same Linux AMD64 container:
-
-```sh
-docker build --platform linux/amd64 --target proxy-diagnostics -t withadult-proxy-diagnostics .
-docker run --rm --platform linux/amd64 --entrypoint node withadult-proxy-diagnostics --test tests/proxy-diagnostics.test.mjs
-docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt no-new-privileges:true withadult-proxy-diagnostics --direct
-docker run --rm --platform linux/amd64 --read-only --cap-drop ALL --security-opt no-new-privileges:true -e HTTP_PROXY withadult-proxy-diagnostics
-```
-
-The host test command is `npm run test:proxy-diagnostics` and requires curl plus
-permission to bind loopback fixture servers. The container supplies both clients.
-
-Roxy ingestion now supports proxied curl through `ROXY_PROXY_URL`. The refresh
+Roxy ingestion supports proxied curl through `ROXY_PROXY_URL`. The refresh
 workflow maps the existing Actions `HTTP_PROXY` secret to that variable and sets
 `ROXY_PROXY_REQUIRED=1`: missing or invalid configuration fails Roxy and retains
 its last-valid data. It does not silently fall back to direct access. The refresh

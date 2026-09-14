@@ -71,6 +71,12 @@ actual failing response.
 
 ### Optional user-agent comparison
 
+Historical investigation: the optional probes and standalone diagnostics workflow
+described below were retired after successful production deployment. Their scripts,
+tests, and Docker target were removed. These sections retain the evidence behind
+the transport decision; they are not current operating instructions. Production
+proxied curl, shared proxy configuration, retries, and transport tests remain active.
+
 GitHub run `34787560798` returned `x-amzn-waf-action: challenge` with HTTP 202
 and an empty body. The challenge response is confirmed; its triggering rule is
 not known. A local comparison returned HTTP 200 JSON both with Node's default

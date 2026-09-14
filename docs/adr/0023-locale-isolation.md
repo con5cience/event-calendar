@@ -231,6 +231,11 @@ memory use; this change does not resolve Roxy's upstream HTML response.
 
 ### Dry-run concurrency comparison
 
+Historical experiment: the memory-sampling loop described below has been retired.
+The workflow retains the concurrency selector and records its selected value,
+but no longer produces memory samples or monitor-error logs. Streamed refresh
+logs, exit-code handling, report artifacts, and deployment gates remain active.
+
 The manual workflow exposes `capture_concurrency` choices 1–4, retaining 2 as
 the default, and forwards the selection through Docker's environment. The next
 comparison should use 3 rather than changing the coordinator default globally.

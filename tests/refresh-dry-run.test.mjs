@@ -14,271 +14,25 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { assessRefresh, checkCalendar } from "../scripts/refresh-dry-run.mjs";
 
-test("proxy probe uses full URL credentials only in proxy configuration and preserves TLS", async () => {
-  const { probeRoxyProxy } =
-    await import("../scripts/probe-roxy-user-agent.mjs");
-  let disposed = false;
-  const result = await probeRoxyProxy(
-    "https://aftontickets.com/api/get-events?page=1",
-    "http://fixture-user:p%40ss@proxy.example:823",
-    {
-      newContext: async (options) => {
-        assert.deepEqual(options.proxy, {
-          server: "http://proxy.example:823",
-          username: "fixture-user",
-          password: "p@ss",
-        });
-        assert.equal(options.ignoreHTTPSErrors, false);
-        return {
-          get: async (url, options) => {
-            assert.equal(options.maxRedirects, 0);
-            assert.equal(options.timeout, 30000);
-            return {
-              status: () => 202,
-              headers: () => ({
-                "content-type": "text/html; secret=p@ss",
-                "x-amzn-waf-action": "challenge",
-                "set-cookie": "fixture-user",
-              }),
-            };
-          },
-          dispose: async () => {
-            disposed = true;
-          },
-        };
-      },
-    },
-  );
-  assert.equal(result.status, 202);
-  assert.equal(result.content_type, "text/html");
-  assert.equal(result.challenge, "challenge");
-  assert(disposed);
-  assert(!JSON.stringify(result).includes("fixture-user"));
-  assert(!JSON.stringify(result).includes("p@ss"));
-});
-test("proxy failures never expose credentials or exception messages", async () => {
-  const { probeRoxyProxy } =
-    await import("../scripts/probe-roxy-user-agent.mjs");
-  for (const proxy of [
-    undefined,
-    "not a url",
-    "socks5://proxy.example:123",
-    "http://u:p@proxy.example:823",
-  ]) {
-    const result = await probeRoxyProxy(
-      "https://aftontickets.com/api/get-events?page=1",
-      proxy,
-      {
-        newContext: async () => {
-          throw Error("private credentials");
-        },
-      },
-    );
-    assert.equal(result.request_failed, true);
-    assert.equal(
-      result.error_category,
-      proxy?.startsWith("http:") ? "client_setup" : "configuration",
-    );
-    assert(Number.isInteger(result.elapsed_ms));
-    assert(!JSON.stringify(result).includes("private"));
-  }
-});
-test("proxy request errors have fixed categories without raw error text", async () => {
-  const { probeRoxyProxy } =
-    await import("../scripts/probe-roxy-user-agent.mjs");
-  const cases = [
-    [Object.assign(Error("private"), { name: "TimeoutError" }), "timeout"],
-    [
-      Error(
-        "apiRequestContext.get: Timeout 30000ms exceeded.\nCall log:\nprivate",
-      ),
-      "timeout",
-    ],
-    [
-      Error(
-        "apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:123\nprivate",
-      ),
-      "connection",
-    ],
-    [Object.assign(Error("private"), { cause: { code: "ENOTFOUND" } }), "dns"],
-    [Error("apiRequestContext.get: self-signed certificate\nprivate"), "tls"],
-    [Error("private timeout password"), "unknown"],
-  ];
-  for (const [error, category] of cases) {
-    let disposed = false;
-    const result = await probeRoxyProxy(
-      "https://aftontickets.com/api/get-events?page=1",
-      "http://u:p@proxy.example",
-      {
-        newContext: async () => ({
-          get: async () => {
-            throw error;
-          },
-          dispose: async () => {
-            disposed = true;
-          },
-        }),
-      },
-    );
-    assert.equal(result.error_category, category);
-    assert(result.elapsed_ms >= 0);
-    assert(disposed);
-    assert(!JSON.stringify(result).includes("private"));
-  }
-});
-test("proxy secret is scoped to the probe and Roxy-only refresh configuration", () => {
+test("workflow removes retired diagnostics and retains production proxy", () => {
   const yaml = readFileSync(
     new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
     "utf8",
   );
-  assert.match(yaml, /roxy_proxy_probe:[\s\S]*default: false/);
-  const step = yaml
-    .split("      - name: Probe Roxy proxy\n")[1]
-    ?.split("      - name:")[0];
-  assert(step);
-  assert.match(step, /HTTP_PROXY: \$\{\{ secrets.HTTP_PROXY \}\}/);
-  assert.match(step, /-e HTTP_PROXY /);
-  assert.match(step, /--proxy > dry-run-results\/roxy-proxy.json/);
-  const refresh = yaml
-    .split("      - name: Refresh sources\n")[1]
-    .split("      - name: Build refreshed application\n")[0];
-  assert.match(refresh, /ROXY_PROXY_URL: \$\{\{ secrets.HTTP_PROXY \}\}/);
-  assert.match(refresh, /ROXY_PROXY_REQUIRED: "1"/);
-  assert.match(refresh, /-e ROXY_PROXY_URL -e ROXY_PROXY_REQUIRED/);
-  assert(!refresh.includes("-e HTTP_PROXY"));
-  assert.equal(yaml.split("secrets.HTTP_PROXY").length, 3);
-});
-
-test("browser probe observes scoped feed responses without exposing URLs or bodies", async () => {
-  const { probeRoxyBrowser } =
-    await import("../scripts/probe-roxy-user-agent.mjs");
-  for (const status of [200, 202, null]) {
-    const listeners = new Map();
-    const response = (url, code, type) => ({
-      url: () => url,
-      status: () => code,
-      headers: () => ({
-        "content-type": type,
-        "x-amzn-waf-action": code === 202 ? "challenge" : undefined,
-      }),
-      request: () => ({ resourceType: () => "fetch" }),
-    });
-    const page = {
-      on: (name, fn) => listeners.set(name, fn),
-      off: (name) => listeners.delete(name),
-      goto: async () =>
-        response("https://www.theroxydenver.com/calendar", 200, "text/html"),
-      waitForTimeout: async () => {
-        const emit = listeners.get("response");
-        emit(
-          response(
-            "https://aftontickets.com/api/get-events?key=other",
-            200,
-            "application/json",
-          ),
-        );
-        if (status !== null)
-          emit(
-            response(
-              "https://aftontickets.com/api/get-events?key=private-key&page=1",
-              status,
-              status === 200 ? "application/json" : "text/html",
-            ),
-          );
-      },
-      frames: () => [{ url: () => "https://embed.example/frame?secret=value" }],
-    };
-    const result = await probeRoxyBrowser(page, {
-      page: "https://www.theroxydenver.com/calendar",
-      endpoint: "https://aftontickets.com/api/get-events?key=private-key&page=",
-    });
-    assert.equal(result.feed_responses.length, status === null ? 0 : 1);
-    if (status !== null) assert.equal(result.feed_responses[0].status, status);
-    assert.equal(result.json_feed_response, status === 200);
-    assert(!JSON.stringify(result).includes("private-key"));
-    assert(!JSON.stringify(result).includes("secret"));
-    assert.equal(listeners.size, 0);
-  }
-});
-test("browser probe workflow is opt-in and bounded", () => {
-  const yaml = readFileSync(
-    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
-    "utf8",
-  );
-  assert.match(yaml, /roxy_browser_probe:[\s\S]*default: false/);
-  assert.match(yaml, /if:.*inputs.roxy_browser_probe/);
-  assert.match(
-    yaml,
-    /probe-roxy-user-agent.mjs --browser > dry-run-results\/roxy-browser.json/,
-  );
-});
-
-test("Roxy probe compares only user agent and excludes sensitive response data", async () => {
-  const { probeRoxy } = await import("../scripts/probe-roxy-user-agent.mjs");
-  const calls = [];
-  const output = await probeRoxy(
-    "https://aftontickets.com/api/get-events?key=fixture&page=1",
-    "Installed Chromium UA",
-    async (url, options) => {
-      calls.push({ url, options });
-      return new Response("private body", {
-        status: 202,
-        headers: {
-          "content-type": "text/html",
-          "x-amzn-waf-action": "challenge",
-          "set-cookie": "private cookie",
-        },
-      });
-    },
-  );
-  assert.equal(calls.length, 2);
-  assert.equal(calls[0].options.headers, undefined);
-  assert.deepEqual(calls[1].options.headers, {
-    "user-agent": "Installed Chromium UA",
-  });
   assert(
-    calls.every(
-      (c) =>
-        c.options.redirect === "error" &&
-        c.options.signal instanceof AbortSignal,
+    !existsSync(
+      new URL("../.github/workflows/proxy-diagnostics.yml", import.meta.url),
     ),
   );
-  assert.deepEqual(
-    output.results.map((r) => r.status),
-    [202, 202],
+  assert(
+    !/roxy_.*probe|Probe Roxy|docker stats|refresh-memory|stop_monitor/.test(
+      yaml,
+    ),
   );
-  assert.equal(output.results[0].challenge, "challenge");
-  assert(!JSON.stringify(output).includes("private"));
-  assert(!JSON.stringify(output).includes("key="));
-});
-test("Roxy probe reports request failure safely and still tries the second request", async () => {
-  const { probeRoxy } = await import("../scripts/probe-roxy-user-agent.mjs");
-  let calls = 0;
-  const output = await probeRoxy(
-    "https://aftontickets.com/api/get-events?page=1",
-    "UA",
-    async () => {
-      if (++calls === 1) throw Error("private proxy credentials");
-      return Response.json({});
-    },
-  );
-  assert.equal(output.results[0].request_failed, true);
-  assert.equal(output.results[1].status, 200);
-  assert(!JSON.stringify(output).includes("private"));
-  await assert.rejects(probeRoxy("https://other.example/", "UA"), /Unreviewed/);
-});
-test("Roxy workflow probe is opt-in and has read-only configuration", () => {
-  const yaml = readFileSync(
-    new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
-    "utf8",
-  );
-  assert.match(yaml, /roxy_user_agent_probe:[\s\S]*default: false/);
-  assert.match(yaml, /if:.*inputs.roxy_user_agent_probe/);
-  assert.match(yaml, /dst=\/site,readonly/);
-  assert.match(
-    yaml,
-    /probe-roxy-user-agent.mjs > dry-run-results\/roxy-user-agent.json/,
-  );
+  assert.equal(yaml.split("secrets.HTTP_PROXY").length, 2);
+  assert.match(yaml, /ROXY_PROXY_REQUIRED: "1"/);
+  assert(yaml.includes("-e ROXY_PROXY_URL -e ROXY_PROXY_REQUIRED"));
+  assert(!yaml.includes("-e HTTP_PROXY"));
 });
 
 test("workflow streams and retains output, preserves status, and exports reports inside Docker", () => {
@@ -303,8 +57,6 @@ test("workflow streams and retains output, preserves status, and exports reports
   assert.match(shell, /stop-commands/);
   assert.match(yaml, /capture_concurrency:[\s\S]*default: "2"/);
   assert.match(shell, /-e CAPTURE_CONCURRENCY/);
-  assert.match(shell, /docker stats --no-stream/);
-  assert.match(shell, /refresh-memory.jsonl/);
   for (const exitCode of [0, 1, 2, 137]) {
     const root = mkdtempSync(join(tmpdir(), "refresh-shell-"));
     mkdirSync(join(root, "dry-run-results"));
@@ -313,7 +65,7 @@ test("workflow streams and retains output, preserves status, and exports reports
       [
         "-e",
         "-c",
-        `docker() { if [[ "$1" == stats ]]; then printf '{"MemUsage":"10MiB / 1GiB"}\\n'; return 0; fi; if [[ "$*" == *"--entrypoint node"* ]]; then printf 'report exported\\n'; return 0; fi; [[ "$*" == *"-e CAPTURE_CONCURRENCY"* ]] || return 99; printf 'live stdout\\n'; printf 'live stderr\\n' >&2; return ${exitCode}; }\n${shell}`,
+        `docker() { if [[ "$*" == *"--entrypoint node"* ]]; then printf 'report exported\\n'; return 0; fi; [[ "$*" == *"-e CAPTURE_CONCURRENCY"* ]] || return 99; printf 'live stdout\\n'; printf 'live stderr\\n' >&2; return ${exitCode}; }\n${shell}`,
       ],
       {
         cwd: root,
@@ -331,7 +83,6 @@ test("workflow streams and retains output, preserves status, and exports reports
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /live stdout/);
     assert.match(result.stdout, /live stderr/);
-    assert(existsSync(join(root, "dry-run-results/refresh-memory.jsonl")));
     assert.equal(
       readFileSync(join(root, "dry-run-results/refresh.log"), "utf8"),
       "live stdout\nlive stderr\n",

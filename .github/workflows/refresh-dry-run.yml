@@ -24,18 +24,6 @@ on:
           - "3"
           - "4"
         default: "2"
-      roxy_user_agent_probe:
-        description: Compare anonymous Roxy requests with default and Chromium user agents
-        type: boolean
-        default: false
-      roxy_browser_probe:
-        description: Observe Roxy calendar and embedded feed in a fresh Chromium session
-        type: boolean
-        default: false
-      roxy_proxy_probe:
-        description: Request Roxy feed through the HTTP_PROXY secret (diagnostic only)
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -70,26 +58,6 @@ jobs:
           cp -R "locales/$LOCALE" "$RUNNER_TEMP/refresh-input/locales/$LOCALE"
       - name: Build refresh image
         run: docker build --target refresh -t withadult-refresh-dry-run .
-      - name: Probe Roxy user agent
-        if: ${{ inputs.roxy_user_agent_probe }}
-        continue-on-error: true
-        timeout-minutes: 2
-        run: |
-          docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs > dry-run-results/roxy-user-agent.json
-      - name: Probe Roxy browser
-        if: ${{ inputs.roxy_browser_probe }}
-        continue-on-error: true
-        timeout-minutes: 2
-        run: |
-          docker run --rm --entrypoint node -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --browser > dry-run-results/roxy-browser.json
-      - name: Probe Roxy proxy
-        if: ${{ inputs.roxy_proxy_probe }}
-        continue-on-error: true
-        timeout-minutes: 2
-        env:
-          HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
-        run: |
-          docker run --rm --entrypoint node -e HTTP_PROXY -e SITE_DIR=/site --mount "type=bind,src=$RUNNER_TEMP/refresh-input/locales/$LOCALE,dst=/site,readonly" withadult-refresh-dry-run /tools/scripts/probe-roxy-user-agent.mjs --proxy > dry-run-results/roxy-proxy.json
       - name: Refresh sources
         id: refresh
         env:
@@ -99,22 +67,10 @@ jobs:
           log_token=$(node --input-type=module -e 'import { randomUUID } from "node:crypto"; console.log(randomUUID());')
           printf '::stop-commands::%s\n' "$log_token"
           printf '%s\n' "$CAPTURE_CONCURRENCY" > dry-run-results/capture-concurrency.txt
-          touch dry-run-results/refresh-memory.jsonl
-          (
-            while true; do
-              docker stats --no-stream --format "{\"sampled_at\":\"$(date -u +%FT%TZ)\",\"stats\":{{json .}}}" withadult-refresh-capture >> dry-run-results/refresh-memory.jsonl 2>> dry-run-results/refresh-memory-errors.log || true
-              sleep 5
-            done
-          ) &
-          monitor_pid=$!
-          stop_monitor() { kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" 2>/dev/null || true; }
-          trap stop_monitor EXIT
           set +e
           docker run --rm --name withadult-refresh-capture -e CAPTURE_CONCURRENCY -e ROXY_PROXY_URL -e ROXY_PROXY_REQUIRED --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" withadult-refresh-dry-run "$LOCALE" 2>&1 | tee dry-run-results/refresh.log
           pipeline_status=("${PIPESTATUS[@]}")
           set -e
-          stop_monitor
-          trap - EXIT
           printf '::%s::\n' "$log_token"
           printf '%s\n' "${pipeline_status[0]}" > dry-run-results/refresh-exit-code.txt
           if [ "${pipeline_status[1]}" -ne 0 ]; then
