@@ -75,12 +75,12 @@ test("deployment polling checks the exact upload ID, never another successful de
   );
 });
 
-test("workflow deployment is opt-in, serialized, main-only, and isolates credentials", () => {
+test("manual workflow defaults to deployment, is serialized, main-only, and isolates credentials", () => {
   const yaml = readFileSync(
     new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
     "utf8",
   );
-  assert.match(yaml, /deploy:[\s\S]*type: boolean\n\s+default: false/);
+  assert.match(yaml, /deploy:[\s\S]*type: boolean\n\s+default: true/);
   assert.match(yaml, /group: refresh-dry-run-/);
   const deploy = yaml.split("\n  deploy:\n")[1];
   assert(deploy);

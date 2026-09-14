@@ -172,7 +172,7 @@ The integration image uses local synthetic HTTP responses and the real Go
 publisher, snapshot validator, and calendar HTTP consumer. It also checks HMT
 HTML extraction against the Go parser. These checks do not prove live access
 from GitHub-hosted runners. The manual Actions dry run is described below;
-scheduling remains separate work. Opt-in Git publishing and Railway deployment
+scheduling remains separate work. Manual Git publishing and Railway deployment
 are described below.
 `Dockerfile.railway` consumes the tracked catalog; the local
 Compose app still consumes its independent `.artifacts/<id>` working store.
@@ -182,10 +182,12 @@ Compose app still consumes its independent `.artifacts/<id>` working store.
 `.github/workflows/refresh-dry-run.yml` provides **Locale refresh and deploy** with a
 manual `workflow_dispatch` trigger. After this workflow is pushed to the default
 branch, select **Actions → Locale refresh and deploy → Run workflow → denver**.
-Leave `deploy` unchecked for a read-only dry run.
+Defaults are locale `denver`, `deploy` enabled, and capture concurrency `3`.
+Select branch `main` to deploy. Uncheck `deploy` for a read-only dry run.
+Pushes do not trigger this workflow.
 No remote run is implied by local verification.
 
-The manual run accepts `capture_concurrency` (1–4, default 2) and retains the
+The manual run accepts `capture_concurrency` (1–4, default 3) and retains the
 selected value in `capture-concurrency.txt`. Temporary Roxy probe inputs,
 the standalone diagnostics workflow, and memory sampling have been retired.
 Refresh logs, reports, snapshot artifacts, and deployment checks remain enabled.

@@ -6,9 +6,10 @@
 
 ## Manual Actions deployment — September 14, 2026
 
-Extend the tested refresh workflow with an opt-in `deploy` input, default false,
-rather than duplicate its capture/build steps or enable competing Git autodeploys.
-Daily scheduling is deferred until a successful manual deployment.
+The manual refresh workflow defaults to locale `denver`, `deploy: true`, and
+capture concurrency `3`. Operators can uncheck `deploy` for a read-only dry run.
+Deployment remains restricted to `main`; pushes do not trigger the workflow.
+Daily scheduling remains deferred. The local coordinator default remains 2.
 
 The refresh job remains read-only. A separate main-only job gets Git write access,
 downloads the exact run attempt's verified artifacts, validates and packages the
@@ -236,9 +237,9 @@ The workflow retains the concurrency selector and records its selected value,
 but no longer produces memory samples or monitor-error logs. Streamed refresh
 logs, exit-code handling, report artifacts, and deployment gates remain active.
 
-The manual workflow exposes `capture_concurrency` choices 1–4, retaining 2 as
-the default, and forwards the selection through Docker's environment. The next
-comparison should use 3 rather than changing the coordinator default globally.
+The manual workflow exposes `capture_concurrency` choices 1–4, now defaulting to
+3, and forwards the selection through Docker's environment. This does not change
+the local coordinator default globally.
 Provider groups and serial publication remain unchanged.
 
 During capture, a background loop samples the named refresh container with
