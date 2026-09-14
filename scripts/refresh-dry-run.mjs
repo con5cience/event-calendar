@@ -1,5 +1,6 @@
 // Read-only assessment and HTTP verification for the manual Actions dry run.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   readFileSync,
   readdirSync,
@@ -82,6 +83,9 @@ export async function checkCalendar(base, locale) {
     locale,
     health: "ok",
     calendar: "nonempty",
+    calendar_sha256: createHash("sha256")
+      .update(JSON.stringify(calendar.events))
+      .digest("hex"),
     sample: calendar.events
       .slice(0, 5)
       .map(({ id, title, venue, date }) => ({ id, title, venue, date })),
@@ -143,7 +147,7 @@ if (
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
       if (report.status === "partial")
         console.log(
-          "::warning::Partial refresh: inspect report.json. Build verification will continue; the final run will fail.",
+          "::warning::Partial refresh: inspect report.json. Build verification will continue; deployment requires every source to publish.",
         );
     } else if (command === "smoke") {
       let result;

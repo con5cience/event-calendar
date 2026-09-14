@@ -169,15 +169,17 @@ The integration image uses local synthetic HTTP responses and the real Go
 publisher, snapshot validator, and calendar HTTP consumer. It also checks HMT
 HTML extraction against the Go parser. These checks do not prove live access
 from GitHub-hosted runners. The manual Actions dry run is described below;
-scheduling, Git publishing, and Railway deployment remain separate work.
+scheduling remains separate work. Opt-in Git publishing and Railway deployment
+are described below.
 `Dockerfile.railway` consumes the tracked catalog; the local
 Compose app still consumes its independent `.artifacts/<id>` working store.
 
 ### Manual GitHub Actions refresh dry run
 
-`.github/workflows/refresh-dry-run.yml` adds **Locale refresh dry run** with a
+`.github/workflows/refresh-dry-run.yml` provides **Locale refresh and deploy** with a
 manual `workflow_dispatch` trigger. After this workflow is pushed to the default
-branch, select **Actions → Locale refresh dry run → Run workflow → denver**.
+branch, select **Actions → Locale refresh and deploy → Run workflow → denver**.
+Leave `deploy` unchecked for a read-only dry run.
 No remote run is implied by local verification.
 
 The manual run also accepts `capture_concurrency` (1–4, default 2). Select 3 for
@@ -311,7 +313,7 @@ Run `npm run test:roxy-transport` for transport and secret-isolation tests; curl
 and loopback permission are required. `docker run --rm event-calendar-refresh-test`
 also runs these tests in the refresh image.
 
-The refresh dry-run workflow uses read-only repository permissions and no Railway secret. It
+The refresh job uses read-only repository permissions and no Railway secret. It
 builds the existing refresh image, copies only the selected locale into a new
 runner directory, and captures fresh source data there. It does not start from
 an empty catalog: the tracked snapshot supplies identity and last-valid records.
@@ -330,7 +332,8 @@ Download `snapshot-<locale>-<run>-<attempt>` and
 The snapshot contains the manifest and referenced source files, not raw captures
 or backup generations. Diagnostics include the refresh log, JSON report, source
 summary, and HTTP-check sample when those stages complete. Treat reports as public
-repository diagnostics; no credentials are passed to the capture container.
+repository diagnostics. Only the dedicated Roxy proxy configuration reaches
+capture; the Railway credential never reaches ingestion.
 
 The refresh step streams its combined output through `tee` and keeps the same
 output in `refresh.log`. It preserves Docker's exit code, checks log-write
@@ -342,13 +345,64 @@ run directories remain private; no recursive permission change is needed.
 
 Runs for one locale cannot overlap. The 180-minute job timeout is an operational
 cap, not a duration estimate. A timeout can leave only partial diagnostics and
-does not produce a verified snapshot. There is no schedule, Git commit/push,
-Railway deployment, or change to the local Compose data store.
+does not produce a verified snapshot. With `deploy` unchecked there is no Git
+commit/push or Railway deployment. Neither mode changes the local Compose data
+store. There is no schedule yet.
 
 Local checks: `npm run test:refresh-dry-run`, `npm run test:refresh`, and the
 existing `refresh-test` container. Workflow syntax is checked with `actionlint`.
 GitHub runner access to each venue and artifact upload permissions require a
 separately authorized remote run.
+
+### Manual Railway deployment through Actions
+
+Select branch `main`, locale `denver`, and enable `deploy` in **Locale refresh
+and deploy**. Keep the tested capture concurrency and Roxy proxy configuration.
+Optional probes are not required for deployment.
+
+Required repository secrets are `HTTP_PROXY` (the existing full Roxy proxy URL)
+and `WITHADULT_RAILWAY_API_TOKEN` (the Railway project token for `withadult.com` /
+`production`). Actions maps the latter to `RAILWAY_TOKEN`, not `RAILWAY_API_TOKEN`,
+only for credential checking and deployment. Never commit either secret value.
+
+Only the deployment job requests `contents: write`. The repository must permit
+its `GITHUB_TOKEN` to push to `main`; branch-protection failures stop the workflow
+before upload. Deployment requires every registered source to publish. Individual
+record rejections remain in the report but do not block deployment. Provider
+validation and source failure retention are unchanged.
+
+The job downloads this run attempt's verified snapshot and report, validates and
+packages the locale, and commits only its catalog. It rejects unrelated changes
+and stops if `main` advanced during refresh. Pushes are fast-forward only. A
+second branch check runs immediately before upload. Do not run concurrent manual
+deployments to the same Railway service.
+
+Railway CLI `5.26.2` uploads the isolated context to the exact target in
+`.github/railway-denver.json`. The job polls the upload's deployment ID and checks
+`/healthz`, `/api/site`, and `/api/calendar`. The event-array SHA-256 must match the
+local container check. An event-retention expiry during deployment can cause a
+safe mismatch failure; inspect and rerun instead of weakening the check.
+
+`deployment-<locale>-<run>-<attempt>` retains the snapshot commit, upload receipt,
+and live-check result when available, for seven days. Upload alone is not success.
+The first remote run remains unverified until it is executed.
+
+Denver uses `Dockerfile.railway`, `LOCALE=denver`, healthcheck `/healthz`, and port
+8080 at `https://denver-production.up.railway.app`. No volume, Git autodeploy, or
+custom DNS was added. The site's canonical origin remains `https://denver.withadult.com`;
+connect that domain separately before launch.
+
+Recovery: capture, validation, or push failures do not deploy. Deployment failure
+can leave a newer snapshot commit in Git; start a fresh run after fixing the
+failure. Do not force-push or roll back Git automatically. Retain previous healthy
+Railway deployments for later operator rollback. The first deployment has no
+previous image. A failed post-deployment check reports failure but does not
+automatically remove or replace the deployment.
+
+Checks: `npm run test:deploy`, `npm run test:refresh-dry-run`, `npm run test:refresh`,
+repository checks, `actionlint`, and the refresh-test and Railway app containers.
+Local checks do not prove Actions secret access, branch-write permission, or
+remote service health.
 
 ### Roxy / Afton capture and replay
 
@@ -769,7 +823,7 @@ Create or select a Railway service and configure:
   at `/data`, which would hide the packaged snapshot.
 - When deploying explicitly from a CLI or future Actions workflow, disable Git
   autodeploys to avoid duplicate deployments. A Git-only deployment can instead
-  use Railway autodeploys; no Actions workflow is configured yet.
+  use Railway autodeploys, but must not also enable the Actions deployment mode.
 
 After authenticating with the Railway CLI, replace the three placeholders below
 with the exact intended deployment target. This command uploads and deploys:

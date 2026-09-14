@@ -4,6 +4,60 @@
 - Date: 2026-09-12
 - Supersedes the single-Denver deployment assumptions in ADRs 0014, 0015 and 0018.
 
+## Manual Actions deployment — September 14, 2026
+
+Extend the tested refresh workflow with an opt-in `deploy` input, default false,
+rather than duplicate its capture/build steps or enable competing Git autodeploys.
+Daily scheduling is deferred until a successful manual deployment.
+
+The refresh job remains read-only. A separate main-only job gets Git write access,
+downloads the exact run attempt's verified artifacts, validates and packages the
+locale, commits only its catalog, and uploads that context to explicit Railway IDs.
+Both jobs share the workflow's locale concurrency lock. Stale branch checks and
+fast-forward-only pushes prevent merging stale captures into newer repository state.
+An additional branch check runs before upload; independent manual Railway uploads
+must not run concurrently. No deployment lock spans external operators.
+
+All registered sources must publish. Individual record rejections do not block
+deployment and remain in diagnostic artifacts. This does not change source
+validation or failure retention. Dry-run mode keeps its existing partial-result
+failure signal and does not publish to Git or Railway.
+
+The Railway project token is mapped from Actions secret
+`WITHADULT_RAILWAY_API_TOKEN` to `RAILWAY_TOKEN` only in credential/deployment steps.
+It is not passed to ingestion, Docker builds, or the exported context. Only the
+deployment job has `contents: write`. The first run must verify secret availability
+and branch-write permission; local permission to inspect GitHub secrets is absent.
+
+Deployment completion requires the exact upload ID to reach `SUCCESS`, followed by
+HTTP health, locale, nonempty calendar, and event-array digest verification against
+the local app check. Retention expiry during a run can fail the digest check safely.
+No automatic rollback is attempted. A failed deployment can leave a valid newer
+snapshot commit; rerun after fixing the cause. The first deployment has no prior
+image to restore. Later deployments should retain the previous healthy image.
+
+Denver's target is recorded in `.github/railway-denver.json`. Railway settings use
+the existing Dockerfile, locale build variable, `/healthz`, port 8080, and no volume.
+A Railway service domain is used for verification; custom DNS remains separate.
+README documents invocation, secrets, checks, and recovery. Local tests are not
+evidence of a successful remote deployment.
+
+### Local deployment verification
+
+| Evidence source | Observation | Supported finding | Material limit |
+| --- | --- | --- | --- |
+| `npm run test:deploy` | Six tests passed, including temporary Git remotes and a real local HTTP server | Gates, scoped commits, stale-run rejection, exact deployment selection, and digest mismatch rejection work on fixtures | Railway CLI responses are stubbed |
+| `npm run test:refresh`, `npm run test:refresh-dry-run`, `npm run test:locale-tools` | 19, 14, and 2 tests passed | Existing refresh and packaging contracts remain covered | Local tests, not live venue requests |
+| `npm run test:contracts` | Go checks reused unchanged cached build steps; 91 frontend tests passed with the Go handoff | Producer/consumer contracts passed | No application behavior changed |
+| Refresh-test image build and `docker run --rm event-calendar-refresh-test` | Build succeeded; 13 tests passed | Real capture fixtures reach Go publication, export, and the HTTP consumer | Synthetic inputs in local Docker |
+| Exported Denver context and running Railway image | Build succeeded; health, locale, nonempty calendar and digest checks passed; five event rows inspected | The selected tracked snapshot is readable through the packaged app | Local Docker, not Railway |
+| Formatting, lint, frontend build, `git diff --check`, and `actionlint` | Passed | Static and workflow checks passed | Does not verify remote permissions |
+
+The first loopback test was blocked by the sandbox and passed after permission
+was granted. A staged-rename regression test exposed a path-check issue in the new
+Git helper; disabling rename grouping fixed it, and the same test then passed.
+No repository snapshot was changed by local verification.
+
 ## Decision
 
 Keep one shared codebase and one locale per application process and image. Do

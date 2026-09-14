@@ -468,7 +468,17 @@ test("HTTP checks reject unhealthy, empty and wrong-locale calendars", async () 
   await once(server, "listening");
   const base = `http://127.0.0.1:${server.address().port}`;
   try {
-    await checkCalendar(base, "denver");
+    const first = await checkCalendar(base, "denver");
+    assert.match(first.calendar_sha256, /^[a-f0-9]{64}$/);
+    assert.equal(
+      (await checkCalendar(base, "denver")).calendar_sha256,
+      first.calendar_sha256,
+    );
+    data.events[0].title = "Changed event";
+    assert.notEqual(
+      (await checkCalendar(base, "denver")).calendar_sha256,
+      first.calendar_sha256,
+    );
     await assert.rejects(checkCalendar(base, "other"));
     health = 503;
     await assert.rejects(checkCalendar(base, "denver"));

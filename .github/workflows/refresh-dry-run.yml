@@ -1,15 +1,19 @@
-name: Locale refresh dry run
+name: Locale refresh and deploy
 
 on:
   workflow_dispatch:
     inputs:
       locale:
-        description: Locale to refresh without publishing or deploying
+        description: Locale to refresh
         required: true
         type: choice
         options:
           - denver
         default: denver
+      deploy:
+        description: Commit the verified snapshot and deploy to Railway (main only)
+        type: boolean
+        default: false
       capture_concurrency:
         description: Maximum independent captures (shared providers remain serial)
         required: true
@@ -48,6 +52,11 @@ jobs:
       LOCALE: ${{ inputs.locale }}
       CAPTURE_CONCURRENCY: ${{ inputs.capture_concurrency }}
     steps:
+      - name: Require main for deployment mode
+        if: inputs.deploy
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: test "$WORKFLOW_REF" = refs/heads/main
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
@@ -142,7 +151,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
       - name: Flag partial refresh
+        if: ${{ !inputs.deploy }}
         run: node --input-type=module -e 'import { readFileSync } from "node:fs"; const r=JSON.parse(readFileSync("dry-run-results/report.json","utf8")); if(r.status!=="success") { console.error("Partial refresh. Inspect the saved reports and snapshot."); process.exitCode=1; }'
+      - name: Require all sources for deployment
+        if: inputs.deploy
+        run: node scripts/deploy-locale.mjs gate "$LOCALE" dry-run-results
       - name: Stop verification container
         if: always()
         run: |
@@ -150,3 +163,68 @@ jobs:
             docker logs withadult-dry-run-app
             docker stop withadult-dry-run-app
           fi
+
+  deploy:
+    needs: dry-run
+    if: inputs.deploy && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      LOCALE: ${{ inputs.locale }}
+    steps:
+      - name: Check deployment credential
+        env:
+          RAILWAY_TOKEN: ${{ secrets.WITHADULT_RAILWAY_API_TOKEN }}
+        run: test -n "$RAILWAY_TOKEN" || { echo 'Missing WITHADULT_RAILWAY_API_TOKEN Actions secret' >&2; exit 1; }
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+      - name: Preserve previous snapshot
+        run: mv "locales/$LOCALE/catalog" "$RUNNER_TEMP/previous-catalog"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: snapshot-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: locales/${{ inputs.locale }}/catalog/
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: report-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deployment-results/
+      - name: Validate and package snapshot
+        run: |
+          node scripts/deploy-locale.mjs gate "$LOCALE" "$RUNNER_TEMP/deployment-results"
+          node scripts/package-locale.mjs "$LOCALE" "$RUNNER_TEMP/railway-context"
+      - name: Commit and push snapshot
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          node scripts/publish-snapshot.mjs "$LOCALE" "$EXPECTED_HEAD" > "$RUNNER_TEMP/deployment-results/snapshot-commit.txt"
+          cat "$RUNNER_TEMP/deployment-results/snapshot-commit.txt" >> "$GITHUB_STEP_SUMMARY"
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli@5.26.2
+      - name: Deploy and verify Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.WITHADULT_RAILWAY_API_TOKEN }}
+        run: |
+          test -n "$RAILWAY_TOKEN" || { echo 'Missing WITHADULT_RAILWAY_API_TOKEN Actions secret' >&2; exit 1; }
+          project=$(node -p "require('./.github/railway-' + process.env.LOCALE + '.json').project")
+          environment=$(node -p "require('./.github/railway-' + process.env.LOCALE + '.json').environment")
+          service=$(node -p "require('./.github/railway-' + process.env.LOCALE + '.json').service")
+          git fetch origin refs/heads/main
+          test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)" || { echo 'main changed before deployment; start a new run' >&2; exit 1; }
+          railway up "$RUNNER_TEMP/railway-context" --path-as-root --project "$project" --environment "$environment" --service "$service" --detach --json --message "Snapshot $(git rev-parse HEAD)" > "$RUNNER_TEMP/deployment-results/upload.json"
+          node scripts/deploy-locale.mjs verify "$LOCALE" "$RUNNER_TEMP/deployment-results"
+          cat "$RUNNER_TEMP/deployment-results/live-check.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save deployment diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: deployment-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deployment-results/
+          if-no-files-found: warn
+          retention-days: 7
