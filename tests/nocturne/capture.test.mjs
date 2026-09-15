@@ -109,6 +109,91 @@ test("exhausted retries fail the month and abort capture", async () => {
   assert.equal(calls.length, 4);
   assert.equal(calls.filter((url) => url.includes("format=ical")).length, 3);
 });
+test("policy page interstitials retry and capture succeeds", async () => {
+  const calls = [];
+  const result = await capture(
+    async (u) => {
+      const url = String(u);
+      calls.push(url);
+      if (url.includes("/faq")) {
+        // The venue edge serves transient 202 HTML interstitials; a 2xx HTML
+        // page must not be captured as the reviewed FAQ.
+        if (calls.filter((c) => c === url).length === 1)
+          return new Response("interstitial", {
+            status: 202,
+            headers: { "content-type": "text/html" },
+          });
+        return new Response("<html>reviewed policy</html>", {
+          headers: { "content-type": "text/html" },
+        });
+      }
+      return new Response("BEGIN:VCALENDAR\r\nEND:VCALENDAR", {
+        headers: { "content-type": "text/calendar" },
+      });
+    },
+    new Date("2026-09-14T18:00:00Z"),
+    settings,
+  );
+  assert.equal(result.snapshot.pages.policy, "<html>reviewed policy</html>");
+  // Pass one needed one retry; the verification pass fetched it once.
+  assert.equal(calls.filter((url) => url.includes("/faq")).length, 3);
+});
+test("exhausted policy retries abort capture before any month", async () => {
+  const calls = [];
+  await assert.rejects(
+    capture(
+      async (u) => {
+        calls.push(String(u));
+        if (String(u).includes("/faq"))
+          return new Response("interstitial", {
+            status: 202,
+            headers: { "content-type": "text/html" },
+          });
+        return new Response("BEGIN:VCALENDAR\r\nEND:VCALENDAR", {
+          headers: { "content-type": "text/calendar" },
+        });
+      },
+      new Date("2026-09-14T18:00:00Z"),
+      settings,
+    ),
+    /Policy page failure after 3 attempts \(HTTP 202 text\/html\)/,
+  );
+  assert.equal(calls.filter((url) => url.includes("/faq")).length, 3);
+  assert.equal(calls.filter((url) => url.includes("format=ical")).length, 0);
+});
+test("a 202 calendar interstitial retries even with a calendar content type", async () => {
+  const calls = new Map();
+  const result = await capture(
+    async (u) => {
+      const url = String(u);
+      const count = (calls.get(url) || 0) + 1;
+      calls.set(url, count);
+      if (url.includes("/faq"))
+        return new Response("policy", {
+          headers: { "content-type": "text/html" },
+        });
+      if (url.endsWith("date=2026-09-01") && count === 1)
+        return new Response(
+          "BEGIN:VCALENDAR\r\nINTERSTITIAL\r\nEND:VCALENDAR",
+          {
+            status: 202,
+            headers: { "content-type": "text/calendar" },
+          },
+        );
+      return new Response("BEGIN:VCALENDAR\r\nEND:VCALENDAR", {
+        headers: { "content-type": "text/calendar" },
+      });
+    },
+    new Date("2026-09-14T18:00:00Z"),
+    settings,
+  );
+  // The interstitial body must never be captured as the month's calendar.
+  assert.equal(
+    result.snapshot.pages.months["2026-09-01"],
+    "BEGIN:VCALENDAR\r\nEND:VCALENDAR",
+  );
+  assert.equal(calls.get(settings.endpoint + "&date=2026-09-01"), 3);
+});
 test("body-level invalid data does not retry", async () => {
   const calls = [];
   await assert.rejects(

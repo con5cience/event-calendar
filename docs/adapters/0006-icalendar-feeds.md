@@ -97,11 +97,12 @@ in Denver's existing refresh workflow; no remote deployment was performed.
 The September 15 workflow refresh failed its all-source deployment gate when
 one calendar request returned a transient response-level failure; the feed was
 healthy immediately after and every other source published. Monthly calendar
-requests now retry response-level failures at most twice — network errors,
-unsuccessful statuses, or non-calendar content types — with 500ms then 1s
+and policy requests now retry response-level failures at most twice —
+network errors, any status other than HTTP 200, or an unexpected content
+type — with 500ms then 1s
 backoff. A fresh attempt discards all bytes, and one 30-second deadline spans
 every attempt for a request. Body-level invalid data (size, encoding, framing)
-and the policy page remain single-attempt. Exhausted retries still fail the
+remains single-attempt. Exhausted retries still fail the
 source and retain its last valid data; the all-source deployment gate is
 unchanged. Parsing, reconciliation, and publication are unchanged.
 
@@ -121,6 +122,15 @@ sizes and safe status/type/byte diagnostics; the capture's own bounded retry
 loop remains the only retry loop. Scope checks admit only the configured
 `music?format=ical&date=YYYY-MM-DD` requests and the exact policy URL.
 Deployment gating is unchanged.
+
+A third refresh captured cleanly through the proxy but failed ingestion with
+`unreviewed admission policy`: the venue edge had served a transient 202 HTML
+interstitial for the FAQ, and a 2xx HTML response is indistinguishable from
+the reviewed page at the transport layer, so the interstitial was captured and
+correctly rejected by the reviewed-clause gate. Calendar and policy reads now
+accept only HTTP 200 with the expected content type and share the same
+bounded response-level retry; the clause gate and deployment gating are
+unchanged.
 
 ## HoldMyTicket operational context
 
