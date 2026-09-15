@@ -5,16 +5,41 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// One workflow refresh lost its all-source deployment gate to a single
+// transient response from this public feed while the endpoint was healthy
+// immediately after. Calendar requests therefore retry response-level
+// failures at most twice — network errors, unsuccessful statuses, or a
+// non-calendar content type — with 500ms then 1s backoff. A fresh attempt
+// discards all bytes, and one 30-second deadline spans every attempt.
+// Body-level invalid data (size, encoding, framing) and the policy page
+// remain single-attempt.
+async function openCalendar(url, fetcher) {
+  const signal = AbortSignal.timeout(30000);
+  let last = "no response";
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1)
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt - 1)));
+    try {
+      const response = await fetcher(url, { redirect: "error", signal });
+      if (
+        response.ok &&
+        response.headers.get("content-type")?.startsWith("text/calendar")
+      )
+        return response;
+      last = response.ok
+        ? "non-calendar content type"
+        : `HTTP ${response.status}`;
+    } catch (error) {
+      last = error.message;
+    }
+  }
+  throw Error(
+    `Calendar HTTP or content-type failure after 3 attempts (${last})`,
+  );
+}
+
 async function calendar(url, fetcher) {
-  const response = await fetcher(url, {
-    redirect: "error",
-    signal: AbortSignal.timeout(30000),
-  });
-  if (
-    !response.ok ||
-    !response.headers.get("content-type")?.startsWith("text/calendar")
-  )
-    throw Error("Calendar HTTP or content-type failure");
+  const response = await openCalendar(url, fetcher);
   const reader = response.body.getReader(),
     chunks = [];
   let size = 0;

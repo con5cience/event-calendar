@@ -92,6 +92,19 @@ published. Source-specific HTML parsing is inert.
 See ADR 0019 for publication and runtime verification. The source is registered
 in Denver's existing refresh workflow; no remote deployment was performed.
 
+## Nocturne capture retries — September 15, 2026
+
+The September 15 workflow refresh failed its all-source deployment gate when
+one calendar request returned a transient response-level failure; the feed was
+healthy immediately after and every other source published. Monthly calendar
+requests now retry response-level failures at most twice — network errors,
+unsuccessful statuses, or non-calendar content types — with 500ms then 1s
+backoff. A fresh attempt discards all bytes, and one 30-second deadline spans
+every attempt for a request. Body-level invalid data (size, encoding, framing)
+and the policy page remain single-attempt. Exhausted retries still fail the
+source and retain its last valid data; the all-source deployment gate is
+unchanged. Parsing, reconciliation, and publication are unchanged.
+
 ## HoldMyTicket operational context
 
 September 13 update: the common capture wrapper uses each locale's configured

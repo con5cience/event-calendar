@@ -472,6 +472,14 @@ SITE_DIR=locales/denver CAPTURE_SOURCE=nocturne node tests/nocturne/capture.mjs
 Replay with `replay-nocturne --store /data --config /config/nocturne.yaml --snapshot /capture/snapshot.json --now <captured_at>` using the ingestion container and the Meow Wolf mount pattern above.
 The established source requires its prior artifact. Capture does not publish by
 itself. The existing locale refresh workflow runs both stages.
+Monthly calendar requests retry response-level failures at most twice —
+network errors, unsuccessful statuses, or non-calendar content types — with
+500ms then 1s backoff; one workflow refresh lost its deployment gate to a
+single such transient failure while the feed was healthy immediately after.
+A fresh attempt discards all bytes, and one 30-second deadline spans every
+attempt. Body-level invalid data (size, encoding, framing) and the policy
+page fail immediately. Exhausted retries still fail the source and retain its
+last valid data; the all-source deployment gate is unchanged.
 Sets with separate reservations are separate events. With Adult ages 10–17
 require a parent/guardian, table reservation and venue confirmation. Prices are
 not ingested. Test with `npm run test:nocturne`, the Docker Go suite, and
