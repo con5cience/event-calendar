@@ -105,6 +105,23 @@ and the policy page remain single-attempt. Exhausted retries still fail the
 source and retain its last valid data; the all-source deployment gate is
 unchanged. Parsing, reconciliation, and publication are unchanged.
 
+## Nocturne proxied capture — September 15, 2026
+
+A second refresh attempt still failed the all-source gate: every calendar
+attempt now reported HTTP 200 with a non-calendar content type from the
+GitHub-hosted runner, while the identical Node fetch succeeded immediately
+from other networks and the feed stayed healthy. The runner's datacenter
+egress is selectively served non-calendar interstitials by the venue edge, so
+response-level retries cannot recover. Nocturne capture now routes its
+calendar and policy requests through the same reviewed capture proxy as Roxy
+when `ROXY_PROXY_URL` is configured, failing closed when `ROXY_PROXY_REQUIRED`
+is set without a proxy; direct local capture is unchanged. The proxied
+transport performs one confirmed-tunnel curl attempt per request with bounded
+sizes and safe status/type/byte diagnostics; the capture's own bounded retry
+loop remains the only retry loop. Scope checks admit only the configured
+`music?format=ical&date=YYYY-MM-DD` requests and the exact policy URL.
+Deployment gating is unchanged.
+
 ## HoldMyTicket operational context
 
 September 13 update: the common capture wrapper uses each locale's configured

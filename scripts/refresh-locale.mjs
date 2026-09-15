@@ -167,7 +167,9 @@ async function captureSource({ site, sourceID, directory, logging }) {
       env: {
         SITE_DIR: site,
         CAPTURE_SOURCE: sourceID,
-        ...(sourceID === "roxy"
+        // The reviewed capture proxy serves the sources whose hosts challenge
+        // datacenter egress; every other child keeps a proxy-free environment.
+        ...(["roxy", "nocturne"].includes(sourceID)
           ? {
               ROXY_PROXY_URL: process.env.ROXY_PROXY_URL || "",
               ROXY_PROXY_REQUIRED: process.env.ROXY_PROXY_REQUIRED || "",

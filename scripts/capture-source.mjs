@@ -36,9 +36,16 @@ else if (runner.feed === "hmt") {
   result = await module[runner.fn || "capture"](
     ...(sourceID === "roxy" && profile.adapter === "afton"
       ? [(await import("./roxy-transport.mjs")).roxyFetcher(profile.endpoint)]
-      : runner.keyed
-        ? [sourceID]
-        : []),
+      : sourceID === "nocturne"
+        ? [
+            (await import("./nocturne-transport.mjs")).nocturneFetcher(
+              profile.endpoint,
+              profile.policy,
+            ),
+          ]
+        : runner.keyed
+          ? [sourceID]
+          : []),
   );
 }
 const snapshot =

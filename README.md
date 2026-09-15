@@ -194,10 +194,11 @@ Refresh logs, reports, snapshot artifacts, and deployment checks remain enabled.
 
 Roxy ingestion supports proxied curl through `ROXY_PROXY_URL`. The refresh
 workflow maps the existing Actions `HTTP_PROXY` secret to that variable and sets
-`ROXY_PROXY_REQUIRED=1`: missing or invalid configuration fails Roxy and retains
-its last-valid data. It does not silently fall back to direct access. The refresh
-coordinator passes these variables only to Roxy's capture process; all other
-capture, ingestion, and packaging children have them removed. Curl also removes
+`ROXY_PROXY_REQUIRED=1`: missing or invalid configuration fails the proxied
+sources and retains
+their last-valid data. It does not silently fall back to direct access. The refresh
+coordinator passes these variables only to the Roxy and Nocturne capture
+processes; all other capture, ingestion, and packaging children have them removed. Curl also removes
 proxy-related environment variables and receives credentials through stdin.
 
 Local runs without `ROXY_PROXY_URL` keep the existing direct Node fetch behavior,
@@ -480,6 +481,14 @@ A fresh attempt discards all bytes, and one 30-second deadline spans every
 attempt. Body-level invalid data (size, encoding, framing) and the policy
 page fail immediately. Exhausted retries still fail the source and retain its
 last valid data; the all-source deployment gate is unchanged.
+Nocturne shares the reviewed capture proxy: when `ROXY_PROXY_URL` is configured,
+its calendar and policy requests use the confirmed-tunnel curl transport —
+one attempt per request, so the capture's own bounded retry loop stays the only
+retry loop — and `ROXY_PROXY_REQUIRED=1` without a proxy fails closed. Direct
+local capture without the proxy is unchanged. The proxied transport admits
+only the configured `music?format=ical&date=YYYY-MM-DD` requests and the exact
+policy URL, and logs safe status, type, and byte diagnostics for rejected
+responses.
 Sets with separate reservations are separate events. With Adult ages 10–17
 require a parent/guardian, table reservation and venue confirmation. Prices are
 not ingested. Test with `npm run test:nocturne`, the Docker Go suite, and

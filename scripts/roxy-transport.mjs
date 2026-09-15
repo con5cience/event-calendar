@@ -67,7 +67,10 @@ export async function withTransportRetries(
   }
 }
 
-export function decodeCurlResponse(bytes) {
+export function decodeCurlResponse(
+  bytes,
+  mimeTypes = ["application/json", "text/html"],
+) {
   let rest = bytes,
     headerBytes = 0;
   for (;;) {
@@ -96,9 +99,7 @@ export function decodeCurlResponse(bytes) {
         if (headers.has(key)) throw Error("curl duplicate content type");
         headers.set(
           key,
-          ["application/json", "text/html"].includes(mime)
-            ? mime
-            : "application/octet-stream",
+          mimeTypes.includes(mime) ? mime : "application/octet-stream",
         );
       }
       if (
