@@ -735,18 +735,20 @@ without a valid catalog is an error, not an empty calendar.
 
 Optional environment settings:
 
-| Variable            | Default                           | Meaning                                       |
-| ------------------- | --------------------------------- | --------------------------------------------- |
-| `CALENDAR_PORT`     | `8090`                            | Local HTTP port; bound to loopback            |
-| `CALENDAR_DATA_DIR` | `./.artifacts/${CALENDAR_LOCALE}` | Directory containing `catalog.json`           |
-| `WEEK_EVENT_LIMIT`  | `10`                              | Visible event cards per date in week view     |
-| `MONTH_EVENT_LIMIT` | `5`                               | Visible event cards per date in month view    |
-| `DAY_EVENT_LIMIT`   | `0`                               | Per-date day-view limit; zero means unlimited |
+| Variable            | Default                           | Meaning                                          |
+| ------------------- | --------------------------------- | ------------------------------------------------ |
+| `CALENDAR_PORT`     | `8090`                            | Local HTTP port; bound to loopback               |
+| `CALENDAR_DATA_DIR` | `./.artifacts/${CALENDAR_LOCALE}` | Directory containing `catalog.json`              |
+| `WEEK_EVENT_LIMIT`  | `10`                              | Reserved; kept in the payload, no longer applied |
+| `MONTH_EVENT_LIMIT` | `5`                               | Reserved; kept in the payload, no longer applied |
+| `DAY_EVENT_LIMIT`   | `0`                               | Desktop Day per-date cap; zero means unlimited   |
 
-Week and month limits must be positive integers. These limits apply only to
-the phone's scrolling lists; desktop Week and Month use available cell height instead.
-A finite day limit also shows a
-Show All control; full day expansion is covered by the UI tests when configured.
+Week and month limits must be positive integers and remain in the API payload
+for compatibility, but no view applies them: phones list every event for each
+date and scroll, and desktop Week and Month fit their available cell height.
+A finite day limit caps desktop Day view with a
+Show All control; phones never cap, and full day expansion is covered by the UI
+tests when configured.
 
 ## Railway snapshot deployment
 
@@ -962,7 +964,7 @@ Venue checkboxes match any selected venue; `All` removes the venue restriction.
 Removing the last selected venue also returns to `All`. Search matches every query
 word, case-insensitively, across available public event metadata throughout the
 loaded date range. It does not change the calendar date or view. All active filters
-combine before the day/week/month display limits are applied.
+combine before any display capping is applied.
 
 Advertised age policies remain available in event details and search. Event policies
 replace venue defaults. There is no separate age-category filter.
@@ -1062,8 +1064,9 @@ sit between the date range and search. With Adult reveals the adjacent child's
 age picker on desktop and an age row below on mobile. The event modal Close button
 uses a centered 44px target.
 FullCalendar owns date layout, navigation, and event placement. Desktop uses DayGrid;
-phones use List views. A presentation-only Show All row caps mobile dates without
-changing the domain data. All-day placement is used only to arrange date cards; it
+phones use List views. Phones list every event for each date and scroll vertically;
+no phone view caps or offers a Show All control, and the domain data never changes.
+All-day placement is used only to arrange date cards; it
 does not assign an event duration. Visible time labels always use the venue timezone.
 Month view shows only the selected month's dates and events. The desktop grid uses
 only the required week rows, with blank cells for weekday alignment.
@@ -1077,8 +1080,8 @@ slicing to reserve only the measured overflow-link height, not a whole event row
 opens the full day. Month cards use tighter vertical padding without smaller text.
 Desktop event cards size to their text and padding; Day cards can grow when text
 wraps. Phone event cards retain a 44px minimum touch height; toolbar
-and Show All controls keep their existing sizing.
-`Show All` is horizontally centered within its date cell or mobile date section.
+controls keep their existing sizing.
+`Show All` is horizontally centered within its date cell.
 It uses a muted plum background with bold lavender text, a brighter hover state,
 and an inset keyboard-focus outline without adding height.
 Phone lists and desktop Day retain their scrolling layout. Side gutters are each

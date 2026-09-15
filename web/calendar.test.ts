@@ -105,21 +105,16 @@ describe("calendar projection", () => {
     ).toBe("19:00 MST");
     expect(displayTime(event("unknown"))).toBe("");
   });
-  it("caps each day separately and adds a presentation-only drill-in row", () => {
+  it("projects every event without capping or mutating the domain records", () => {
     const events = Array.from({ length: 14 }, (_, i) =>
       event(String(i).padStart(2, "0")),
     );
     events.push(event("next day", { date: "2026-09-09" }));
     const before = JSON.stringify(events);
-    const rows = projectEvents(events, 10, true);
-    expect(rows.filter((r) => r.extendedProps.kind === "event")).toHaveLength(
-      11,
-    );
-    expect(rows.filter((r) => r.extendedProps.kind === "more")).toHaveLength(1);
-    expect(
-      rows.find((r) => r.extendedProps.kind === "more")?.extendedProps
-        .hiddenCount,
-    ).toBe(4);
+    const rows = projectEvents(events);
+    expect(rows).toHaveLength(15);
+    expect(rows.filter((r) => r.start === "2026-09-08")).toHaveLength(14);
+    expect(rows.every((r) => r.allDay)).toBe(true);
     expect(JSON.stringify(events)).toBe(before);
   });
   it("formats both sides of Denver DST transitions without inventing times", () => {
@@ -133,9 +128,8 @@ describe("calendar projection", () => {
         expected,
       );
   });
-  it("leaves the domain dataset complete and day view unlimited by default", () => {
+  it("keeps the domain dataset complete regardless of any display limit", () => {
     const events = Array.from({ length: 14 }, (_, i) => event(String(i)));
-    expect(projectEvents(events, null, true)).toHaveLength(14);
-    expect(projectEvents(events, 5, false)).toHaveLength(14);
+    expect(projectEvents(events)).toHaveLength(14);
   });
 });

@@ -167,14 +167,15 @@ function Calendar({ data }: { data: CalendarData }) {
   }, [viewMenuOpen]);
   const returnFocus = useRef<HTMLElement | null>(null);
   const actualView = viewName(view, mobile);
-  const fitGrid = view !== "day" && !mobile;
   const [dayExpanded, setDayExpanded] = useState(false);
+  const fitGrid = view !== "day" && !mobile;
+  // Phones list every event on every date and scroll vertically. Only desktop
+  // Day view can cap, and only until the visitor expands the day.
   const limit =
-    (view === "day" && dayExpanded) || fitGrid ? null : data.limits[view];
-  const events = useMemo(
-    () => projectEvents(matchingEvents, limit, mobile || fitGrid),
-    [matchingEvents, limit, mobile, fitGrid],
-  );
+    mobile || fitGrid || (view === "day" && dayExpanded)
+      ? null
+      : data.limits.day;
+  const events = useMemo(() => projectEvents(matchingEvents), [matchingEvents]);
   useEffect(() => {
     const media = matchMedia("(max-width: 767px)");
     const update = () => setMobile(media.matches);
@@ -540,20 +541,9 @@ function Calendar({ data }: { data: CalendarData }) {
             }
             eventClass="calendar-event-shell"
             eventContent={(info) => {
-              const row = info.event
-                .extendedProps as ProjectedEvent["extendedProps"];
-              if (row.kind === "more")
-                return (
-                  <button
-                    className="event-card show-all"
-                    onClick={() => drillDay(row.date, true)}
-                  >
-                    {fitGrid
-                      ? "Show All"
-                      : `Show All (${row.hiddenCount} more)`}
-                  </button>
-                );
-              const event = row.record!;
+              const event = (
+                info.event.extendedProps as ProjectedEvent["extendedProps"]
+              ).record;
               const cancelled = displayStatus(event) === "Cancelled";
               return (
                 <button

@@ -39,7 +39,8 @@ test("desktop Week shows more than ten when they fit and only offers Show All fo
     "data-view",
     "listWeek",
   );
+  // Phones list every event for the date instead of capping.
   await expect(
     page.locator('[data-event-date="2026-09-08"]:visible'),
-  ).toHaveCount(10);
+  ).toHaveCount(14);
 });

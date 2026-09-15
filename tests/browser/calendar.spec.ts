@@ -26,13 +26,15 @@ test("explicit month selection survives reload on both layouts", async ({
   await expect
     .poll(() => page.locator('[data-event-date="2026-09-08"]:visible').count())
     .toBeGreaterThan(0);
-  expect(
-    await page.locator('[data-event-date="2026-09-08"]:visible').count(),
-  ).toBeLessThanOrEqual(info.project.name === "phone" ? 5 : 14);
   if (info.project.name === "phone")
+    // Phones list every event for the date instead of capping.
     await expect(
       page.locator('[data-event-date="2026-09-08"]:visible'),
-    ).toHaveCount(5);
+    ).toHaveCount(14);
+  else
+    expect(
+      await page.locator('[data-event-date="2026-09-08"]:visible').count(),
+    ).toBeLessThanOrEqual(14);
   await page.reload();
   await expect(page.getByTestId("calendar")).toHaveAttribute("data-view", view);
 });
@@ -116,7 +118,7 @@ test("records a small-fixture performance baseline", async ({ page }, info) => {
     await selectCalendarView(page, "Week");
     await expect(
       page.locator('[data-event-date="2026-09-08"]:visible'),
-    ).toHaveCount(info.project.name === "phone" ? 10 : 14);
+    ).toHaveCount(14);
     const readyMs = performance.now() - started;
     const navigationStarted = performance.now();
     await selectCalendarView(page, "Month");
@@ -127,7 +129,7 @@ test("records a small-fixture performance baseline", async ({ page }, info) => {
       .toBeGreaterThan(0);
     expect(
       await page.locator('[data-event-date="2026-09-08"]:visible').count(),
-    ).toBeLessThanOrEqual(info.project.name === "phone" ? 5 : 14);
+    ).toBeLessThanOrEqual(14);
     const monthMs = performance.now() - navigationStarted;
     samples.push({
       sample,
@@ -223,14 +225,20 @@ test("configured day limit can expand without hiding events permanently", async 
   await page.goto("/");
   await selectCalendarView(page, "Week");
   const cards = page.locator('[data-event-date="2026-09-08"]:visible');
-  await expect(cards).toHaveCount(info.project.name === "phone" ? 4 : 14);
-  await selectCalendarView(page, "Day");
-  await expect(cards).toHaveCount(3);
-  await page
-    .getByText(/Show All/)
-    .first()
-    .click();
   await expect(cards).toHaveCount(14);
+  await selectCalendarView(page, "Day");
+  if (info.project.name === "phone") {
+    // Phones ignore every configured limit and scroll the full day.
+    await expect(cards).toHaveCount(14);
+    await expect(page.getByRole("button", { name: /Show All/ })).toHaveCount(0);
+  } else {
+    await expect(cards).toHaveCount(3);
+    await page
+      .getByText(/Show All/)
+      .first()
+      .click();
+    await expect(cards).toHaveCount(14);
+  }
 });
 
 test("normal startup is empty", async ({ page }) => {
@@ -339,7 +347,7 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
     page.getByTestId("event-gothic-000000000001").filter({ visible: true }),
   ).toBeVisible();
   const cards = page.locator('[data-event-date="2026-09-08"]:visible');
-  await expect(cards).toHaveCount(mobile ? 10 : 14);
+  await expect(cards).toHaveCount(14);
   await expect(cards.first()).toContainText("Untimed Alpha");
   if (!mobile) {
     const headers = page.locator("[data-calendar-day-header]");
@@ -357,11 +365,7 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
     path: `test-results/${info.project.name}-week.png`,
     fullPage: true,
   });
-  if (mobile)
-    await page
-      .getByText(/Show All/)
-      .first()
-      .click();
+  if (mobile) await page.getByTestId("date-2026-09-08").click();
   else
     await page
       .locator("[data-calendar-day-header]")
@@ -406,18 +410,23 @@ test("calendar views, limits, ordering, details, and date navigation", async ({
   await expect(dialog).not.toBeVisible();
   await expect(event).toBeFocused();
   await selectCalendarView(page, "Month");
-  await expect.poll(() => cards.count()).toBeGreaterThan(0);
-  expect(await cards.count()).toBeLessThanOrEqual(mobile ? 5 : 14);
-  await page
-    .getByRole("button", { name: /Show All/ })
-    .first()
-    .click();
-  await expect(cards).toHaveCount(14);
+  if (mobile) {
+    await expect(cards).toHaveCount(14);
+    await expect(page.getByRole("button", { name: /Show All/ })).toHaveCount(0);
+  } else {
+    await expect.poll(() => cards.count()).toBeGreaterThan(0);
+    expect(await cards.count()).toBeLessThanOrEqual(14);
+    await page
+      .getByRole("button", { name: /Show All/ })
+      .first()
+      .click();
+    await expect(cards).toHaveCount(14);
+  }
   await selectCalendarView(page, "Week");
   await page.getByRole("button", { name: "Previous", exact: true }).click();
   await expect(page.getByTestId("range")).toContainText("Aug 30");
   await page.getByRole("button", { name: "Next", exact: true }).click();
-  await expect(cards).toHaveCount(mobile ? 10 : 14);
+  await expect(cards).toHaveCount(14);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

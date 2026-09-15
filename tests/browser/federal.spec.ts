@@ -76,8 +76,8 @@ test("Federal publication supports details and With Adult", async ({
   // Direct event URLs reset filters. Re-enable the filter in the restricted week.
   await page.goto(base + restricted.public_path);
   await page.getByRole("button", { name: "Close event details" }).click();
-  // The live week can exceed its configured card limit as sources are added.
-  // Test age filtering in the event's full day, not its first ten week cards.
+  // Desktop grids cap week cards to the available cell height. Test age
+  // filtering in the event's full day, not its capped week cards.
   await openDay(restricted.date);
   await expect(
     page.getByTestId(`event-${restricted.id}`).filter({ visible: true }),

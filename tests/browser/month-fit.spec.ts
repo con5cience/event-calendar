@@ -131,7 +131,8 @@ test("desktop Month omits Show All when every event fits", async ({ page }) => {
     "data-view",
     "listMonth",
   );
+  // Phones list every event for the date instead of capping.
   await expect(
     page.locator('[data-event-date="2026-09-08"]:visible'),
-  ).toHaveCount(5);
+  ).toHaveCount(14);
 });

@@ -6,10 +6,27 @@ test("Show All is horizontally centered and still opens the full day", async ({
 }, info) => {
   await page.clock.setFixedTime(new Date("2026-09-09T01:00:00Z"));
   await page.goto("/");
-  // Month overflow remains centered at different heights; phone keeps its cap.
-  for (const height of info.project.name === "desktop" ? [900, 2000] : [844]) {
+  if (info.project.name === "phone") {
+    // Phones list every event for each date and scroll; no Show All control.
+    await selectCalendarView(page, "Month");
+    const cards = page.locator('[data-event-date="2026-09-08"]:visible');
+    await expect(cards).toHaveCount(14);
+    await expect(page.getByRole("button", { name: /Show All/ })).toHaveCount(0);
+    await page.getByTestId("date-2026-09-08").click();
+    await expect(page.getByTestId("calendar")).toHaveAttribute(
+      "data-view",
+      "listDay",
+    );
+    await expect(cards).toHaveCount(14);
+    await page.screenshot({
+      path: `test-results/show-all-phone-full-list.png`,
+    });
+    return;
+  }
+  // Month overflow remains centered at different heights.
+  for (const height of [900, 2000]) {
     await page.setViewportSize({
-      width: info.project.name === "desktop" ? 1440 : 390,
+      width: 1440,
       height,
     });
     await selectCalendarView(page, "Month");
@@ -26,15 +43,13 @@ test("Show All is horizontally centered and still opens the full day", async ({
         normalHeight = (await more.boundingBox())?.height ?? -1;
         return normalHeight;
       })
-      .toBeCloseTo(info.project.name === "desktop" ? 22 : 44, 0);
-    if (info.project.name === "desktop") {
-      await more.hover();
-      await expect(more).toHaveCSS("background-color", "rgb(56, 46, 76)");
-      await expect
-        .poll(async () => (await more.boundingBox())?.height)
-        .toBe(normalHeight);
-      await page.mouse.move(0, 0);
-    }
+      .toBeCloseTo(22, 0);
+    await more.hover();
+    await expect(more).toHaveCSS("background-color", "rgb(56, 46, 76)");
+    await expect
+      .poll(async () => (await more.boundingBox())?.height)
+      .toBe(normalHeight);
+    await page.mouse.move(0, 0);
     await page.keyboard.press("Tab");
     await more.focus();
     await expect(more).toHaveCSS("outline-style", "solid");
@@ -57,7 +72,7 @@ test("Show All is horizontally centered and still opens the full day", async ({
     await more.click();
     await expect(page.getByTestId("calendar")).toHaveAttribute(
       "data-view",
-      info.project.name === "desktop" ? "dayGridDay" : "listDay",
+      "dayGridDay",
     );
     await expect(
       page.locator('[data-event-date="2026-09-08"]:visible'),

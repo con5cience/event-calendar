@@ -474,26 +474,17 @@ dd > .venue-marker {
   color: #f87171;
   font-weight: 700;
 }
-.show-all {
-  text-align: center;
-  border: 0;
-}
 .calendar-more-link {
   justify-content: center;
   text-align: center;
-}
-.show-all,
-.calendar-more-link {
   background: #292238;
   color: #c4b5fd;
   font-weight: 700;
   border-radius: 4px;
 }
-.show-all:hover,
 .calendar-more-link:hover {
   background: #382e4c;
 }
-.show-all:focus-visible,
 .calendar-more-link:focus-visible {
   outline: 3px solid var(--accent-text);
   outline-offset: -3px;
@@ -680,7 +671,7 @@ dd {
   flex-shrink: 0;
 }
 @media (min-width: 768px) {
-  .event-card:not(.show-all) {
+  .event-card {
     min-height: 0;
   }
   main:has([data-view="dayGridMonth"], [data-view="dayGridWeek"]) {

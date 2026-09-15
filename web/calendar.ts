@@ -34,6 +34,10 @@ export interface CalendarEvent {
 
 export interface CalendarData {
   events: CalendarEvent[];
+  // Week and month limits stay in the payload for compatibility, but nothing
+  // applies them: phones list every event for a date and scroll, and desktop
+  // Week/Month fit their available cell height. Only the desktop Day cap is
+  // read.
   limits: { day: number | null; week: number; month: number };
   initial_date?: string;
 }
@@ -82,51 +86,31 @@ export function compareEvents(a: CalendarEvent, b: CalendarEvent): number {
   );
 }
 
+// Every event is projected; FullCalendar's own dayMaxEvents option performs
+// any visible slicing, so the feed never hides domain records.
 export type ProjectedEvent = EventInput & {
   extendedProps: {
-    kind: "event" | "more";
-    record?: CalendarEvent;
-    date: string;
-    hiddenCount?: number;
+    record: CalendarEvent;
     sortIndex: number;
   };
 };
 
-export function projectEvents(
-  events: CalendarEvent[],
-  limit: number | null,
-  capWithMoreRow: boolean,
-): ProjectedEvent[] {
+export function projectEvents(events: CalendarEvent[]): ProjectedEvent[] {
   const days = new Map<string, CalendarEvent[]>();
   for (const event of [...events].sort(compareEvents)) {
     const day = days.get(event.date) || [];
     day.push(event);
     days.set(event.date, day);
   }
-  return [...days].flatMap(([date, day]) => {
-    const visible = capWithMoreRow && limit ? day.slice(0, limit) : day;
+  return [...days].flatMap(([date, day]) =>
     // These are date-card placements, not an assertion of all-day duration.
     // The source instant remains on record and is formatted in its venue timezone.
-    const rows: ProjectedEvent[] = visible.map((record, sortIndex) => ({
+    day.map((record, sortIndex) => ({
       id: record.id,
       title: record.title,
       start: date,
       allDay: true,
-      extendedProps: { kind: "event", record, date, sortIndex },
-    }));
-    if (visible.length < day.length)
-      rows.push({
-        id: `more:${date}`,
-        title: "Show All",
-        start: date,
-        allDay: true,
-        extendedProps: {
-          kind: "more",
-          date,
-          hiddenCount: day.length - visible.length,
-          sortIndex: day.length,
-        },
-      });
-    return rows;
-  });
+      extendedProps: { record, sortIndex },
+    })),
+  );
 }

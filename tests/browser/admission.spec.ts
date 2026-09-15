@@ -24,7 +24,7 @@ test("With Adult uses child age, leaves no hidden restriction filter, and explai
     exact: true,
   });
   await expect(age).toHaveValue("14");
-  const cards = page.locator(".event-card:not(.show-all):visible");
+  const cards = page.locator(".event-card:visible");
   await expect(cards).toHaveCount(1);
   await cards.first().click();
   await expect(page.getByRole("dialog")).toContainText(

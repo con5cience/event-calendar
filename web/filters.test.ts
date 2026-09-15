@@ -105,7 +105,7 @@ describe("discovery filters", () => {
     expect(filterEvents(rows, defaultPreferences())).toEqual(rows);
     expect(filterEvents(rows, { ...prefs, query: "yes" })).toEqual([]); // IDs are internal.
   });
-  it("searches dates outside the current view and filters before caps without mutating records", () => {
+  it("searches dates outside the current view and filters without mutating records", () => {
     const rows = [
       record("hidden"),
       record("match", { title: "Needle", date: "2027-01-01" }),
@@ -115,7 +115,7 @@ describe("discovery filters", () => {
       ...defaultPreferences(),
       query: "NEED",
     });
-    expect(projectEvents(matches, 1, true).map((e) => e.id)).toEqual(["match"]);
+    expect(projectEvents(matches).map((e) => e.id)).toEqual(["match"]);
     expect(JSON.stringify(rows)).toBe(before);
   });
   it("searches readable times, status and optional links, not absent values", () => {
