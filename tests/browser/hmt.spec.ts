@@ -38,7 +38,7 @@ for (const [venue, category] of [
       path: `test-results/hmt-${venue === "HQ" ? "hq" : "oriental"}-${info.project.name}.png`,
     });
     await page.getByRole("button", { name: "Close event details" }).click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/\?view=week&date=\d{4}-\d{2}-\d{2}$/);
     await selectCalendarView(page, "Day");
     // Direct URLs open the event week. Use search to locate it within that week.
     await selectCalendarView(page, "Week");

@@ -17,6 +17,15 @@ import { venueColor } from "./venueColors";
 import { ActionIcon } from "./ActionIcon";
 import { ActionTooltip } from "./ActionTooltip";
 import { readView, saveView, type View } from "./view";
+import {
+  calendarUrl,
+  readCalendarContext,
+  readEntryContext,
+  readEntryScroll,
+  sameContext,
+  semanticView,
+  type CalendarContext,
+} from "./route";
 import { containDialogFocus, isBackdropInteraction } from "./dialog";
 import monarchPlugin from "@fullcalendar/react/themes/monarch";
 import {
@@ -104,10 +113,16 @@ function Calendar({ data }: { data: CalendarData }) {
     temporaryDefaults.current = false;
     updatePreferences(value);
   }
-  const [path, setPath] = useState(location.pathname);
+  const [path, setPath] = useState(location.pathname + location.search);
   const [detailError, setDetailError] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const cardPath = useRef<string | null>(null);
+  const directLoad = useRef(location.pathname.startsWith("/events/"));
+  const bootContext = useRef(readCalendarContext(location.search)).current;
+  const position = useRef<CalendarContext | null>(null);
+  const pushPosition = useRef(false);
+  const pushTimer = useRef(0);
+  const bootstrapped = useRef(false);
   const historyClosing = useRef(false);
   const backdropPointerDown = useRef(false);
   const [now, setNow] = useState(() => new Date());
@@ -189,10 +204,49 @@ function Calendar({ data }: { data: CalendarData }) {
     if (selected && !dialogRef.current?.open) dialogRef.current?.showModal();
   }, [selected]);
   useEffect(() => {
-    const update = () => setPath(location.pathname);
+    const update = () => setPath(location.pathname + location.search);
     window.addEventListener("popstate", update);
     return () => window.removeEventListener("popstate", update);
   }, []);
+  // Every history entry owns its scroll offset. The browser's automatic
+  // restoration cannot know that a restored range redraws a different list.
+  useEffect(() => {
+    history.scrollRestoration = "manual";
+    let timer = 0;
+    const save = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        history.replaceState(
+          { ...history.state, scrollY: window.scrollY },
+          "",
+          location.href,
+        );
+      }, 150);
+    };
+    window.addEventListener("scroll", save, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", save);
+    };
+  }, []);
+  function requestPush() {
+    // datesSet observes the resulting position and pushes the entry. The
+    // timer drops the request when a control is a no-op (Today at today,
+    // reselecting the current view) and no datesSet ever follows.
+    pushPosition.current = true;
+    window.clearTimeout(pushTimer.current);
+    pushTimer.current = window.setTimeout(() => {
+      pushPosition.current = false;
+    }, 500);
+  }
+  function restoreContext(context: CalendarContext) {
+    // Positional restore from a history entry. Unlike the toolbar's view
+    // picker, it never writes the saved view preference.
+    setView(context.view);
+    ref.current
+      ?.getApi()
+      .changeView(viewName(context.view, mobile), context.date);
+  }
   useEffect(() => {
     setCopyStatus("");
     setDetailError("");
@@ -202,12 +256,23 @@ function Calendar({ data }: { data: CalendarData }) {
         historyClosing.current = true;
         dialogRef.current.close();
       }
+      const context = readCalendarContext(location.search);
+      if (
+        context &&
+        position.current &&
+        !sameContext(context, position.current)
+      )
+        restoreContext(context);
+      const scrollY = readEntryScroll(history.state);
+      if (scrollY !== null)
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
       return;
     }
     if (cardPath.current === path) {
       cardPath.current = null;
       return;
     }
+    if (selected?.public_path === path) return;
     const controller = new AbortController();
     fetch("/api" + path, { signal: controller.signal })
       .then(async (response) => {
@@ -221,9 +286,24 @@ function Calendar({ data }: { data: CalendarData }) {
       })
       .then((event) => {
         if (controller.signal.aborted) return;
-        setView("week");
-        ref.current?.getApi().changeView(viewName("week", mobile), event.date);
+        const anchor: CalendarContext = { view: "week", date: event.date };
+        const context = directLoad.current
+          ? anchor
+          : (readEntryContext(history.state) ?? anchor);
+        if (!position.current || !sameContext(context, position.current))
+          restoreContext(context);
+        const scrollY = readEntryScroll(history.state);
+        if (scrollY !== null)
+          requestAnimationFrame(() => window.scrollTo(0, scrollY));
         setSelected(event);
+        if (directLoad.current) {
+          directLoad.current = false;
+          // Keep a calendar entry under the deep link so closing the modal,
+          // or pressing Back from it, stays inside the app at the event's week.
+          const state = { ...context, scrollY: window.scrollY };
+          history.replaceState(state, "", calendarUrl(context));
+          history.pushState(state, "", path);
+        }
       })
       .catch((error: Error) => {
         if (!controller.signal.aborted) setDetailError(error.message);
@@ -233,6 +313,7 @@ function Calendar({ data }: { data: CalendarData }) {
 
   function drillDay(date: string | Date, expand = false) {
     setDayExpanded(expand);
+    requestPush();
     selectView("day");
     ref.current?.getApi().changeView(viewName("day", mobile), date);
   }
@@ -245,7 +326,11 @@ function Calendar({ data }: { data: CalendarData }) {
     setCopyStatus("");
     if (event.public_path && location.pathname !== event.public_path) {
       cardPath.current = event.public_path;
-      history.pushState(null, "", event.public_path);
+      history.pushState(
+        { ...position.current, scrollY: window.scrollY },
+        "",
+        event.public_path,
+      );
       setPath(event.public_path);
     }
   }
@@ -268,6 +353,7 @@ function Calendar({ data }: { data: CalendarData }) {
             <button
               onClick={() => {
                 setDayExpanded(false);
+                requestPush();
                 ref.current?.getApi().prev();
               }}
               aria-label="Previous"
@@ -277,6 +363,7 @@ function Calendar({ data }: { data: CalendarData }) {
             <button
               onClick={() => {
                 setDayExpanded(false);
+                requestPush();
                 ref.current?.getApi().gotoDate(today);
               }}
             >
@@ -285,6 +372,7 @@ function Calendar({ data }: { data: CalendarData }) {
             <button
               onClick={() => {
                 setDayExpanded(false);
+                requestPush();
                 ref.current?.getApi().next();
               }}
               aria-label="Next"
@@ -431,6 +519,7 @@ function Calendar({ data }: { data: CalendarData }) {
                     aria-pressed={view === option}
                     onClick={() => {
                       setDayExpanded(false);
+                      requestPush();
                       selectView(option);
                       setViewMenuOpen(false);
                       if (mobile)
@@ -462,7 +551,7 @@ function Calendar({ data }: { data: CalendarData }) {
                 showNonCurrentDates: false,
               },
             }}
-            initialDate={data.initial_date || today}
+            initialDate={bootContext?.date || data.initial_date || today}
             firstDay={site.week_start}
             locale={site.language}
             timeZone="UTC"
@@ -490,7 +579,34 @@ function Calendar({ data }: { data: CalendarData }) {
             moreLinkContent={(info) =>
               fitGrid ? "Show All" : `Show All (${info.num} more)`
             }
-            datesSet={(info) => setTitle(info.view.title)}
+            datesSet={(info) => {
+              setTitle(info.view.title);
+              const context: CalendarContext = {
+                view: semanticView(info.view.type),
+                date: info.view.currentStart.toISOString().slice(0, 10),
+              };
+              position.current = context;
+              if (!bootstrapped.current) {
+                bootstrapped.current = true;
+                // Give the session's first entry an addressable position.
+                if (!location.pathname.startsWith("/events/"))
+                  history.replaceState(
+                    { ...context, scrollY: window.scrollY },
+                    "",
+                    calendarUrl(context),
+                  );
+                return;
+              }
+              if (pushPosition.current) {
+                pushPosition.current = false;
+                window.clearTimeout(pushTimer.current);
+                history.pushState(
+                  { ...context, scrollY: window.scrollY },
+                  "",
+                  calendarUrl(context),
+                );
+              }
+            }}
             noEventsContent={
               matchingEvents.length === 0 ? emptyMessage : "No events available"
             }
@@ -592,11 +708,12 @@ function Calendar({ data }: { data: CalendarData }) {
             historyClosing.current = false;
             return;
           }
-          if (location.pathname.startsWith("/events/")) {
-            history.pushState(null, "", "/");
-            setPath("/");
-          }
+          // The app pushed the event entry when the modal opened. Pop it so
+          // Back continues from the calendar position that opened the modal
+          // instead of resurrecting a stale detail panel.
+          const popEventEntry = location.pathname.startsWith("/events/");
           setSelected(null);
+          if (popEventEntry) history.back();
           if (returnFocus.current?.isConnected) returnFocus.current.focus();
           else
             viewPickerRef.current

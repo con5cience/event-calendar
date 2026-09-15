@@ -100,7 +100,7 @@ test("With Adult uses child age, leaves no hidden restriction filter, and explai
     path: `test-results/admission-metadata-${test.info().project.name}.png`,
   });
   await page.getByRole("button", { name: "Close event details" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=week&date=2026-09-06$/);
   await page.reload();
   await expect(cards).toHaveCount(1);
   await expect(

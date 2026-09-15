@@ -196,7 +196,7 @@ test("venue and search filters combine, preserve navigation, and survive reload"
   ).toBeVisible();
   await expect(page.locator(".event-card:visible")).toHaveCount(1);
   await expect(page.getByTestId("range")).toHaveAttribute("aria-label", range!);
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL(/\/\?view=week&date=2026-09-06$/);
   await page.reload();
   await expect(search).toHaveValue("EARLY mission");
   await page

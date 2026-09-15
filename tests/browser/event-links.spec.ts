@@ -171,7 +171,7 @@ test("background dismissal preserves inside interaction, focus, and calendar con
     await page.touchscreen.tap(outside.x, outside.y);
   else await page.mouse.click(outside.x, outside.y);
   await expect(dialog).not.toBeVisible();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=month&date=2026-09-01$/);
   await expect(card).toBeFocused();
   await expect(page.getByTestId("range")).toHaveAttribute(
     "aria-label",
@@ -181,7 +181,7 @@ test("background dismissal preserves inside interaction, focus, and calendar con
   await expect(dialog).toBeVisible();
   await page.mouse.click(outside.x, outside.y);
   await expect(dialog).not.toBeVisible();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=week&date=2026-09-08$/);
   await expect(
     page.getByRole("button", {
       name: info.project.name === "phone" ? "Choose calendar view" : "Week",
@@ -229,15 +229,46 @@ test("card links support Back, Forward, close, reload, and Copy Event Link", asy
   await page.goForward();
   await expect(page.getByRole("dialog")).toContainText("Early doors");
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=week&date=2026-09-06$/);
   await expect(page.getByTestId("range")).toContainText("Sep 6");
   await card.click();
   const response = await page.reload();
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("dialog")).toContainText("Early doors");
   await page.getByRole("button", { name: "Close event details" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=week&date=2026-09-08$/);
   await expect(page.getByTestId("range")).toContainText("Sep 6");
+});
+
+test("Back steps through browsed weeks instead of reopening closed events", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const card = page
+    .getByTestId("event-mission-000000000003")
+    .filter({ visible: true });
+  await card.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  // Browse two weeks beyond the event without leaving the app.
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByTestId("range")).toContainText("Sep 13");
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByTestId("range")).toContainText("Sep 20");
+  await expect(page).toHaveURL(/date=2026-09-20$/);
+  // Back retraces the browsed weeks; it must not reopen the closed event
+  // or reset the calendar to the event's week.
+  await page.goBack();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByTestId("range")).toContainText("Sep 13");
+  await expect(page).toHaveURL(/date=2026-09-13$/);
+  await page.goBack();
+  await expect(page.getByTestId("range")).toContainText("Sep 6");
+  await page.goForward();
+  await expect(page.getByTestId("range")).toContainText("Sep 13");
+  await expect(dialog).not.toBeVisible();
 });
 
 test("direct links use temporary defaults, open the event week, and preserve saved preferences", async ({

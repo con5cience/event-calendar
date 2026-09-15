@@ -42,7 +42,7 @@ for (const [venue, category, condition] of [
       path: `test-results/live-admission-modal-${event.id}-${info.project.name}.png`,
     });
     await page.getByRole("button", { name: "Close event details" }).click();
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/\?view=week&date=\d{4}-\d{2}-\d{2}$/);
     if (info.project.name === "phone")
       await openPhoneEventDay(page, event.date);
     await page

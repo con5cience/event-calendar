@@ -1094,10 +1094,24 @@ date, view, selections, and open event. No page zoom or scaling transform is use
 
 Event cards use their stored `public_path`. Direct links open the event's week and
 detail panel with temporary default filters; saved preferences remain unchanged
-unless the visitor changes a filter. Back/Forward and closing the panel retain
-calendar context. Retained unlisted records show `No longer listed`; expired or
-unknown records return HTTP 404. Unavailable storage uses the last valid snapshot,
-or HTTP 503 when none exists.
+unless the visitor changes a filter. Retained unlisted records show `No longer
+listed`; expired or unknown records return HTTP 404. Unavailable storage uses the
+last valid snapshot, or HTTP 503 when none exists.
+
+Calendar positions are addressable. The root URL carries `view` and `date` query
+parameters, and the session's first entry is rewritten to the booted position, so
+a reload returns to the same range. Saved view preferences still win on a fresh
+load; the parameters restore positions while traversing history in-session.
+Every calendar navigation (Previous, Next, Today, a view switch, or a day
+drill-in) pushes a history entry, so Back and Forward retrace the visited ranges
+instead of reopening closed events or resetting the calendar. Opening an event
+pushes its `public_path` with the current position stored in history state;
+closing the panel, or pressing Back from it, pops that entry and restores the
+position, view, and scroll offset it was opened from. Deep links keep a calendar
+entry beneath the event, so closing a directly opened panel stays inside the app
+at the event's week. Traversing into an event entry restores its stored position;
+only a fresh direct load anchors the event's week. Sitemap and canonical URLs
+stay parameter-free.
 
 Clicking or tapping the background closes event details, as do Escape and the close
 button. Clicks inside the popup and drags that start inside it do not dismiss it.

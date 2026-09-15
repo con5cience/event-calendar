@@ -64,7 +64,7 @@ test("direct event links do not replace a saved Month preference", async ({
     page.getByRole("button", { name: "Close event details" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close event details" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/\?view=week&date=\d{4}-\d{2}-\d{2}$/);
   expect(
     await page.evaluate(() => localStorage.getItem("event-calendar.view.v1")),
   ).toBe("month");
