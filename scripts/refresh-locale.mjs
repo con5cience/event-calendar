@@ -42,6 +42,7 @@ const runners = {
     command: "replay-blackbox",
     script: "blackbox/capture.mjs",
   },
+  "html-anteup": { command: "replay-anteup", script: "anteup/capture.mjs" },
   "html-buzzard": { command: "replay-buzzard", script: "buzzard/capture.mjs" },
   "html-herbs": { command: "replay-herbs", script: "herbs/capture.mjs" },
   "html-seventh-circle": {
@@ -181,10 +182,12 @@ async function captureSource({ site, sourceID, directory, logging }) {
 }
 
 // Conservative provider groups: one active capture per adapter family. Distinct
-// KSE and Wix adapters also share infrastructure, so share a slot within it.
+// KSE adapters share infrastructure, as do the Wix-hosted adapters, so each
+// family shares a slot.
 function providerGroup(adapter) {
   if (["kse-calendar", "kse-venue-events"].includes(adapter)) return "kse";
-  if (["html-buzzard", "html-herbs"].includes(adapter)) return "wix";
+  if (["html-anteup", "html-buzzard", "html-herbs"].includes(adapter))
+    return "wix";
   return adapter;
 }
 

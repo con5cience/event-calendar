@@ -189,7 +189,7 @@ identity, retention, and publication. No aggregator or new venue is introduced.
 
 Captures use a bounded pool (default 2; `CAPTURE_CONCURRENCY=1` restores serial
 capture; accepted range 1–4). Each adapter family shares a provider slot. The
-two KSE adapters share a slot, as do the two Wix adapters. This deliberately
+two KSE adapters share a slot, as do the Wix adapters. This deliberately
 serializes RHP venues even though their public hostnames differ. New adapters
 must review shared provider infrastructure when assigning their group.
 Requests and paired passes inside each capture remain unchanged. All capture

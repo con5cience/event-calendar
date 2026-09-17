@@ -1,4 +1,9 @@
 {
+  "ante-up": {
+    "page": "https://www.anteupdenver.com/events-1",
+    "policy": "https://www.anteupdenver.com/venue",
+    "timezone": "America/Denver"
+  },
   "nocturne": {
     "endpoint": "https://nocturnejazz.com/music?format=ical",
     "policy": "https://nocturnejazz.com/faq",

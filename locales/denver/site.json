@@ -21,6 +21,7 @@
     "day": 0
   },
   "venue_colors": {
+    "Ante Up!": "#C4496C",
     "Ball Arena": "#00B8D4",
     "The Black Box": "#AC4FE8",
     "The Black Buzzard": "#B8C0CC",
@@ -52,6 +53,10 @@
     "Summit": "#7379BD"
   },
   "sources": {
+    "ante-up": {
+      "adapter": "html-anteup",
+      "venue_key": "ante-up"
+    },
     "ball-arena": {
       "adapter": "kse-calendar",
       "venue_key": "ball-arena"

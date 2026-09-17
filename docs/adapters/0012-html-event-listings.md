@@ -1,6 +1,6 @@
 # ADR 0012: HTML event listings
 
-- Status: Ophelia's, Black Buzzard, Herb's and Seventh Circle implemented; 19hz remains proposed
+- Status: Ophelia's, Black Buzzard, Herb's, Seventh Circle, and Ante Up implemented; 19hz remains proposed
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
@@ -291,6 +291,46 @@ Test one fixture set per source, multiple shows per day, year boundaries, overni
 Ophelia's and Black Buzzard have importer, fixture, capture, CLI and runtime checks.
 The 19hz profile remains unimplemented;
 aggregators remain deferred.
+
+## Ante Up implementation and admission review — September 17, 2026
+
+`tests/anteup/capture.mjs` reads the public [events page](https://www.anteupdenver.com/events-1)
+and [venue page](https://www.anteupdenver.com/venue) twice. The events page is a
+Wix document larger than the shared 1 MiB HTML cap, so this capture allows 2 MiB
+per response, rejects redirects, and uses a 30-second timeout. It stores the
+server-rendered `wix-warmup-data` JSON and the venue page with scripts and styles
+removed. It does not execute page scripts or call the authenticated events API.
+Robots allows `/` except lightbox query URLs. That is crawl guidance, not a
+redistribution license.
+
+`internal/anteup` compares normalized records across both passes. The Wix Events
+app must be the only widget in that payload, `hasMore` and `moreLoading` must be
+present and false, and an empty list fails because no empty-calendar layout was
+reviewed. Five hundred events is a cap guard. Duplicate or missing IDs fail the
+refresh. Dynamic calendar-export tokens are ignored because equality is on
+normalized records, not raw JSON.
+
+Mapping uses the event ID, title, slug, America/Denver start, and on-site address
+2130 S Platte River Dr. Displayed clocks are minute precision; Wix's trailing
+`:57` seconds are not published. A `DOORS at` clock must match that start before
+`doors_at` is set. A labeled `SHOW at` or bare `SHOW` clock becomes `show_at`.
+Unlabeled clocks stay unpublished, including daytime markets whose Wix start is
+not identified as doors or show. DST-invalid or ambiguous clocks reject the
+record. Off-site locations and unknown numeric statuses reject the record.
+Cancelled titles stay Cancelled with no ticket link. The public event page is the
+event link and, when Wix ticketing is present, the ticket link. Prices, images,
+and descriptions are not published.
+
+The venue page describes a sober community space for people of all ages. No
+guardian requirement was stated. The configured All Ages rule covers ages 0–17
+with `Permitted at this age; sober space`. Explicit `18+`, `21+`, adults-only, or
+age-restricted description text becomes an unclassified event policy and does not
+inherit that clearance. All-ages text plus a numeric restriction fails the record
+for review. Policy wording, address, incomplete listings, and pass disagreement
+fail the whole refresh.
+
+The first local publication used `state: new` and committed 11 events with no
+rejections. The tracked source is now `state: established`.
 
 ## Roxy follow-up — September 10, 2026
 
