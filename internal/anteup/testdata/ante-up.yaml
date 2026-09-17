@@ -1,0 +1,23 @@
+schema_version: 1
+source: { id: ante-up, adapter: html-anteup }
+state: established
+venue:
+  key: ante-up
+  name: Ante Up!
+  timezone: America/Denver
+  website: https://www.anteupdenver.com/events-1
+  address: 2130 S Platte River Dr, Denver, CO 80223
+  admission_policy:
+    text: All ages; sober community space
+    category: All ages
+    url: https://www.anteupdenver.com/venue
+admission_rules:
+  All ages:
+    url: https://www.anteupdenver.com/venue
+    reviewed_on: "2026-09-17"
+    ranges:
+      - {
+          min_age: 0,
+          max_age: 17,
+          condition: Permitted at this age; sober space,
+        }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"event-calendar/internal/afton"
+	"event-calendar/internal/anteup"
 	"event-calendar/internal/blackbox"
 	"event-calendar/internal/buzzard"
 	"event-calendar/internal/clique"
@@ -26,6 +27,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-anteup" {
+		return replaySnapshot(args[1:], out, errout, "replay-anteup", anteup.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-nocturne" {
 		return replaySnapshot(args[1:], out, errout, "replay-nocturne", nocturne.Decode)
 	}
