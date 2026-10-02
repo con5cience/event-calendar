@@ -30,6 +30,28 @@ requests injected into the browser are used. Stop on an event-response failure.
 Browser capture is a separate operator step; Chromium is not added to the app or
 Go ingestion image. The app still consumes JSON files and makes no venue requests.
 
+## Scroll-flow completion probe — October 2, 2026
+
+Run `37040894324` failed Fillmore, Marquis, and Summit captures with
+`Incomplete pages: page_index=1`. The scroll flow now stops once a partial page
+arrives, without requesting the empty page that marked the end. All three venue
+sites changed this behavior together between the September 15 success and
+October 2. The API itself is unchanged: requesting the offset past the final
+partial page with the page's own request headers, including `x-api-key`, still
+returns HTTP 200 with an empty array. No scroll interaction re-triggers the flow.
+
+The capture now completes enumeration with that same request, issued from the
+venue page itself with the flow's own observed headers, and requires an empty
+array. A non-empty result fails closed as `Rows past the final page`; the
+paired-pass identical-data check is unchanged. Scrolling also stops once the
+flow has been quiet for eight consecutive seconds after a partial page. No
+JavaScript or Go page-shape, terminal-empty, gap, identity, or timeout check is
+relaxed, and no retries or alternate access paths were added.
+
+Verification: an unmodified local reproduction failed identically; the focused
+Docker refresh published Fillmore, Marquis, and Summit through capture, Go
+ingestion, validation, and export; unit, integration, and Go suites passed.
+
 ## CI pagination diagnostics — September 13, 2026
 
 Run `34784640227` failed Marquis capture with `Incomplete pages`. A subsequent

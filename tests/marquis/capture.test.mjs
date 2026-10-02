@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validatePages, venueProfile } from "./capture.mjs";
+import { validatePages, venueProfile, completionOffset } from "./capture.mjs";
 
 test("only reviewed venue capture profiles are supported", () => {
   assert.equal(
@@ -64,4 +64,18 @@ test("incomplete pagination reports the observed page sizes without relaxing val
     () => validatePages(pages, structuredClone(pages)),
     /Incomplete pages.*page_index=1.*page_sizes=\[36,1\]/,
   );
+});
+test("enumeration completes with the page past the partial page the flow stops at", () => {
+  assert.equal(
+    completionOffset(
+      new Map([
+        [0, full()],
+        [36, [row("last")]],
+      ]),
+    ),
+    72,
+  );
+  assert.equal(completionOffset(new Map([[0, full()]])), 36);
+  assert.equal(completionOffset(new Map([[0, []]])), null);
+  assert.equal(completionOffset(new Map()), null);
 });
