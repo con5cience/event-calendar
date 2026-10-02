@@ -113,7 +113,7 @@ jobs:
         run: node --input-type=module -e 'import { readFileSync } from "node:fs"; const r=JSON.parse(readFileSync("dry-run-results/report.json","utf8")); if(r.status!=="success") { console.error("Partial refresh. Inspect the saved reports and snapshot."); process.exitCode=1; }'
       - name: Require all sources for deployment
         if: github.event_name == 'schedule' || inputs.deploy
-        run: node scripts.deploy-locale.mjs gate "$LOCALE" dry-run-results
+        run: node scripts/deploy-locale.mjs gate "$LOCALE" dry-run-results
       - name: Stop verification container
         if: always()
         run: |
@@ -155,8 +155,8 @@ jobs:
           path: ${{ runner.temp }}/deployment-results/
       - name: Validate and package snapshot
         run: |
-          node scripts.deploy-locale.mjs gate "$LOCALE" "$RUNNER_TEMP/deployment-results"
-          node scripts.package-locale.mjs "$LOCALE" "$RUNNER_TEMP/railway-context"
+          node scripts/deploy-locale.mjs gate "$LOCALE" "$RUNNER_TEMP/deployment-results"
+          node scripts/package-locale.mjs "$LOCALE" "$RUNNER_TEMP/railway-context"
       - name: Commit and push snapshot
         env:
           EXPECTED_HEAD: ${{ github.sha }}

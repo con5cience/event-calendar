@@ -82,7 +82,10 @@ test("manual workflow defaults to deployment, is serialized, main-only, and isol
   );
   assert.match(yaml, /schedule:[\s\S]*cron: "0 12 \* \* \*"/);
   assert.match(yaml, /deploy:[\s\S]*type: boolean\n\s+default: true/);
-  assert.match(yaml, /group: refresh-dry-run-\$\{\{ inputs.locale \|\| 'denver' \}\}/);
+  assert.match(
+    yaml,
+    /group: refresh-dry-run-\$\{\{ inputs.locale \|\| 'denver' \}\}/,
+  );
   const deploy = yaml.split("\n  deploy:\n")[1];
   assert(deploy);
   assert.match(deploy, /needs: dry-run/);
@@ -105,10 +108,10 @@ test("manual workflow defaults to deployment, is serialized, main-only, and isol
   );
   assert.match(upload, /--path-as-root/);
   assert.match(upload, /--detach --json/);
-  assert.match(upload, /deploy-locale.mjs verify/);
+  assert.match(upload, /node scripts\/deploy-locale\.mjs verify/);
   assert.equal(yaml.split("secrets.WITHADULT_RAILWAY_API_TOKEN").length, 3);
-  assert.match(deploy, /publish-snapshot.mjs/);
-  assert.match(deploy, /deploy-locale.mjs gate/);
+  assert.match(deploy, /node scripts\/publish-snapshot\.mjs "\$LOCALE"/);
+  assert.match(deploy, /node scripts\/deploy-locale\.mjs gate/);
 });
 
 test("verification CLI checks the uploaded deployment and real HTTP response digest", async () => {
