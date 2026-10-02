@@ -4,6 +4,11 @@
     "policy": "https://www.anteupdenver.com/venue",
     "timezone": "America/Denver"
   },
+  "reelworks": {
+    "page": "https://reelworksdenver.com/events/",
+    "faq": "https://reelworksdenver.com/faq/",
+    "timezone": "America/Denver"
+  },
   "nocturne": {
     "endpoint": "https://nocturnejazz.com/music?format=ical",
     "policy": "https://nocturnejazz.com/faq",

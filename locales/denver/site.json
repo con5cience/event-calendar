@@ -50,12 +50,17 @@
     "Red Rocks Amphitheatre": "#DD7027",
     "The Roxy Theatre": "#71828E",
     "Seventh Circle Music Collective": "#85A6CF",
-    "Summit": "#7379BD"
+    "Summit": "#7379BD",
+    "ReelWorks Denver": "#7A5CE8"
   },
   "sources": {
     "ante-up": {
       "adapter": "html-anteup",
       "venue_key": "ante-up"
+    },
+    "reelworks": {
+      "adapter": "reelworks-wordpress-events",
+      "venue_key": "reelworks"
     },
     "ball-arena": {
       "adapter": "kse-calendar",

@@ -29,6 +29,7 @@
     "test:nocturne": "node --import ./tests/setup-capture.mjs --test tests/nocturne/capture.test.mjs",
     "test:nocturne-transport": "node --test tests/nocturne-transport.test.mjs",
     "test:anteup": "node --import ./tests/setup-capture.mjs --test tests/anteup/capture.test.mjs",
+    "test:reelworks": "node --import ./tests/setup-capture.mjs --test tests/reelworks/capture.test.mjs",
     "test:afton": "node --import ./tests/setup-capture.mjs --test tests/afton/capture.test.mjs",
     "test:contracts": "docker build --target go-test -t event-calendar-contract-tests . && mkdir -p test-results/contracts && docker run --rm --mount type=bind,src=\"$PWD/test-results/contracts\",dst=/handoff -e CONTRACT_HANDOFF_DIR=/handoff event-calendar-contract-tests go test ./internal/artifact -run TestConsumerHandoff -count=1 && CONTRACT_HANDOFF_DIR=test-results/contracts vitest run",
     "test:capture-profiles": "node --import ./tests/setup-capture.mjs --test tests/capture-profile.test.mjs",

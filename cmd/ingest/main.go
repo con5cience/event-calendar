@@ -15,6 +15,7 @@ import (
 	"event-calendar/internal/nocturne"
 	"event-calendar/internal/ophelias"
 	"event-calendar/internal/plot"
+	"event-calendar/internal/reelworks"
 	"event-calendar/internal/rhp"
 	"event-calendar/internal/seventhcircle"
 	"event-calendar/internal/store"
@@ -27,6 +28,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-reelworks" {
+		return replaySnapshot(args[1:], out, errout, "replay-reelworks", reelworks.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-anteup" {
 		return replaySnapshot(args[1:], out, errout, "replay-anteup", anteup.Decode)
 	}

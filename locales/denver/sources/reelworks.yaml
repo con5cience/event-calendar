@@ -1,0 +1,10 @@
+schema_version: 1
+source: { id: reelworks, adapter: reelworks-wordpress-events }
+state: established
+venue:
+  key: reelworks
+  name: ReelWorks Denver
+  timezone: America/Denver
+  website: https://reelworksdenver.com/events/
+  address: 1399 35th St, Denver, CO 80205
+  phone: +1-303-468-5443

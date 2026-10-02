@@ -43,6 +43,10 @@ const runners = {
     script: "blackbox/capture.mjs",
   },
   "html-anteup": { command: "replay-anteup", script: "anteup/capture.mjs" },
+  "reelworks-wordpress-events": {
+    command: "replay-reelworks",
+    script: "reelworks/capture.mjs",
+  },
   "html-buzzard": { command: "replay-buzzard", script: "buzzard/capture.mjs" },
   "html-herbs": { command: "replay-herbs", script: "herbs/capture.mjs" },
   "html-seventh-circle": {
