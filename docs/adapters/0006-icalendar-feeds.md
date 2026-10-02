@@ -10,6 +10,27 @@ inherit that specialist behavior. Keep fixture configs separate from operational
 - Date: 2026-09-08
 - Related: [Evaluation contract](../adr/0001-data-source-evaluation.md), [source registry](../adr/0013-source-adapter-registry.md)
 
+## HQ multi-line description fold — October 2, 2026
+
+Run `37040894324` failed HQ ingestion with `hmt: invalid iCalendar`. The feed
+added event 467654 (Julien-K, November 7) whose multi-line DESCRIPTION is
+serialized as raw unescaped lines inside the VEVENT, such as
+`Julien-K 10:15-11:15pm` and `Doors 6pm`. The strict Go parser reads the leading
+token as a property name and aborts the whole calendar. This is the same defect
+class Federal hit on September 10, but the value is recoverable without
+discarding it.
+
+Capture now folds those lines into their preceding property with RFC 5545
+`\n` escaping, before URL discovery and snapshot storage. A blank line before a
+stray line opens the value; the blank lines HMT writes between properties stay
+as observed; lines the fold cannot attribute fail closed. Well-formed feeds
+pass through byte-identical. Go validation remains authoritative and unchanged,
+and Federal's in-memory description discard is unchanged.
+
+Verification: the live feed folds with all 45 event URLs discovered and the
+envelope preserved; the focused Docker refresh published HQ through capture,
+Go ingestion, validation, and export; unit, integration, and Go suites passed.
+
 ## Nocturne discovery and admission review — September 14, 2026
 
 Research only; Nocturne is not implemented or published. The

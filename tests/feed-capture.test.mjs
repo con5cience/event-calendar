@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { captureAEG, captureHMT, hmtURLs } from "../scripts/capture-feeds.mjs";
+import {
+  captureAEG,
+  captureHMT,
+  foldHMTCalendar,
+  hmtURLs,
+} from "../scripts/capture-feeds.mjs";
 const hq = JSON.parse(
   readFileSync(new URL("../internal/hmt/testdata/hq.json", import.meta.url)),
 );
@@ -49,6 +54,75 @@ test("HMT discovers folded public event URLs without modifying the calendar", ()
     /URL/,
   );
   assert.throws(() => hmtURLs("not a calendar"), /calendar/);
+});
+test("HMT multi-line TEXT values fold into their property, escaped per RFC 5545", () => {
+  const calendar = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "SUMMARY:Julien-K",
+    "DESCRIPTION:Set Times:",
+    "",
+    "Julien-K 10:15-11:15pm",
+    "",
+    "Cruel Mourning 9:15-10pm",
+    "",
+    "Doors 6pm",
+    "CREATED:20260929T150430Z",
+    "URL;VALUE=URI:http://holdmyticket.com/event/467654 ",
+    "",
+    "DTEND:20261107T233000",
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ].join("\n");
+  assert.equal(
+    foldHMTCalendar(calendar),
+    [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "SUMMARY:Julien-K",
+      "DESCRIPTION:Set Times:\\n\\nJulien-K 10:15-11:15pm\\n\\nCruel Mourning 9:15-10pm\\n\\nDoors 6pm",
+      "CREATED:20260929T150430Z",
+      "URL;VALUE=URI:http://holdmyticket.com/event/467654 ",
+      "",
+      "DTEND:20261107T233000",
+      "END:VEVENT",
+      "END:VCALENDAR",
+      "",
+    ].join("\n"),
+  );
+  assert.equal(foldHMTCalendar(hq.calendar), hq.calendar);
+  assert.throws(
+    () =>
+      foldHMTCalendar(
+        [
+          "BEGIN:VCALENDAR",
+          "BEGIN:VEVENT",
+          "Not a property continuation",
+          "END:VEVENT",
+          "END:VCALENDAR",
+          "",
+        ].join("\n"),
+      ),
+    /Unattributed/,
+  );
+  assert.throws(
+    () =>
+      foldHMTCalendar(
+        [
+          "BEGIN:VCALENDAR",
+          "BEGIN:VEVENT",
+          "UID:fixture",
+          "",
+          "",
+          "Not a property continuation",
+          "END:VEVENT",
+          "END:VCALENDAR",
+          "",
+        ].join("\n"),
+      ),
+    /Unattributed/,
+  );
 });
 test("HMT snapshot contains original calendar and parsed detail; missing detail stays explicit", async () => {
   const calls = [];

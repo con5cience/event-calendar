@@ -62,8 +62,64 @@ export async function eventJSONLD(page, html) {
     return events[0];
   }, html);
 }
+// HMT emits multi-line TEXT values as raw lines without RFC 5545 escaping.
+// Fold those lines into their property so Go validation stays authoritative;
+// lines the fold cannot attribute fail closed.
+export function foldHMTCalendar(calendar) {
+  const newline = /\r\n/.test(calendar) ? "\r\n" : "\n";
+  const property = (line) =>
+    /^[A-Za-z0-9-]+[;:]/.test(line) && !/^(BEGIN|END):/.test(line);
+  const stray = (line) =>
+    typeof line === "string" &&
+    line !== "" &&
+    !property(line) &&
+    !/^[ \t]/.test(line) &&
+    !/^(BEGIN|END):/.test(line);
+  const lines = calendar.split(/\r?\n/);
+  const folded = [];
+  let component = false;
+  let open = false;
+  const attribute = () => {
+    const previous = folded[folded.length - 1];
+    if (!property(previous)) throw Error("Unattributed HMT calendar line");
+    return previous;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^(BEGIN|END):[A-Za-z0-9-]+$/.test(line)) {
+      component = line.startsWith("BEGIN");
+      open = false;
+      folded.push(line);
+      continue;
+    }
+    if (component && open && /^[ \t]/.test(line)) {
+      folded[folded.length - 1] += line.slice(1);
+      continue;
+    }
+    if (component && open && line === "") {
+      folded[folded.length - 1] += "\\n";
+      continue;
+    }
+    if (component && stray(line)) {
+      const previous = attribute();
+      folded[folded.length - 1] = `${previous}\\n${line}`;
+      open = true;
+      continue;
+    }
+    // A blank line before a stray line opens a multi-line value; otherwise
+    // the blank lines HMT writes between properties stay as observed.
+    if (component && line === "" && stray(lines[i + 1])) {
+      folded[folded.length - 1] = `${attribute()}\\n`;
+      open = true;
+      continue;
+    }
+    open = false;
+    folded.push(line);
+  }
+  return folded.join(newline);
+}
 export async function captureHMT(profile, fetcher = fetch, extract) {
-  const calendar = await request(profile.endpoint, fetcher);
+  const calendar = foldHMTCalendar(await request(profile.endpoint, fetcher));
   const urls = hmtURLs(calendar);
   const details = {},
     failures = [];
