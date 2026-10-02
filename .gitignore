@@ -10,3 +10,4 @@ playwright-report/
 .refresh-lock/
 # Disposable manual workflow output (not a source catalog).
 dry-run-results/
+__pycache__/
