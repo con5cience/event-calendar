@@ -4,6 +4,16 @@
 - Date: 2026-09-12
 - Supersedes the single-Denver deployment assumptions in ADRs 0014, 0015 and 0018.
 
+## Daily scheduled deployment — October 2, 2026
+
+The workflow now schedules daily at 12:00 UTC. Scheduled runs take the manual
+defaults (`denver`, capture concurrency 3), run in deployment mode, and share
+the manual default run's per-locale concurrency group, so a schedule cannot
+overlap a concurrent manual default run. Main-only gating, all-source
+publication, and the separate main-only Git-writing deploy job are unchanged;
+individual record rejections still do not block deployment. This supersedes the
+daily-scheduling deferral recorded in the September 14 section below.
+
 ## Manual Actions deployment — September 14, 2026
 
 The manual refresh workflow defaults to locale `denver`, `deploy: true`, and

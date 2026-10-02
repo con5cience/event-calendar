@@ -55,7 +55,9 @@ test("workflow streams and retains output, preserves status, and exports reports
     /docker run.*--entrypoint node.*refresh-dry-run.mjs report/,
   );
   assert.match(shell, /stop-commands/);
+  assert.match(yaml, /schedule:[\s\S]*cron: "0 12 \* \* \*"/);
   assert.match(yaml, /capture_concurrency:[\s\S]*default: "3"/);
+  assert.match(yaml, /CAPTURE_CONCURRENCY: \$\{\{ inputs.capture_concurrency \|\| '3' \}\}/);
   assert.match(shell, /-e CAPTURE_CONCURRENCY/);
   for (const exitCode of [0, 1, 2, 137]) {
     const root = mkdtempSync(join(tmpdir(), "refresh-shell-"));

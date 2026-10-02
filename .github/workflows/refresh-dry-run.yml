@@ -1,6 +1,8 @@
 name: Locale refresh and deploy
 
 on:
+  schedule:
+    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       locale:
@@ -29,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: refresh-dry-run-${{ inputs.locale }}
+  group: refresh-dry-run-${{ inputs.locale || 'denver' }}
   cancel-in-progress: false
 
 jobs:
@@ -37,11 +39,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
-      LOCALE: ${{ inputs.locale }}
-      CAPTURE_CONCURRENCY: ${{ inputs.capture_concurrency }}
+      LOCALE: ${{ inputs.locale || 'denver' }}
+      CAPTURE_CONCURRENCY: ${{ inputs.capture_concurrency || '3' }}
     steps:
       - name: Require main for deployment mode
-        if: inputs.deploy
+        if: github.event_name == 'schedule' || inputs.deploy
         env:
           WORKFLOW_REF: ${{ github.ref }}
         run: test "$WORKFLOW_REF" = refs/heads/main
@@ -94,24 +96,24 @@ jobs:
         if: steps.smoke.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: snapshot-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/refresh-input/locales/${{ inputs.locale }}/catalog/
+          name: snapshot-${{ inputs.locale || 'denver' }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/refresh-input/locales/${{ inputs.locale || 'denver' }}/catalog/
           if-no-files-found: error
           retention-days: 7
       - name: Save diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: report-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: report-${{ inputs.locale || 'denver' }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: dry-run-results/
           if-no-files-found: warn
           retention-days: 7
       - name: Flag partial refresh
-        if: ${{ !inputs.deploy }}
+        if: github.event_name != 'schedule' && !inputs.deploy
         run: node --input-type=module -e 'import { readFileSync } from "node:fs"; const r=JSON.parse(readFileSync("dry-run-results/report.json","utf8")); if(r.status!=="success") { console.error("Partial refresh. Inspect the saved reports and snapshot."); process.exitCode=1; }'
       - name: Require all sources for deployment
-        if: inputs.deploy
-        run: node scripts/deploy-locale.mjs gate "$LOCALE" dry-run-results
+        if: github.event_name == 'schedule' || inputs.deploy
+        run: node scripts.deploy-locale.mjs gate "$LOCALE" dry-run-results
       - name: Stop verification container
         if: always()
         run: |
@@ -122,13 +124,13 @@ jobs:
 
   deploy:
     needs: dry-run
-    if: inputs.deploy && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'schedule' || inputs.deploy) && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: write
     env:
-      LOCALE: ${{ inputs.locale }}
+      LOCALE: ${{ inputs.locale || 'denver' }}
     steps:
       - name: Check deployment credential
         env:
@@ -145,16 +147,16 @@ jobs:
         run: mv "locales/$LOCALE/catalog" "$RUNNER_TEMP/previous-catalog"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: snapshot-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: locales/${{ inputs.locale }}/catalog/
+          name: snapshot-${{ inputs.locale || 'denver' }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: locales/${{ inputs.locale || 'denver' }}/catalog/
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: report-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: report-${{ inputs.locale || 'denver' }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/deployment-results/
       - name: Validate and package snapshot
         run: |
-          node scripts/deploy-locale.mjs gate "$LOCALE" "$RUNNER_TEMP/deployment-results"
-          node scripts/package-locale.mjs "$LOCALE" "$RUNNER_TEMP/railway-context"
+          node scripts.deploy-locale.mjs gate "$LOCALE" "$RUNNER_TEMP/deployment-results"
+          node scripts.package-locale.mjs "$LOCALE" "$RUNNER_TEMP/railway-context"
       - name: Commit and push snapshot
         env:
           EXPECTED_HEAD: ${{ github.sha }}
@@ -180,7 +182,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: deployment-${{ inputs.locale }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: deployment-${{ inputs.locale || 'denver' }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/deployment-results/
           if-no-files-found: warn
           retention-days: 7

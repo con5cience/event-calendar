@@ -80,17 +80,21 @@ test("manual workflow defaults to deployment, is serialized, main-only, and isol
     new URL("../.github/workflows/refresh-dry-run.yml", import.meta.url),
     "utf8",
   );
+  assert.match(yaml, /schedule:[\s\S]*cron: "0 12 \* \* \*"/);
   assert.match(yaml, /deploy:[\s\S]*type: boolean\n\s+default: true/);
-  assert.match(yaml, /group: refresh-dry-run-/);
+  assert.match(yaml, /group: refresh-dry-run-\$\{\{ inputs.locale \|\| 'denver' \}\}/);
   const deploy = yaml.split("\n  deploy:\n")[1];
   assert(deploy);
   assert.match(deploy, /needs: dry-run/);
-  assert.match(deploy, /github.ref == 'refs\/heads\/main'/);
+  assert.match(
+    deploy,
+    /\(github.event_name == 'schedule' \|\| inputs.deploy\) && github.ref == 'refs\/heads\/main'/,
+  );
   assert.match(deploy, /contents: write/);
   assert.match(deploy, /ref: \$\{\{ github.sha \}\}/);
   assert.match(
     deploy,
-    /snapshot-\$\{\{ inputs.locale \}\}-\$\{\{ github.run_id \}\}-\$\{\{ github.run_attempt \}\}/,
+    /snapshot-\$\{\{ inputs.locale \|\| 'denver' \}\}-\$\{\{ github.run_id \}\}-\$\{\{ github.run_attempt \}\}/,
   );
   const upload = deploy
     .split("      - name: Deploy and verify Railway\n")[1]
