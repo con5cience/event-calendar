@@ -51,6 +51,10 @@ const runners = {
     command: "replay-spothopper",
     script: "blacksky/capture.mjs",
   },
+  "google-calendar-ics": {
+    command: "replay-google-ics",
+    script: "d3/capture.mjs",
+  },
   "html-buzzard": { command: "replay-buzzard", script: "buzzard/capture.mjs" },
   "html-herbs": { command: "replay-herbs", script: "herbs/capture.mjs" },
   "html-seventh-circle": {

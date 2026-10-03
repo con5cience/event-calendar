@@ -1,0 +1,16 @@
+schema_version: 1
+source: { id: d3, adapter: google-calendar-ics }
+state: established
+venue:
+  key: d3
+  name: D3 Arts
+  timezone: America/Denver
+  website: https://www.d3arts.org/calendar/
+  address: 3632 Morrison Road, Denver, CO
+  phone: 720-412-2784
+  admission_policy:
+    text: "All Ages Welcome: 90% of our shows are open to all ages"
+    category: All ages
+    url: https://www.d3arts.org/3632-2/
+adapter_options:
+  recurring: exclude

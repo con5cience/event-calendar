@@ -52,7 +52,8 @@
     "Seventh Circle Music Collective": "#85A6CF",
     "Summit": "#7379BD",
     "ReelWorks Denver": "#7A5CE8",
-    "Black Sky Brewery": "#DC4D40"
+    "Black Sky Brewery": "#DC4D40",
+    "D3 Arts": "#2FD06A"
   },
   "sources": {
     "ante-up": {
@@ -66,6 +67,10 @@
     "black-sky": {
       "adapter": "spothopper-events",
       "venue_key": "black-sky"
+    },
+    "d3": {
+      "adapter": "google-calendar-ics",
+      "venue_key": "d3"
     },
     "ball-arena": {
       "adapter": "kse-calendar",

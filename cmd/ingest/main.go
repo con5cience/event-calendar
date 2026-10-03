@@ -7,6 +7,7 @@ import (
 	"event-calendar/internal/blackbox"
 	"event-calendar/internal/buzzard"
 	"event-calendar/internal/clique"
+	"event-calendar/internal/googleics"
 	"event-calendar/internal/herbs"
 	"event-calendar/internal/hmt"
 	"event-calendar/internal/kse"
@@ -29,6 +30,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-google-ics" {
+		return replaySnapshot(args[1:], out, errout, "replay-google-ics", googleics.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-spothopper" {
 		return replaySnapshot(args[1:], out, errout, "replay-spothopper", spothopper.Decode)
 	}

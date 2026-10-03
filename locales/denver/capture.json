@@ -8,6 +8,10 @@
     "page": "https://blackskydenver.com/denver-santa-fe-arts-district-black-sky-brewery-events",
     "timezone": "America/Denver"
   },
+  "d3": {
+    "endpoint": "https://calendar.google.com/calendar/ical/mkjl322tg56ecg0mf7qjvtllcc%40group.calendar.google.com/public/basic.ics",
+    "timezone": "America/Denver"
+  },
   "reelworks": {
     "page": "https://reelworksdenver.com/events/",
     "faq": "https://reelworksdenver.com/faq/",
@@ -33,8 +37,12 @@
   "fiddlers-green": {
     "endpoint": "https://aegwebprod.blob.core.windows.net/json/events/44/events.json"
   },
-  "hq": { "endpoint": "https://holdmyticket.com/feeds2/events/ics/6457" },
-  "oriental": { "endpoint": "https://holdmyticket.com/feeds2/events/ics/801" },
+  "hq": {
+    "endpoint": "https://holdmyticket.com/feeds2/events/ics/6457"
+  },
+  "oriental": {
+    "endpoint": "https://holdmyticket.com/feeds2/events/ics/801"
+  },
   "federal": {
     "endpoint": "https://holdmyticket.com/feeds2/events/ics_user/8693"
   },
