@@ -50,6 +50,8 @@ test("capture pool overlaps independent providers, serializes shared providers a
     three: { adapter: "holdmyticket-ical" },
     four: { adapter: "kse-calendar" },
     five: { adapter: "kse-venue-events" },
+    six: { adapter: "rhp-calendar" },
+    seven: { adapter: "rhp-calendar" },
   };
   writeFileSync(
     join(f.site, "site.json"),
@@ -57,7 +59,8 @@ test("capture pool overlaps independent providers, serializes shared providers a
   );
   let active = 0,
     maximum = 0,
-    writers = 0;
+    writers = 0,
+    overlapped = false;
   const groups = new Set(),
     completed = [];
   const result = await refreshLocale("test-city", {
@@ -66,14 +69,24 @@ test("capture pool overlaps independent providers, serializes shared providers a
       const group =
         sourceID === "four" || sourceID === "five"
           ? "kse"
-          : sources[sourceID].adapter;
+          : sourceID === "six" || sourceID === "seven"
+            ? "rhp-" + sourceID
+            : sources[sourceID].adapter;
       assert(!groups.has(group));
       assert(runner.command);
       groups.add(group);
       maximum = Math.max(maximum, ++active);
       await new Promise((resolve) =>
-        setTimeout(resolve, sourceID === "one" ? 35 : 10),
+        setTimeout(
+          resolve,
+          sourceID === "one"
+            ? 35
+            : sourceID === "six" || sourceID === "seven"
+              ? 25
+              : 10,
+        ),
       );
+      if (sourceID === "six" || sourceID === "seven") overlapped ||= active > 1;
       groups.delete(group);
       active--;
       completed.push(sourceID);
@@ -92,6 +105,7 @@ test("capture pool overlaps independent providers, serializes shared providers a
     },
   });
   assert.equal(maximum, 2);
+  assert(overlapped, "RHP per-venue captures must overlap");
   assert(completed.indexOf("three") < completed.indexOf("one"));
   assert.deepEqual(
     result.sources.map((s) => s.source),
@@ -103,6 +117,8 @@ test("capture pool overlaps independent providers, serializes shared providers a
     two: "updated",
     four: "updated",
     five: "updated",
+    six: "updated",
+    seven: "updated",
   });
   assert.equal(active, 0);
 });

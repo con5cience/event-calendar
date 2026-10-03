@@ -128,7 +128,9 @@ Captures run with concurrency 2 by default. Set `CAPTURE_CONCURRENCY` to an inte
 from 1 to 4 to change the limit; use 1 for serial capture or a low-memory runner.
 For Docker, add `-e CAPTURE_CONCURRENCY=1` before the image name. Each adapter
 family is serialized, with shared groups for KSE's two adapters and the Wix
-adapters. Capture passes and requests within a source stay sequential.
+adapters; the RHP venues share their plugin but capture in per-venue slots so
+the cross-venue chain is not the pool's wall. Capture passes and requests
+within a source stay sequential.
 All captures finish before serial ingestion and validated catalog publication.
 Failures retain the source's previous data. No concurrent catalog writers run.
 

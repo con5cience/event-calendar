@@ -14,6 +14,35 @@ publication, and the separate main-only Git-writing deploy job are unchanged;
 individual record rejections still do not block deployment. This supersedes the
 daily-scheduling deferral recorded in the September 14 section below.
 
+## RHP per-venue capture slots — October 2, 2026
+
+Run 37063780315 measured the refresh step at 320 seconds, with about 286 of
+them inside the four RHP captures serialized in one family slot: Cervantes 98
+seconds over 114 event pages, Globe Hall 76 over 48, Larimer Lounge 50 over 91,
+and Lost Lake 62 over 46, each a serial page pass at roughly one request per
+second. Simulated with those measured durations, the pool makespan is 285
+seconds at three lanes and unchanged at eight: the family slot, not the lane
+count, was the whole wall. The per-refresh volume is 4 calendar POSTs plus
+299 event-page GETs, all serial, with no waste — every fetched page is inside
+the coverage window.
+
+RHP venues now capture in per-venue slots. Each host still receives exactly
+the same serial request stream as before; only the cross-venue chaining is
+removed, so per-host pacing is unchanged and in-capture request serialization
+remains as it was. Parallel page fetching inside one capture stays rejected.
+The serialization premise was weaker than recorded: the four venues do not
+share hosting — Cervantes is Cloudflare-fronted, Globe Hall and Larimer
+Lounge are separate Linode servers, and Lost Lake is on separate shared
+hosting. They share the Etix-backed `rhp-events` plugin, not the servers, and
+no direct request is ever sent to `api.etix.com`, whose published rate-limit
+policy (20,000 requests per five minutes per IP) covers its own API edge,
+not these hosts. No venue host publishes rate limits, and no 429 or 406
+response has been observed from any of them at the serial pace.
+
+This supersedes the "deliberately serializes RHP venues" rule in the
+September 13 capture-pool section below. The next CI run measures the real
+step time; the simulated expectation is about 150 seconds.
+
 ## Manual Actions deployment — September 14, 2026
 
 The manual refresh workflow defaults to locale `denver`, `deploy: true`, and

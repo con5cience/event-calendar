@@ -187,11 +187,14 @@ async function captureSource({ site, sourceID, directory, logging }) {
 
 // Conservative provider groups: one active capture per adapter family. Distinct
 // KSE adapters share infrastructure, as do the Wix-hosted adapters, so each
-// family shares a slot.
-function providerGroup(adapter) {
+// family shares a slot. RHP venues share the plugin but host separately; they
+// take per-venue slots so each host's serial pacing is unchanged while the
+// cross-venue chain is removed (ADR 0023, October 2, 2026).
+function providerGroup(sourceID, adapter) {
   if (["kse-calendar", "kse-venue-events"].includes(adapter)) return "kse";
   if (["html-anteup", "html-buzzard", "html-herbs"].includes(adapter))
     return "wix";
+  if (adapter === "rhp-calendar") return "rhp-" + sourceID;
   return adapter;
 }
 
@@ -350,7 +353,7 @@ export async function refreshLocale(id, options = {}) {
         runner: runnerFor(source.adapter),
         directory,
         logging: options,
-        group: providerGroup(source.adapter),
+        group: providerGroup(sourceID, source.adapter),
       };
     });
     progress(`${id}: capturing with concurrency ${captureConcurrency}`);
