@@ -40,8 +40,23 @@ not these hosts. No venue host publishes rate limits, and no 429 or 406
 response has been observed from any of them at the serial pace.
 
 This supersedes the "deliberately serializes RHP venues" rule in the
-September 13 capture-pool section below. The next CI run measures the real
-step time; the simulated expectation is about 150 seconds.
+September 13 capture-pool section below.
+
+The follow-up measurements revised the wall's shape. Run `37085256550`
+(3 lanes) stepped at 351 seconds: the four RHP captures finished by 166
+seconds, but the run's aggregate capture work was 758 seconds over 31 sources,
+and the 118-second proxied Roxy capture — 28th of 31 in source order — did
+not start until +195 seconds. Run `37086018177` (4 lanes) stepped at 278
+seconds with a 246-second capture wall: aggregate 724 seconds, all four RHP
+captures overlapped and per-host pacing was unchanged, and Roxy remained the
+last capture to finish. The workflow's `capture_concurrency` default is now
+4, satisfying this ADR's measure-before-raising precondition with those runs;
+per-family serialization and in-capture request serialization are unchanged,
+and the 1–4 accepted range is unchanged. Raising the range beyond 4 stays
+deferred: the simulated step floor at 6 lanes is about 233 seconds, the
+absolute floor with Roxy's deliberate proxied transport plus the serial
+publication tail is about 160 seconds, and neither is worth the contract
+change while the remaining distance is about a minute.
 
 ## Manual Actions deployment — September 14, 2026
 

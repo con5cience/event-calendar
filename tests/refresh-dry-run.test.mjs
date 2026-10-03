@@ -56,10 +56,10 @@ test("workflow streams and retains output, preserves status, and exports reports
   );
   assert.match(shell, /stop-commands/);
   assert.match(yaml, /schedule:[\s\S]*cron: "0 12 \* \* \*"/);
-  assert.match(yaml, /capture_concurrency:[\s\S]*default: "3"/);
+  assert.match(yaml, /capture_concurrency:[\s\S]*default: "4"/);
   assert.match(
     yaml,
-    /CAPTURE_CONCURRENCY: \$\{\{ inputs.capture_concurrency \|\| '3' \}\}/,
+    /CAPTURE_CONCURRENCY: \$\{\{ inputs.capture_concurrency \|\| '4' \}\}/,
   );
   assert.match(shell, /-e CAPTURE_CONCURRENCY/);
   for (const exitCode of [0, 1, 2, 137]) {
@@ -78,7 +78,7 @@ test("workflow streams and retains output, preserves status, and exports reports
         env: {
           ...process.env,
           LOCALE: "denver",
-          CAPTURE_CONCURRENCY: "3",
+          CAPTURE_CONCURRENCY: "4",
           RUNNER_TEMP: root,
           GITHUB_WORKSPACE: root,
           GITHUB_STEP_SUMMARY: join(root, "summary.md"),
