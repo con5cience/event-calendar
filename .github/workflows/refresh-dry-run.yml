@@ -58,8 +58,10 @@ jobs:
           node --input-type=module -e 'import { validateLocaleID } from "./scripts/package-locale.mjs"; validateLocaleID(process.env.LOCALE);'
           mkdir -p "$RUNNER_TEMP/refresh-input/locales" dry-run-results
           cp -R "locales/$LOCALE" "$RUNNER_TEMP/refresh-input/locales/$LOCALE"
+      - name: Prepare buildx builder
+        run: docker buildx create --name ci --driver docker-container --use
       - name: Build refresh image
-        run: docker build --target refresh -t withadult-refresh-dry-run .
+        run: docker buildx build --target refresh --cache-from type=gha,scope=refresh --cache-to type=gha,scope=refresh,mode=max --load -t withadult-refresh-dry-run .
       - name: Refresh sources
         id: refresh
         env:
@@ -86,7 +88,7 @@ jobs:
       - name: Build refreshed application
         run: |
           docker run --rm --entrypoint node --mount "type=bind,src=$RUNNER_TEMP/refresh-input,dst=/repo" --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/checkout" withadult-refresh-dry-run --input-type=module -e 'import { cpSync } from "node:fs"; const id=process.argv[1]; cpSync(`/repo/locales/${id}/catalog`, `/checkout/locales/${id}/catalog`, { recursive:true });' "$LOCALE"
-          docker build -f Dockerfile.railway --build-arg "LOCALE=$LOCALE" -t withadult-app-dry-run .
+          docker buildx build -f Dockerfile.railway --build-arg "LOCALE=$LOCALE" --cache-from type=gha,scope=app --cache-to type=gha,scope=app,mode=max --load -t withadult-app-dry-run .
       - name: Verify running application
         id: smoke
         run: |

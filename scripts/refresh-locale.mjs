@@ -198,6 +198,26 @@ function providerGroup(sourceID, adapter) {
   return adapter;
 }
 
+// Measured slow transports start first so one long capture cannot become
+// the pool's tail (ADR 0023, October 2026): the proxied Afton pass, the RHP
+// event-page passes, Nocturne, Supabase, and the embedded Next.js capture
+// dominate the wall. Registry order is preserved within a tier. Re-measure
+// when this ordering stops matching the runs.
+const slowFirst = [
+  "afton",
+  "rhp-calendar",
+  "nocturne-ical",
+  "supabase-events",
+  "embedded-nextjs",
+];
+function queuedSlowFirst(jobs) {
+  const rank = (adapter) => {
+    const at = slowFirst.indexOf(adapter);
+    return at === -1 ? slowFirst.length : at;
+  };
+  return [...jobs].sort((a, b) => rank(a.adapter) - rank(b.adapter));
+}
+
 async function capturePool(jobs, limit, capture) {
   const pending = [...jobs],
     active = new Map(),
@@ -350,6 +370,7 @@ export async function refreshLocale(id, options = {}) {
       return {
         site: ctx.site,
         sourceID,
+        adapter: source.adapter,
         runner: runnerFor(source.adapter),
         directory,
         logging: options,
@@ -359,8 +380,10 @@ export async function refreshLocale(id, options = {}) {
     progress(`${id}: capturing with concurrency ${captureConcurrency}`);
     // Finish all captures before publishing. No background writer or child is
     // left running if a later savepoint/export fails and releases the locale lock.
+    // Only the pool's queue is reordered: ingest and publication still run in
+    // registry order, and no host's request stream changes.
     const captured = await capturePool(
-      jobs,
+      queuedSlowFirst(jobs),
       captureConcurrency,
       async (job) => {
         progress(`${job.sourceID}: source started`);

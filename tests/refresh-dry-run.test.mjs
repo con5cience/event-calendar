@@ -62,6 +62,18 @@ test("workflow streams and retains output, preserves status, and exports reports
     /CAPTURE_CONCURRENCY: \$\{\{ inputs.capture_concurrency \|\| '4' \}\}/,
   );
   assert.match(shell, /-e CAPTURE_CONCURRENCY/);
+  assert.match(
+    yaml,
+    /docker buildx create --name ci --driver docker-container --use/,
+  );
+  assert.match(
+    yaml,
+    /buildx build --target refresh --cache-from type=gha,scope=refresh --cache-to type=gha,scope=refresh,mode=max --load/,
+  );
+  assert.match(
+    yaml,
+    /buildx build -f Dockerfile\.railway[\s\S]*?--cache-from type=gha,scope=app --cache-to type=gha,scope=app,mode=max --load/,
+  );
   for (const exitCode of [0, 1, 2, 137]) {
     const root = mkdtempSync(join(tmpdir(), "refresh-shell-"));
     mkdirSync(join(root, "dry-run-results"));

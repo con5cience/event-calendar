@@ -122,6 +122,35 @@ test("capture pool overlaps independent providers, serializes shared providers a
   });
   assert.equal(active, 0);
 });
+test("measured slow transports are scheduled before registry order", async () => {
+  const f = fixture();
+  const sources = {
+    alpha: { adapter: "aeg-json" },
+    omega: { adapter: "afton" },
+  };
+  writeFileSync(
+    join(f.site, "site.json"),
+    JSON.stringify({ id: "test-city", sources }),
+  );
+  const started = [];
+  const result = await refreshLocale("test-city", {
+    ...f,
+    captureConcurrency: 1,
+    capture: async ({ sourceID }) => {
+      started.push(sourceID);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    },
+    refresh: async ({ sourceID, store }) => {
+      writeFileSync(
+        join(store, "catalog.json"),
+        JSON.stringify({ ...read(store), [sourceID]: "updated" }),
+      );
+      return { published: true, durable: true };
+    },
+  });
+  assert.deepEqual(started, ["omega", "alpha"]);
+  assert.equal(result.status, "success");
+});
 test("capture concurrency can be set to one and invalid limits fail before writes", async () => {
   for (const captureConcurrency of [0, -1, 1.5, "2", 5]) {
     const f = fixture();
