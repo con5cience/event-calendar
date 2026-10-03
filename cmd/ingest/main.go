@@ -18,6 +18,7 @@ import (
 	"event-calendar/internal/reelworks"
 	"event-calendar/internal/rhp"
 	"event-calendar/internal/seventhcircle"
+	"event-calendar/internal/spothopper"
 	"event-calendar/internal/store"
 	"event-calendar/internal/venuepilot"
 	"flag"
@@ -28,6 +29,9 @@ import (
 )
 
 func run(args []string, out, errout io.Writer) int {
+	if len(args) > 0 && args[0] == "replay-spothopper" {
+		return replaySnapshot(args[1:], out, errout, "replay-spothopper", spothopper.Decode)
+	}
 	if len(args) > 0 && args[0] == "replay-reelworks" {
 		return replaySnapshot(args[1:], out, errout, "replay-reelworks", reelworks.Decode)
 	}

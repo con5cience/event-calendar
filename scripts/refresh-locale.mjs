@@ -47,6 +47,10 @@ const runners = {
     command: "replay-reelworks",
     script: "reelworks/capture.mjs",
   },
+  "spothopper-events": {
+    command: "replay-spothopper",
+    script: "blacksky/capture.mjs",
+  },
   "html-buzzard": { command: "replay-buzzard", script: "buzzard/capture.mjs" },
   "html-herbs": { command: "replay-herbs", script: "herbs/capture.mjs" },
   "html-seventh-circle": {

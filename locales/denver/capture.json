@@ -4,6 +4,10 @@
     "policy": "https://www.anteupdenver.com/venue",
     "timezone": "America/Denver"
   },
+  "black-sky": {
+    "page": "https://blackskydenver.com/denver-santa-fe-arts-district-black-sky-brewery-events",
+    "timezone": "America/Denver"
+  },
   "reelworks": {
     "page": "https://reelworksdenver.com/events/",
     "faq": "https://reelworksdenver.com/faq/",

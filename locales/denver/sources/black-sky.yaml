@@ -1,0 +1,12 @@
+schema_version: 1
+source: { id: black-sky, adapter: spothopper-events }
+state: established
+venue:
+  key: black-sky
+  name: Black Sky Brewery
+  timezone: America/Denver
+  website: https://blackskydenver.com/denver-santa-fe-arts-district-black-sky-brewery-events
+  address: 490 Santa Fe Drive, Denver, CO 80204
+  phone: (720) 708-5816
+adapter_options:
+  recurring: exclude

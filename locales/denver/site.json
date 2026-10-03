@@ -51,7 +51,8 @@
     "The Roxy Theatre": "#71828E",
     "Seventh Circle Music Collective": "#85A6CF",
     "Summit": "#7379BD",
-    "ReelWorks Denver": "#7A5CE8"
+    "ReelWorks Denver": "#7A5CE8",
+    "Black Sky Brewery": "#DC4D40"
   },
   "sources": {
     "ante-up": {
@@ -61,6 +62,10 @@
     "reelworks": {
       "adapter": "reelworks-wordpress-events",
       "venue_key": "reelworks"
+    },
+    "black-sky": {
+      "adapter": "spothopper-events",
+      "venue_key": "black-sky"
     },
     "ball-arena": {
       "adapter": "kse-calendar",
