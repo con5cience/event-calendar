@@ -14,32 +14,27 @@ publication, and the separate main-only Git-writing deploy job are unchanged;
 individual record rejections still do not block deployment. This supersedes the
 daily-scheduling deferral recorded in the September 14 section below.
 
-## Build caching and slow-first capture scheduling — October 3, 2026
+## Slow-first capture scheduling — October 3, 2026
 
-The four-lane run `37086018177` measured the pipeline budget: refresh image
-build 48–60 seconds (every run re-ran `npm ci`, the 94 MB Playwright Chromium
-download, and the Go builds on an ephemeral runner), refresh step 278 seconds
-(capture wall 246 plus a 32-second serial publication tail), application build
-19–21 seconds, deploy job about 70 seconds. Two changes keep every request
-stream and every publication contract unchanged.
+The four-lane run `37086018177` measured the refresh step at 278 seconds
+with the 103–118-second proxied Roxy capture sitting 28th of 31 in source
+order, starting at +143 seconds and finishing last. The capture pool's queue
+is now ordered slow-first from measured transport classes: the proxied Afton
+pass, the RHP event-page passes, Nocturne, Supabase, and the embedded Next.js
+capture start before the rest, with registry order preserved within a tier.
+Only the queue is reordered — ingest and publication still run in registry
+order, per-host request streams are unchanged, and family serialization is
+unchanged. The subsequent runs measured 250 seconds (with Roxy's capture
+failing mid-pass) and 233 seconds (clean, all sources published), matching
+the roughly 230-second expectation.
 
-The workflow now creates a buildx `docker-container` builder and builds the
-refresh and application images with `--cache-from/--cache-to type=gha,mode=max`
-under separate `refresh` and `app` scopes. Unchanged lockfiles and Dockerfiles
-reuse the installed layers; the first run pays the export and later runs build
-in roughly 5–15 seconds.
-
-The capture pool's queue is now ordered slow-first from measured transport
-classes: the proxied Afton pass, the RHP event-page passes, Nocturne, Supabase,
-and the embedded Next.js capture start before the rest, with registry order
-preserved within a tier. Only the queue is reordered — ingest and publication
-still run in registry order, per-host request streams are unchanged, and
-family serialization is unchanged. The prior runs measured the cost of FIFO
-ordering: the 103–118-second Roxy capture sat 28th of 31 in source order and
-did not start until +195 seconds (three lanes) and +143 seconds (four lanes),
-making it the pool's tail. The expected capture wall is now about 190–200
-seconds, bounded by the aggregate work over four lanes and Roxy's deliberate
-proxied transport.
+A buildx `type=gha` layer cache for the refresh and application images was
+tried and reverted the same day: across two same-commit runs the cache never
+restored a layer (no `CACHED` steps, Chromium re-downloaded, no cache-export
+phase in either log) and the docker-container driver's OCI export, tarball,
+and load overhead cost 98–117 seconds against the 48–60-second plain
+`docker build` baseline. Revisit build caching only with a registry-backed
+cache or a prebuilt base image, where the transfer overhead is justified.
 
 ## RHP per-venue capture slots — October 2, 2026
 
